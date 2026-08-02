@@ -1,0 +1,32 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Git
+.git
+.gitignore
+
+# Development
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Build
+dist
+
+# Cache
+.cache
+.npm
+.DS_Store
+
+# Database
+*.db
+cache.db 
