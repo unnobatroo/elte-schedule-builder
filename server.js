@@ -18,6 +18,7 @@ import {
 } from "./server-utils.js";
 import { createSecurityHeaders } from "./security-headers.js";
 import { readPort } from "./runtime-config.js";
+import { createServerLogger } from "./server-logger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const port = readPort(process.env.PORT, 3000, "PORT");
@@ -438,7 +439,7 @@ export function createApp({
   now = Date.now,
   staticDirectory = path.join(__dirname, "dist"),
   trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS, 10),
-  logger = console,
+  logger = createServerLogger(),
 } = {}) {
   if (!database) throw new TypeError("createApp requires a database");
 
@@ -530,13 +531,13 @@ export async function startServer({
   listenPort = port,
   databaseFilename = process.env.CACHE_DB_PATH ||
     path.join(__dirname, "data", "cache.db"),
-  logger = console,
+  logger = createServerLogger(),
 } = {}) {
   const database = await setupDatabase(databaseFilename);
   const { app, cleanupCache: cleanup } = createApp({ database, logger });
   const cacheCleanupInterval = setInterval(cleanup, 60 * 60 * 1000);
   const server = app.listen(listenPort, () => {
-    logger.log(`Server running at http://localhost:${listenPort}`);
+    logger.info?.(`Server running at http://localhost:${listenPort}`);
   });
 
   return {

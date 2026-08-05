@@ -26,6 +26,7 @@ Open <http://localhost:5173>. The API runs on port 3000 and Vite proxies `/api` 
 Optional local configuration lives in `.env`. Copy `.env.example` and adjust the
 documented ports, proxy target, cache path, and backend safeguards as needed.
 Invalid port or proxy URL values stop startup with a clear error.
+Set `DEBUG_SERVER=true` when you need verbose request, queue, and cache logs.
 
 Want Docker instead?
 
