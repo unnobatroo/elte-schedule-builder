@@ -83,3 +83,27 @@ useful, but they do not prove the assembled frontend and backend flow.
 **Consequence:** DEMO responses are part of the development and testing contract.
 The browser happy path and backend smoke checks should remain independent of the
 network.
+
+## Dependency install scripts
+
+**Decision:** Use npm's strict install-script policy and approve only the locked
+`esbuild` and `sqlite3` versions. Explicitly deny the optional `fsevents`
+installers, and pin the policy-capable npm version in local metadata, CI, and
+Docker.
+
+**Why:** `esbuild` needs its postinstall script to provision and validate the
+platform-specific executable used by Vite. `sqlite3` needs its install script to
+load a prebuilt native N-API binding or compile one when no compatible binary is
+available. Allowing every transitive dependency script would grant more install-
+time execution than the application requires. The macOS-only `fsevents`
+packages are optional watcher accelerators, so the application can use its
+portable fallback without running their native installers.
+
+**Alternative considered:** Disable all lifecycle scripts. That prevents both
+required native tools from installing correctly. Leaving npm's policy in warning
+mode would allow newly introduced scripts without review.
+
+**Consequence:** Dependency updates that change either approved version, or add
+another install script, make `npm ci` fail. Review the new script and then run
+`npm approve-scripts <package>` to record a version-pinned approval. CI and
+Docker must continue using the npm version declared in `package.json`.
