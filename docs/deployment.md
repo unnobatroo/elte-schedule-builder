@@ -42,15 +42,20 @@ Configure the application as an image-based deployment with these values:
 - Cache database: leave `CACHE_DB_PATH` unset to use `/app/data/cache.db`, or
   set it explicitly to that path.
 - Environment: copy only the production values needed from `.env.example`.
+  The published image defaults `NODE_ENV` to `production`, which enables HSTS
+  on every application response. Set `NODE_ENV=production` explicitly when
+  deploying the server without the published container.
   Set `TRUST_PROXY_HOPS=1` only when exactly one trusted reverse proxy sits in
   front of the application.
 
 Public GHCR packages need no registry credentials. For a private package,
 configure Dokploy with a GitHub token that has `read:packages` permission.
 
-After deployment, request `/api/subject/DEMO-1` and confirm that the response
-contains `Introduction to Web Development`. This checks the server, database,
-and bundled demo data without relying on Tanrend.
+After deployment, request `/` and `/api/subject/DEMO-1`. Confirm both responses
+include `Strict-Transport-Security: max-age=31536000`, and confirm that the API
+response contains `Introduction to Web Development`. This checks the production
+security mode, server, database, and bundled demo data without relying on
+Tanrend.
 
 ## Roll back
 

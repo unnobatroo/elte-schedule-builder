@@ -72,15 +72,17 @@ jobs:
             --name elte-schedule-builder-ci \
             --publish 127.0.0.1:3000:3000 \
             --env CACHE_DB_PATH=:memory: \
-            --env NODE_ENV=test \
             elte-schedule-builder:ci
 
       - name: Verify DEMO API from the container
         shell: bash
         run: |
           for attempt in {1..30}; do
-            if response="$(curl --fail --silent http://127.0.0.1:3000/api/subject/DEMO-1)" \
-              && grep --quiet "Introduction to Web Development" <<<"$response"; then
+            if root_headers="$(curl --fail --silent --dump-header - --output /dev/null http://127.0.0.1:3000/)" \
+              && api_response="$(curl --fail --silent --dump-header - http://127.0.0.1:3000/api/subject/DEMO-1)" \
+              && grep --ignore-case --quiet $'^strict-transport-security: max-age=31536000\r$' <<<"$root_headers" \
+              && grep --ignore-case --quiet $'^strict-transport-security: max-age=31536000\r$' <<<"$api_response" \
+              && grep --quiet "Introduction to Web Development" <<<"$api_response"; then
               exit 0
             fi
             sleep 1
