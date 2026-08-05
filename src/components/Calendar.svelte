@@ -1,4 +1,5 @@
 <script>
+  import "temporal-polyfill/global";
   import { ScheduleXCalendar } from "@schedule-x/svelte";
   import { createCalendar, createViewWeek } from "@schedule-x/calendar";
   import { createEventsServicePlugin } from "@schedule-x/events-service";
@@ -10,6 +11,7 @@
 
   let { events = [], lectureExemption = false } = $props();
 
+  const CALENDAR_TIME_ZONE = "Europe/Budapest";
   const eventModal = createEventModalPlugin();
   const eventsServicePlugin = createEventsServicePlugin();
 
@@ -47,8 +49,12 @@
         id: eventId,
         title: `${event.title} (${isLecture ? "L" : "Pr"})`,
         description: `Group ${groupNumber} | ${event.code}`,
-        start: `${dateStr} ${formatTime(startHour, startMin)}`,
-        end: `${dateStr} ${formatTime(endHour, endMin)}`,
+        start: Temporal.ZonedDateTime.from(
+          `${dateStr}T${formatTime(startHour, startMin)}:00[${CALENDAR_TIME_ZONE}]`,
+        ),
+        end: Temporal.ZonedDateTime.from(
+          `${dateStr}T${formatTime(endHour, endMin)}:00[${CALENDAR_TIME_ZONE}]`,
+        ),
         location: event.extendedProps?.location || "",
         people: event.extendedProps?.instructor
           ? [event.extendedProps.instructor]
