@@ -10,7 +10,9 @@ export function getCurrentTerm() {
 
 export async function fetchSubjectData(subjectCode) {
   try {
-    const response = await fetch(`/api/subject/${subjectCode}`);
+    const response = await fetch(
+      `/api/subject/${encodeURIComponent(subjectCode)}`
+    );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
