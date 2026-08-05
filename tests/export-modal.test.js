@@ -33,17 +33,19 @@ describe("ExportModal", () => {
       props: { isOpen: true, events: [event], onClose: vi.fn() },
     });
 
-    await fireEvent.click(screen.getByRole("button", { name: "Add to Calendar" }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Add to Calendar" }),
+    );
 
     expect(open).toHaveBeenCalledWith(expect.any(String), "_blank");
     const url = new URL(open.mock.calls[0][0]);
     expect(url.origin + url.pathname).toBe(
-      "https://calendar.google.com/calendar/render"
+      "https://calendar.google.com/calendar/render",
     );
     expect(url.searchParams.get("action")).toBe("TEMPLATE");
     expect(url.searchParams.get("text")).toBe(event.title);
     expect(url.searchParams.get("dates")).toBe(
-      "20260810T100000/20260810T113000"
+      "20260810T100000/20260810T113000",
     );
     expect(url.searchParams.get("location")).toBe("North Building 2.42");
     expect(url.searchParams.get("details")).toBe(event.description);

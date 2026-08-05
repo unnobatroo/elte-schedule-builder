@@ -14,6 +14,36 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
+      thresholds: {
+        statements: 80,
+        branches: 70,
+        functions: 70,
+        lines: 80,
+        "server.js": {
+          statements: 85,
+          branches: 70,
+          functions: 60,
+          lines: 85,
+        },
+        "src/utils/**": {
+          statements: 90,
+          branches: 80,
+          functions: 90,
+          lines: 90,
+        },
+        "src/App.svelte": {
+          statements: 60,
+          branches: 60,
+          functions: 25,
+          lines: 60,
+        },
+        "src/routes/**": {
+          statements: 70,
+          branches: 60,
+          functions: 80,
+          lines: 70,
+        },
+      },
       exclude: [
         "node_modules/",
         "tests/",

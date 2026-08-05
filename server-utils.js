@@ -7,9 +7,11 @@ export function readPositiveInteger(value, fallback) {
 }
 
 export function isValidSubjectCode(subjectCode) {
-  return typeof subjectCode === "string" &&
+  return (
+    typeof subjectCode === "string" &&
     subjectCode.length <= MAX_SUBJECT_CODE_LENGTH &&
-    SUBJECT_CODE_PATTERN.test(subjectCode);
+    SUBJECT_CODE_PATTERN.test(subjectCode)
+  );
 }
 
 export function validateSubjectCode(req, res, next) {
@@ -38,7 +40,7 @@ export async function trimCache(db, maxEntries) {
        ORDER BY timestamp DESC, key DESC
        LIMIT -1 OFFSET ?
      )`,
-    maxEntries
+    maxEntries,
   );
 }
 
@@ -72,7 +74,7 @@ export function createRateLimiter({
     client.count += 1;
     const resetSeconds = Math.max(
       1,
-      Math.ceil((client.resetAt - currentTime) / 1000)
+      Math.ceil((client.resetAt - currentTime) / 1000),
     );
     res.set({
       "RateLimit-Limit": String(limit),
@@ -138,7 +140,9 @@ export class SubjectRequestQueue {
       }
 
       if (this.queue.length > 0 && this.delay > 0) {
-        await new Promise((resolveDelay) => setTimeout(resolveDelay, this.delay));
+        await new Promise((resolveDelay) =>
+          setTimeout(resolveDelay, this.delay),
+        );
       }
     }
 

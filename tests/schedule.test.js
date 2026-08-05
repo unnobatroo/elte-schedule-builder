@@ -1,47 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { getCurrentTerm, parseTableRow } from "../src/utils/schedule.js";
+import { describe, it, expect } from "vitest";
+import { parseTableRow } from "../src/utils/schedule.js";
 
 describe("Schedule Utilities", () => {
-  describe("getCurrentTerm", () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    it("should return correct term for September (fall semester)", () => {
-      vi.setSystemTime(new Date("2025-09-15"));
-      const term = getCurrentTerm();
-      expect(term).toBe("2025-2026-1");
-    });
-
-    it("should return correct term for January (spring semester)", () => {
-      vi.setSystemTime(new Date("2025-01-15"));
-      const term = getCurrentTerm();
-      expect(term).toBe("2024-2025-2");
-    });
-
-    it("should return correct term for December (fall semester)", () => {
-      vi.setSystemTime(new Date("2025-12-15"));
-      const term = getCurrentTerm();
-      expect(term).toBe("2025-2026-1");
-    });
-
-    it("should return correct term for June (spring semester end)", () => {
-      vi.setSystemTime(new Date("2025-06-15"));
-      const term = getCurrentTerm();
-      expect(term).toBe("2024-2025-2");
-    });
-
-    it("should return correct term for July (start of fall semester)", () => {
-      vi.setSystemTime(new Date("2025-07-01"));
-      const term = getCurrentTerm();
-      expect(term).toBe("2025-2026-1");
-    });
-  });
-
   describe("parseTableRow", () => {
     function createMockRow(data) {
       const row = document.createElement("tr");

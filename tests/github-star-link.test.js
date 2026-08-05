@@ -12,7 +12,7 @@ describe("GitHubStarLink", () => {
       name: "Star on GitHub (opens in a new tab)",
     });
     expect(link.getAttribute("href")).toBe(
-      "https://github.com/example/schedule-builder"
+      "https://github.com/example/schedule-builder",
     );
     expect(link.getAttribute("target")).toBe("_blank");
     expect(link.getAttribute("rel")).toContain("noopener");

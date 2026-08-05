@@ -32,6 +32,7 @@
     setSubjectEnabled,
     toggleScheduleEvent,
   } from "./utils/scheduleState.js";
+  import { STORAGE_KEYS } from "./utils/storageKeys.js";
 
   let events = $state([]);
   let allSubjects = $state([]);
@@ -57,8 +58,11 @@
     // Shared schedules always get their own profile, preserving local schedules.
     if (path.startsWith("/import/")) {
       const base64String = path.split("/import/")[1];
-      const { baseCodes, fullCodes, lectureExemption: importedExemption } =
-        decodeSchedule(base64String);
+      const {
+        baseCodes,
+        fullCodes,
+        lectureExemption: importedExemption,
+      } = decodeSchedule(base64String);
       if (fullCodes.length > 0) {
         storedSchedules = addSchedule(storedSchedules, {
           name: getUniqueScheduleName(storedSchedules, "Imported schedule"),
@@ -73,23 +77,25 @@
     applyScheduleStore(storedSchedules);
 
     // Check if warning was shown before
-    const warningShown = localStorage.getItem("warningShown");
+    const warningShown = localStorage.getItem(STORAGE_KEYS.warningShown);
     if (!warningShown) {
       showWarning = true;
     }
 
     // Check if FAQ was read before
-    faqRead = localStorage.getItem("faqRead") === "true";
+    faqRead = localStorage.getItem(STORAGE_KEYS.faqRead) === "true";
 
     const mql = window.matchMedia(
-      "(max-width: 768px) and (orientation: portrait)"
+      "(max-width: 768px) and (orientation: portrait)",
     );
-    const mobileWarningShown = localStorage.getItem("mobileWarningShown");
+    const mobileWarningShown = localStorage.getItem(
+      STORAGE_KEYS.mobileWarningShown,
+    );
     showMobileWarning = mql.matches && !mobileWarningShown;
 
     const handleOrientationChange = (e) => {
       showMobileWarning =
-        e.matches && !localStorage.getItem("mobileWarningShown");
+        e.matches && !localStorage.getItem(STORAGE_KEYS.mobileWarningShown);
     };
 
     const handleStoredScheduleUpdate = () => {
@@ -107,12 +113,12 @@
 
   function closeWarning() {
     showWarning = false;
-    localStorage.setItem("warningShown", "true");
+    localStorage.setItem(STORAGE_KEYS.warningShown, "true");
   }
 
   function closeMobileWarning() {
     showMobileWarning = false;
-    localStorage.setItem("mobileWarningShown", "true");
+    localStorage.setItem(STORAGE_KEYS.mobileWarningShown, "true");
   }
 
   function handleScheduleUpdate(eventData) {
@@ -151,7 +157,9 @@
   }
 
   function createSchedule() {
-    persistAndApply(addSchedule(scheduleStore ?? loadScheduleStore(localStorage)));
+    persistAndApply(
+      addSchedule(scheduleStore ?? loadScheduleStore(localStorage)),
+    );
   }
 
   function switchSchedule(scheduleId) {
@@ -222,7 +230,7 @@
     showFAQ = false;
     if (!faqRead) {
       faqRead = true;
-      localStorage.setItem("faqRead", "true");
+      localStorage.setItem(STORAGE_KEYS.faqRead, "true");
     }
   }
 
@@ -280,7 +288,7 @@
             showFAQ = true;
             if (!faqRead) {
               faqRead = true;
-              localStorage.setItem("faqRead", "true");
+              localStorage.setItem(STORAGE_KEYS.faqRead, "true");
             }
           }}
         >
@@ -296,7 +304,8 @@
         onScheduleUpdate={handleScheduleUpdate}
         onExportToGoogle={handleExportToGoogle}
         onShare={handleShare}
-        onImportComplete={() => (importedCodes = { baseCodes: "", fullCodes: [] })}
+        onImportComplete={() =>
+          (importedCodes = { baseCodes: "", fullCodes: [] })}
         {importedCodes}
       />
     {/key}
@@ -376,8 +385,9 @@
     padding: 0;
     background: #121212;
     color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
+      Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   }
 
   main {

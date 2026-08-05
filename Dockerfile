@@ -16,7 +16,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
-COPY server.js server-utils.js security-headers.js ./
+COPY server.js server-utils.js security-headers.js runtime-config.js server-logger.js ./
 
 RUN mkdir -p /app/data
 VOLUME /app/data

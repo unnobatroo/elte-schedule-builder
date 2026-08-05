@@ -38,7 +38,7 @@ describe("ScheduleInput", () => {
       target: { value: "DEMO-1" },
     });
     await fireEvent.click(
-      screen.getByRole("button", { name: "Generate/Update Schedule" })
+      screen.getByRole("button", { name: "Generate/Update Schedule" }),
     );
 
     await waitFor(() => expect(onScheduleUpdate).toHaveBeenCalledOnce());
@@ -60,7 +60,7 @@ describe("ScheduleInput", () => {
       target: { value: "IK-FAIL" },
     });
     await fireEvent.click(
-      screen.getByRole("button", { name: "Generate/Update Schedule" })
+      screen.getByRole("button", { name: "Generate/Update Schedule" }),
     );
 
     expect(await screen.findByText("IK-FAIL")).toBeTruthy();
@@ -79,7 +79,7 @@ describe("ScheduleInput", () => {
       target: { value: "DEMO-1 IK-EMPTY" },
     });
     await fireEvent.click(
-      screen.getByRole("button", { name: "Generate/Update Schedule" })
+      screen.getByRole("button", { name: "Generate/Update Schedule" }),
     );
 
     await waitFor(() => expect(onScheduleUpdate).toHaveBeenCalledOnce());

@@ -20,7 +20,7 @@ describe("ScheduleManager", () => {
 
     await fireEvent.click(screen.getByRole("button", { name: "+ New" }));
     await fireEvent.click(
-      screen.getByRole("button", { name: "Alternative", exact: true })
+      screen.getByRole("button", { name: "Alternative", exact: true }),
     );
 
     expect(onCreate).toHaveBeenCalledOnce();
@@ -38,18 +38,18 @@ describe("ScheduleManager", () => {
     });
 
     await fireEvent.click(
-      screen.getByRole("button", { name: "Rename Default schedule" })
+      screen.getByRole("button", { name: "Rename Default schedule" }),
     );
     await fireEvent.input(screen.getByLabelText("Schedule name"), {
       target: { value: "Semester plan" },
     });
     await fireEvent.click(
-      screen.getByRole("button", { name: "Save schedule name" })
+      screen.getByRole("button", { name: "Save schedule name" }),
     );
 
     expect(onRename).toHaveBeenCalledWith("one", "Semester plan");
     expect(
-      screen.getByRole("button", { name: "Delete Default schedule" }).disabled
+      screen.getByRole("button", { name: "Delete Default schedule" }).disabled,
     ).toBe(true);
     expect(onDelete).not.toHaveBeenCalled();
   });

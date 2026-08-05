@@ -1,16 +1,6 @@
-export function getCurrentTerm() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const semester = month >= 6 ? 1 : 2;
-  return `${
-    semester === 1 ? `${year}-${year + 1}` : `${year - 1}-${year}`
-  }-${semester}`;
-}
-
 export async function fetchSubjectData(subjectCode) {
   const response = await fetch(
-    `/api/subject/${encodeURIComponent(subjectCode)}`
+    `/api/subject/${encodeURIComponent(subjectCode)}`,
   );
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -79,8 +69,12 @@ export function processSubjectCode(code) {
   return parts.join("-");
 }
 
-export function extractBaseCodesFromFull(fullCodes) {
-  return [...new Set(fullCodes.map(processSubjectCode))];
+// Tanrend codes such as DEMO-1 are already base codes. Only strip a group
+// suffix when the code contains at least three dash-separated segments.
+export function getTanrendSubjectCode(code) {
+  const parts = code.split("-");
+  if (parts.length > 2) parts.pop();
+  return parts.join("-");
 }
 
 export function createCalendarEvents(classes) {
@@ -91,20 +85,22 @@ export function createCalendarEvents(classes) {
     const time = parseTimeString(subjectClass.time);
     if (!time) return [];
 
-    return [{
-      title: `${subjectClass.title} (${subjectClass.type})`,
-      dayOfWeek: time.dayOfWeek,
-      startTime: time.startTime,
-      endTime: time.endTime,
-      description: `${subjectClass.code}\nInstructor: ${subjectClass.instructor}`,
-      code: subjectClass.code,
-      extendedProps: {
-        location: subjectClass.location,
-        type: subjectClass.type,
-        instructor: subjectClass.instructor,
+    return [
+      {
+        title: `${subjectClass.title} (${subjectClass.type})`,
+        dayOfWeek: time.dayOfWeek,
+        startTime: time.startTime,
+        endTime: time.endTime,
+        description: `${subjectClass.code}\nInstructor: ${subjectClass.instructor}`,
+        code: subjectClass.code,
+        extendedProps: {
+          location: subjectClass.location,
+          type: subjectClass.type,
+          instructor: subjectClass.instructor,
+        },
+        enabled: false,
       },
-      enabled: false,
-    }];
+    ];
   });
 }
 
@@ -114,9 +110,11 @@ function timeToMinutes(time) {
 }
 
 export function checkTimeOverlap(first, second) {
-  return first.dayOfWeek === second.dayOfWeek &&
+  return (
+    first.dayOfWeek === second.dayOfWeek &&
     timeToMinutes(first.startTime) < timeToMinutes(second.endTime) &&
-    timeToMinutes(second.startTime) < timeToMinutes(first.endTime);
+    timeToMinutes(second.startTime) < timeToMinutes(first.endTime)
+  );
 }
 
 function isLecture(event) {
@@ -130,7 +128,11 @@ export function getConflictPairs(events, lectureExemption = false) {
   for (let first = 0; first < events.length; first += 1) {
     for (let second = first + 1; second < events.length; second += 1) {
       if (!checkTimeOverlap(events[first], events[second])) continue;
-      if (lectureExemption && (isLecture(events[first]) || isLecture(events[second]))) continue;
+      if (
+        lectureExemption &&
+        (isLecture(events[first]) || isLecture(events[second]))
+      )
+        continue;
       conflicts.push({ event1: first, event2: second });
     }
   }
@@ -139,13 +141,12 @@ export function getConflictPairs(events, lectureExemption = false) {
 
 export function markConflicts(subjects, lectureExemption = false) {
   const enabledEvents = subjects.flatMap((subject) =>
-    subject.events.filter((event) => event.enabled)
+    subject.events.filter((event) => event.enabled),
   );
   const conflictingEvents = new Set(
-    getConflictPairs(enabledEvents, lectureExemption).flatMap(({ event1, event2 }) => [
-      enabledEvents[event1],
-      enabledEvents[event2],
-    ])
+    getConflictPairs(enabledEvents, lectureExemption).flatMap(
+      ({ event1, event2 }) => [enabledEvents[event1], enabledEvents[event2]],
+    ),
   );
 
   return subjects.map((subject) => ({
@@ -165,9 +166,9 @@ export function decodeSchedule(encodedSchedule) {
       const match = section.match(/^([^{}]+)\{(.*)\}$/);
       if (!match) return [];
       const [, prefix, contents] = match;
-      return contents.split(",").map((item) =>
-        prefix === "OTHER" ? item : `${prefix}-${item}`
-      );
+      return contents
+        .split(",")
+        .map((item) => (prefix === "OTHER" ? item : `${prefix}-${item}`));
     });
 
     return {
@@ -190,7 +191,7 @@ export function encodeSchedule(codes, lectureExemption = false) {
   }
 
   const sections = [...groups]
-    .sort(([prefix]) => prefix === "OTHER" ? 1 : -1)
+    .sort(([prefix]) => (prefix === "OTHER" ? 1 : -1))
     .map(([prefix, values]) => `${prefix}{${values.join(",")}}`);
   return btoa(`${sections.join("|")}|${lectureExemption ? "1" : "0"}`);
 }
@@ -253,7 +254,7 @@ export function getNextWeekDateForDay(dayOfWeek) {
   const currentDay = today.getDay();
 
   // Calculate days until next Monday (ensure it's at least 7 if today is Monday)
-  const daysUntilMonday = ((8 - currentDay) % 7) || 7;
+  const daysUntilMonday = (8 - currentDay) % 7 || 7;
   const mondayDate = currentDate + daysUntilMonday;
 
   // Calculate days to add from Monday

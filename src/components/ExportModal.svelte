@@ -50,7 +50,7 @@
       <button class="close-btn" onclick={onClose}>×</button>
       <h2>Export to Google Calendar</h2>
       <div class="events-list">
-        {#each events as event}
+        {#each events as event (event)}
           <div class="event-item">
             <div class="event-info">
               <div class="event-title">{event.title}</div>

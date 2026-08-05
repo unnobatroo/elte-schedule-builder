@@ -35,7 +35,9 @@ describe("schedule storage", () => {
         },
       ],
     });
-    expect(JSON.parse(localStorage.getItem(SCHEDULES_STORAGE_KEY))).toEqual(store);
+    expect(JSON.parse(localStorage.getItem(SCHEDULES_STORAGE_KEY))).toEqual(
+      store,
+    );
   });
 
   it("migrates the legacy single schedule without losing its settings", () => {
@@ -84,13 +86,13 @@ describe("schedule storage", () => {
         subjects: [{ title: "Shared" }],
         lectureExemption: true,
       },
-      makeId
+      makeId,
     );
 
     expect(store.schedules).toHaveLength(2);
-    expect(store.schedules.find(({ id }) => id === originalId).subjects).toEqual([
-      { title: "Local" },
-    ]);
+    expect(
+      store.schedules.find(({ id }) => id === originalId).subjects,
+    ).toEqual([{ title: "Local" }]);
     expect(getActiveSchedule(store)).toMatchObject({
       name: "Imported schedule",
       subjects: [{ title: "Shared" }],
@@ -120,6 +122,8 @@ describe("schedule storage", () => {
       ],
     });
 
-    expect(loadScheduleStore(localStorage, makeId).activeScheduleId).toBe("valid");
+    expect(loadScheduleStore(localStorage, makeId).activeScheduleId).toBe(
+      "valid",
+    );
   });
 });

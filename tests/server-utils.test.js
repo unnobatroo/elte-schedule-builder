@@ -23,12 +23,12 @@ function createResponse() {
 describe("subject code validation", () => {
   it.each(["IP-18fWPEG", "MATH-201", "DEMO-6", "code_1.test"])(
     "accepts %s",
-    (code) => expect(isValidSubjectCode(code)).toBe(true)
+    (code) => expect(isValidSubjectCode(code)).toBe(true),
   );
 
   it.each(["", "IP 18", "IP&k=other", "IP?x=1", "../subject", "code%26x"])(
     "rejects %s",
-    (code) => expect(isValidSubjectCode(code)).toBe(false)
+    (code) => expect(isValidSubjectCode(code)).toBe(false),
   );
 
   it("rejects oversized codes before continuing", () => {
@@ -39,7 +39,7 @@ describe("subject code validation", () => {
     validateSubjectCode(
       { params: { code: "A".repeat(MAX_SUBJECT_CODE_LENGTH + 1) } },
       { status, json },
-      next
+      next,
     );
 
     expect(status).toHaveBeenCalledWith(400);
@@ -53,7 +53,7 @@ describe("cache bounds", () => {
     const db = await open({ filename: ":memory:", driver: sqlite3.Database });
     try {
       await db.exec(
-        "CREATE TABLE cache (key TEXT PRIMARY KEY, data TEXT, timestamp INTEGER)"
+        "CREATE TABLE cache (key TEXT PRIMARY KEY, data TEXT, timestamp INTEGER)",
       );
       await db.run("INSERT INTO cache VALUES (?, ?, ?)", "old", "data", 1);
       await db.run("INSERT INTO cache VALUES (?, ?, ?)", "middle", "data", 2);
@@ -121,9 +121,10 @@ describe("SubjectRequestQueue", () => {
   it("coalesces matching requests", async () => {
     let release;
     const handler = vi.fn(
-      () => new Promise((resolve) => {
-        release = resolve;
-      })
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
     );
     const queue = new SubjectRequestQueue({ handler, delay: 0, maxQueued: 2 });
 
@@ -143,14 +144,14 @@ describe("SubjectRequestQueue", () => {
         ? new Promise((resolve) => {
             releaseActive = resolve;
           })
-        : Promise.resolve("done")
+        : Promise.resolve("done"),
     );
     const queue = new SubjectRequestQueue({ handler, delay: 0, maxQueued: 1 });
 
     const active = queue.enqueue("ACTIVE", "term");
     const queued = queue.enqueue("QUEUED", "term");
     await expect(queue.enqueue("REJECTED", "term")).rejects.toBeInstanceOf(
-      QueueCapacityError
+      QueueCapacityError,
     );
 
     releaseActive("done");

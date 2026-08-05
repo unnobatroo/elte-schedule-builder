@@ -81,7 +81,7 @@ describe("Import/Export String Processing", () => {
 
     it("should handle complex multi-subject import", () => {
       const base64 = btoa(
-        "IP-18fWPEG{90,91}|MATH-201{01,02,03}|CS-101{A-01}|1"
+        "IP-18fWPEG{90,91}|MATH-201{01,02,03}|CS-101{A-01}|1",
       );
       const result = processImportString(base64);
 

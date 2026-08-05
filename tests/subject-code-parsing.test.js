@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  extractBaseCodesFromFull,
+  getTanrendSubjectCode,
   parseSubjectCodes,
   processSubjectCode,
 } from "../src/utils/schedule.js";
@@ -61,7 +61,7 @@ describe("Subject Code Processing", () => {
 
     it("should parse mixed separators", () => {
       const result = parseSubjectCodes(
-        "IP-18fWPEG, IP-18fKVFPG\nMATH-201 CS-101"
+        "IP-18fWPEG, IP-18fKVFPG\nMATH-201 CS-101",
       );
       expect(result).toEqual([
         "IP-18fWPEG",
@@ -102,46 +102,14 @@ describe("Subject Code Processing", () => {
     });
   });
 
-  describe("extractBaseCodesFromFull", () => {
-    it("should extract base codes from full codes with group numbers", () => {
-      const fullCodes = ["IP-18fWPEG-90", "IP-18fKVFPG-91", "MATH-201-01"];
-      const result = extractBaseCodesFromFull(fullCodes);
-      expect(result).toEqual(["IP-18fWPEG", "IP-18fKVFPG", "MATH-201"]);
+  describe("getTanrendSubjectCode", () => {
+    it("preserves two-part base codes used by demo and Tanrend searches", () => {
+      expect(getTanrendSubjectCode("DEMO-1")).toBe("DEMO-1");
     });
 
-    it("should remove duplicate base codes", () => {
-      const fullCodes = ["IP-18fWPEG-90", "IP-18fWPEG-91", "IP-18fWPEG-92"];
-      const result = extractBaseCodesFromFull(fullCodes);
-      expect(result).toEqual(["IP-18fWPEG"]);
-    });
-
-    it("should handle mix of full and base codes", () => {
-      const fullCodes = ["IP-18fWPEG-90", "STANDALONE", "MATH-201-01"];
-      const result = extractBaseCodesFromFull(fullCodes);
-      expect(result).toEqual(["IP-18fWPEG", "STANDALONE", "MATH-201"]);
-    });
-
-    it("should handle empty array", () => {
-      const result = extractBaseCodesFromFull([]);
-      expect(result).toEqual([]);
-    });
-
-    it("should handle codes without dashes", () => {
-      const fullCodes = ["STANDALONE1", "STANDALONE2"];
-      const result = extractBaseCodesFromFull(fullCodes);
-      expect(result).toEqual(["STANDALONE1", "STANDALONE2"]);
-    });
-
-    it("should handle multiple groups of same subject", () => {
-      const fullCodes = [
-        "IP-18fWPEG-90",
-        "IP-18fWPEG-91",
-        "MATH-201-01",
-        "MATH-201-02",
-        "CS-101-A-01",
-      ];
-      const result = extractBaseCodesFromFull(fullCodes);
-      expect(result).toEqual(["IP-18fWPEG", "MATH-201", "CS-101-A"]);
+    it("removes a group suffix from longer Tanrend codes", () => {
+      expect(getTanrendSubjectCode("IP-18fWPEG-90")).toBe("IP-18fWPEG");
+      expect(getTanrendSubjectCode("CS-101-A-01")).toBe("CS-101-A");
     });
   });
 });

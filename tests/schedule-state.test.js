@@ -31,14 +31,17 @@ describe("schedule state", () => {
   });
 
   it("adds new subjects and derives unique codes", () => {
-    const subjects = mergeScheduleEvents([], [
-      event(),
-      event({
-        dayOfWeek: "Tuesday",
-        description: "IK-ALG-02\nInstructor: Grace",
-        enabled: false,
-      }),
-    ]);
+    const subjects = mergeScheduleEvents(
+      [],
+      [
+        event(),
+        event({
+          dayOfWeek: "Tuesday",
+          description: "IK-ALG-02\nInstructor: Grace",
+          enabled: false,
+        }),
+      ],
+    );
 
     expect(subjects).toEqual([
       expect.objectContaining({
@@ -58,9 +61,15 @@ describe("schedule state", () => {
       events: [event({ enabled: false, location: "Old room" })],
     };
 
-    const subjects = mergeScheduleEvents([existing], [
-      event({ description: "IK-ALG-02\nInstructor: Ada", location: "New room" }),
-    ]);
+    const subjects = mergeScheduleEvents(
+      [existing],
+      [
+        event({
+          description: "IK-ALG-02\nInstructor: Ada",
+          location: "New room",
+        }),
+      ],
+    );
 
     expect(subjects[0]).toMatchObject({
       code: "IK-ALG-01, IK-ALG-02",
@@ -89,17 +98,25 @@ describe("schedule state", () => {
   });
 
   it("toggles one event and derives the subject enabled state", () => {
-    const subjects = [{
-      title: "Algorithms",
-      enabled: true,
-      events: [event({ enabled: true })],
-    }];
+    const subjects = [
+      {
+        title: "Algorithms",
+        enabled: true,
+        events: [event({ enabled: true })],
+      },
+    ];
 
     const disabled = toggleScheduleEvent(subjects, "Algorithms", 0);
     const enabled = toggleScheduleEvent(disabled, "Algorithms", 0);
 
-    expect(disabled[0]).toMatchObject({ enabled: false, events: [{ enabled: false }] });
-    expect(enabled[0]).toMatchObject({ enabled: true, events: [{ enabled: true }] });
+    expect(disabled[0]).toMatchObject({
+      enabled: false,
+      events: [{ enabled: false }],
+    });
+    expect(enabled[0]).toMatchObject({
+      enabled: true,
+      events: [{ enabled: true }],
+    });
   });
 
   it("selects enabled events and their share codes", () => {
@@ -108,7 +125,9 @@ describe("schedule state", () => {
       description: "IK-ALG-02\nInstructor: Grace",
       enabled: false,
     });
-    const subjects = [{ title: "Algorithms", enabled: true, events: [enabled, disabled] }];
+    const subjects = [
+      { title: "Algorithms", enabled: true, events: [enabled, disabled] },
+    ];
 
     expect(getEnabledEvents(subjects)).toEqual([enabled]);
     expect(getEnabledEventCodes(subjects)).toEqual(["IK-ALG-01"]);

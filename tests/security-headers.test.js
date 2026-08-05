@@ -9,7 +9,7 @@ async function getHeaders(enableHsts) {
 
   const server = await new Promise((resolve) => {
     const listeningServer = app.listen(0, "127.0.0.1", () =>
-      resolve(listeningServer)
+      resolve(listeningServer),
     );
   });
 
@@ -47,7 +47,7 @@ describe("security headers", () => {
 
     expect(headers.get("strict-transport-security")).toBe("max-age=31536000");
     expect(headers.get("content-security-policy")).toContain(
-      "upgrade-insecure-requests"
+      "upgrade-insecure-requests",
     );
   });
 });

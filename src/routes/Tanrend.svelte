@@ -3,6 +3,7 @@
   import {
     createCalendarEvents,
     fetchSubjectData,
+    getTanrendSubjectCode,
     parseTimeString,
   } from "../utils/schedule";
   import {
@@ -11,6 +12,7 @@
     saveScheduleStore,
     updateActiveSchedule,
   } from "../utils/scheduleStorage";
+  import { STORAGE_KEYS } from "../utils/storageKeys.js";
 
   let query = $state("");
   let isLoading = $state(false);
@@ -19,8 +21,8 @@
   let successMessage = $state("");
 
   onMount(() => {
-    const savedQuery = localStorage.getItem("tanrendQuery");
-    const savedResults = localStorage.getItem("tanrendResults");
+    const savedQuery = localStorage.getItem(STORAGE_KEYS.tanrendQuery);
+    const savedResults = localStorage.getItem(STORAGE_KEYS.tanrendResults);
 
     if (savedQuery) {
       query = savedQuery;
@@ -76,21 +78,12 @@
       .filter(Boolean);
   }
 
-  function normalizeCode(code) {
-    const parts = code.split("-");
-    if (parts.length > 2) {
-      parts.pop();
-      return parts.join("-");
-    }
-    return code;
-  }
-
   async function search() {
     const codes = query
       .split(/[\s,]+/)
       .map((c) => c.trim())
       .filter(Boolean)
-      .map(normalizeCode);
+      .map(getTanrendSubjectCode);
 
     if (codes.length === 0) {
       error = "Enter at least one subject code.";
@@ -114,13 +107,17 @@
       error = "Failed to fetch data. Please try again.";
     } finally {
       results = sortRows(aggregated).map(
-        ({ dayIndex, startMinutes, ...display }) => display
+        ({ dayIndex: _dayIndex, startMinutes: _startMinutes, ...display }) =>
+          display,
       );
       isLoading = false;
 
       // Save query and results to localStorage
-      localStorage.setItem("tanrendQuery", query);
-      localStorage.setItem("tanrendResults", JSON.stringify(results));
+      localStorage.setItem(STORAGE_KEYS.tanrendQuery, query);
+      localStorage.setItem(
+        STORAGE_KEYS.tanrendResults,
+        JSON.stringify(results),
+      );
     }
   }
 
@@ -132,9 +129,11 @@
 
   function eventMatchesRow(event, row) {
     const [dayOfWeek, timeRange] = row.when.split(" ");
-    return event.dayOfWeek === dayOfWeek &&
+    return (
+      event.dayOfWeek === dayOfWeek &&
       event.startTime === timeRange.split("-")[0] &&
-      (event.code ?? event.description.split("\n")[0]) === row.code;
+      (event.code ?? event.description.split("\n")[0]) === row.code
+    );
   }
 
   function createSelectableEvents(classes, row) {
@@ -155,19 +154,21 @@
       .replace(/\s*L\+Pr\.\s*$/, "")
       .trim();
 
-    const apiCode = normalizeCode(row.code);
+    const apiCode = getTanrendSubjectCode(row.code);
 
     const isLecture = row.type.toLowerCase().includes("lecture");
     const isPractice = row.type.toLowerCase().includes("practice");
 
     const scheduleStore = loadScheduleStore(localStorage);
-    const allSubjects = structuredClone(getActiveSchedule(scheduleStore).subjects);
+    const allSubjects = structuredClone(
+      getActiveSchedule(scheduleStore).subjects,
+    );
 
     const existingSubject = allSubjects.find((s) => s.title === cleanTitle);
 
     if (existingSubject) {
       const eventExists = existingSubject.events.some(
-        (event) => event.description.split("\n")[0] === row.code
+        (event) => event.description.split("\n")[0] === row.code,
       );
 
       if (eventExists) {
@@ -235,7 +236,7 @@
           ].join(", ");
 
           existingSubject.enabled = existingSubject.events.some(
-            (e) => e.enabled
+            (e) => e.enabled,
           );
         } catch (err) {
           console.error("Error fetching subject data:", err);
@@ -273,7 +274,7 @@
 
     saveScheduleStore(
       localStorage,
-      updateActiveSchedule(scheduleStore, { subjects: allSubjects })
+      updateActiveSchedule(scheduleStore, { subjects: allSubjects }),
     );
 
     window.dispatchEvent(new CustomEvent("scheduleUpdated"));
@@ -328,7 +329,7 @@
           </tr>
         </thead>
         <tbody>
-          {#each results as r}
+          {#each results as r (r)}
             <tr>
               <td class="time">
                 <div class="when">{r.when}</div>
@@ -364,9 +365,6 @@
     min-height: 100vh;
     background: #121212;
   }
-  /* .header and h1 selectors removed as they are unused */
-  /* back link removed per request */
-
   .search {
     max-width: 1200px;
     margin: 0 auto;

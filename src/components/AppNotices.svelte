@@ -23,7 +23,9 @@
       <div class="warning-content">
         <ul>
           <li><strong>Not affiliated</strong> with ELTE University.</li>
-          <li>Data is fetched from Tanrend. It is there, you just can't see it.</li>
+          <li>
+            Data is fetched from Tanrend. It is there, you just can't see it.
+          </li>
           <li>
             Developer takes <strong>no responsibility</strong> for errors or
             inaccuracies.<br />
@@ -32,7 +34,9 @@
           <li>Found a bug? Please contact the developer.</li>
         </ul>
         <div class="acknowledge-container">
-          <button class="understand-btn" onclick={onCloseWarning}>I Understand</button>
+          <button class="understand-btn" onclick={onCloseWarning}
+            >I Understand</button
+          >
         </div>
       </div>
     </div>
@@ -55,7 +59,9 @@
       <div class="warning-content">
         <p>This website is designed for desktop/laptop viewing.</p>
         <ul>
-          <li>For the best experience, please use a desktop or laptop computer.</li>
+          <li>
+            For the best experience, please use a desktop or laptop computer.
+          </li>
           <li>
             If you must use a mobile device, try rotating your device to
             landscape mode.

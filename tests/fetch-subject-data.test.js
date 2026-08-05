@@ -19,13 +19,16 @@ describe("fetchSubjectData", () => {
   });
 
   it("rejects HTTP failures so the UI can show an error", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-      ok: false,
-      status: 503,
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+      }),
+    );
 
     await expect(fetchSubjectData("IK-FAIL")).rejects.toThrow(
-      "HTTP error! status: 503"
+      "HTTP error! status: 503",
     );
   });
 

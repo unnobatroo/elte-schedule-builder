@@ -1,9 +1,6 @@
 <script>
   import { ScheduleXCalendar } from "@schedule-x/svelte";
-  import {
-    createCalendar,
-    createViewWeek,
-  } from "@schedule-x/calendar";
+  import { createCalendar, createViewWeek } from "@schedule-x/calendar";
   import { createEventsServicePlugin } from "@schedule-x/events-service";
 
   import { createEventModalPlugin } from "@schedule-x/event-modal";
@@ -22,10 +19,9 @@
 
   function formatEvents(rawEvents) {
     const overlappingEvents = new Set(
-      getConflictPairs(rawEvents, lectureExemption).flatMap(({ event1, event2 }) => [
-        event1,
-        event2,
-      ])
+      getConflictPairs(rawEvents, lectureExemption).flatMap(
+        ({ event1, event2 }) => [event1, event2],
+      ),
     );
 
     return rawEvents.map((event, index) => {
@@ -129,12 +125,5 @@
   :global(.sx-event--has-conflict) {
     background-color: #ff4444 !important;
     border: 2px solid #ff0000;
-  }
-
-  :global(.event-conflict-warning) {
-    color: #ffffff;
-    font-size: 0.8em;
-    font-weight: bold;
-    margin-top: 4px;
   }
 </style>

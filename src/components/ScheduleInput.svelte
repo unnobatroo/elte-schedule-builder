@@ -35,6 +35,8 @@
 
   async function processSubjects() {
     const isImport = importedCodes.fullCodes?.length > 0;
+    // This set is local to this invocation and is not rendered reactive state.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const subjectCodesSet = new Set();
     showFailedSubjects = false;
 
@@ -50,9 +52,11 @@
     }
 
     // Refresh only the currently selected schedule.
-    const subjects = getActiveSchedule(loadScheduleStore(localStorage)).subjects;
+    const subjects = getActiveSchedule(
+      loadScheduleStore(localStorage),
+    ).subjects;
     const storedCodes = subjects.flatMap((subject) =>
-      subject.code.split(", ").map(processSubjectCode)
+      subject.code.split(", ").map(processSubjectCode),
     );
     storedCodes.forEach((code) => subjectCodesSet.add(code));
 
@@ -148,15 +152,13 @@
       inputValue = "";
     }
   }
-
 </script>
 
 <div class="input-container">
   <textarea
     bind:value={inputValue}
     placeholder="Enter subject codes separated by space, newline, or comma"
-    disabled={isLoading}
-  ></textarea>
+    disabled={isLoading}></textarea>
   {#if error}
     <div class="error">{error}</div>
   {/if}
@@ -186,7 +188,7 @@
         >
       </div>
       <div class="failed-list">
-        {#each failedSubjects as subject}
+        {#each failedSubjects as subject (subject.code)}
           <div class="failed-item">
             <span class="failed-code">{subject.code}</span>
             <span class="failed-title">{subject.title}</span>
@@ -206,11 +208,7 @@
     <button onclick={onExportToGoogle} disabled={isLoading}>
       Export to Google Calendar
     </button>
-    <button
-      class="share"
-      onclick={onShare}
-      disabled={isLoading}
-    >
+    <button class="share" onclick={onShare} disabled={isLoading}>
       Share Schedule
     </button>
   </div>

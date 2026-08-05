@@ -1,13 +1,13 @@
 <script>
   import { onMount } from "svelte";
+  import { STORAGE_KEYS } from "../utils/storageKeys.js";
 
   let { path = "/", onNavigate } = $props();
 
-  const STORAGE_KEY = "navigationVisible";
   let isVisible = $state(true);
 
   onMount(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEYS.navigationVisible);
     if (stored !== null) {
       isVisible = stored === "true";
     }
@@ -18,7 +18,10 @@
 
   function toggleVisibility() {
     isVisible = !isVisible;
-    localStorage.setItem(STORAGE_KEY, isVisible ? "true" : "false");
+    localStorage.setItem(
+      STORAGE_KEYS.navigationVisible,
+      isVisible ? "true" : "false",
+    );
   }
 
   function handleNavigate(event, href) {

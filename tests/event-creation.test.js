@@ -196,7 +196,7 @@ describe("Event Creation", () => {
       const events = createCalendarEvents(classes);
 
       expect(events[0].description).toBe(
-        "PHYS-101-01\nInstructor: Dr. Einstein"
+        "PHYS-101-01\nInstructor: Dr. Einstein",
       );
     });
 
