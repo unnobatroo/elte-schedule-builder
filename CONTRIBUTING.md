@@ -10,8 +10,7 @@ to review and safer to release.
 2. For a bug, include a minimal reproduction. Prefer `DEMO-1` through `DEMO-6`
    when the problem can be reproduced without live Tanrend data.
 3. For a larger change, describe the user outcome, scope, compatibility risks,
-   and acceptance criteria. You can use
-   [docs/change-plan-template.md](docs/change-plan-template.md).
+   and acceptance criteria in the issue or pull request.
 4. Read [AGENTS.md](AGENTS.md) for the current architecture, safety boundaries,
    and verification requirements. Those rules are canonical for both human and
    automated contributors.
@@ -80,10 +79,6 @@ course rows.
 - Identify compatibility or migration concerns.
 - List the exact verification performed.
 - Add screenshots for visible UI changes.
-- Call out anything intentionally deferred or requiring a repository setting.
+- Call out anything intentionally deferred.
 - Keep commits reviewable; separate unrelated documentation, tooling, and
   behavior changes.
-
-If another contributor needs to continue the work, complete the handoff section
-in the change-plan template with the current state, decisions, verification, and
-remaining steps.

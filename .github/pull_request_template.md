@@ -29,6 +29,6 @@ Additional focused or manual verification:
 
 Add before/after screenshots for visible UI changes, or write “Not applicable.”
 
-## Handoff
+## Follow-up work
 
-List deferred work, repository settings, known limitations, or follow-up risks.
+List deferred work, known limitations, or follow-up risks.
