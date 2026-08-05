@@ -33,6 +33,12 @@ jobs:
       - name: Run tests
         run: npm run test:run
 
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+
       - name: Generate coverage report
         run: npm run test:coverage
         continue-on-error: true
