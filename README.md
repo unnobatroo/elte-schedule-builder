@@ -27,6 +27,10 @@ The application is actively maintained on a best-effort basis and is used by
 students during registration. Course data can be incomplete or stale, so always
 verify the final schedule in official ELTE systems.
 
+Use [SUPPORT.md](SUPPORT.md) for help, bug reports, and feature requests. Report
+security concerns privately through [SECURITY.md](SECURITY.md), not through a
+public issue.
+
 ## Data and privacy
 
 - No account is required.
