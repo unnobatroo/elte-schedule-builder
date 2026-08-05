@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import { STORAGE_KEYS } from "../utils/storageKeys.js";
 
   let {
     schedules = [],
@@ -10,19 +11,21 @@
     onDelete,
   } = $props();
 
-  const STORAGE_KEY = "scheduleManagerVisible";
   let isVisible = $state(true);
   let editingId = $state("");
   let editingName = $state("");
 
   onMount(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEYS.scheduleManagerVisible);
     if (stored !== null) isVisible = stored === "true";
   });
 
   function toggleVisibility() {
     isVisible = !isVisible;
-    localStorage.setItem(STORAGE_KEY, isVisible ? "true" : "false");
+    localStorage.setItem(
+      STORAGE_KEYS.scheduleManagerVisible,
+      isVisible ? "true" : "false",
+    );
   }
 
   function beginRename(schedule) {

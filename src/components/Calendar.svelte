@@ -126,11 +126,4 @@
     background-color: #ff4444 !important;
     border: 2px solid #ff0000;
   }
-
-  :global(.event-conflict-warning) {
-    color: #ffffff;
-    font-size: 0.8em;
-    font-weight: bold;
-    margin-top: 4px;
-  }
 </style>

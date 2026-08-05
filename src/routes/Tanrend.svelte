@@ -3,6 +3,7 @@
   import {
     createCalendarEvents,
     fetchSubjectData,
+    getTanrendSubjectCode,
     parseTimeString,
   } from "../utils/schedule";
   import {
@@ -11,6 +12,7 @@
     saveScheduleStore,
     updateActiveSchedule,
   } from "../utils/scheduleStorage";
+  import { STORAGE_KEYS } from "../utils/storageKeys.js";
 
   let query = $state("");
   let isLoading = $state(false);
@@ -19,8 +21,8 @@
   let successMessage = $state("");
 
   onMount(() => {
-    const savedQuery = localStorage.getItem("tanrendQuery");
-    const savedResults = localStorage.getItem("tanrendResults");
+    const savedQuery = localStorage.getItem(STORAGE_KEYS.tanrendQuery);
+    const savedResults = localStorage.getItem(STORAGE_KEYS.tanrendResults);
 
     if (savedQuery) {
       query = savedQuery;
@@ -76,21 +78,12 @@
       .filter(Boolean);
   }
 
-  function normalizeCode(code) {
-    const parts = code.split("-");
-    if (parts.length > 2) {
-      parts.pop();
-      return parts.join("-");
-    }
-    return code;
-  }
-
   async function search() {
     const codes = query
       .split(/[\s,]+/)
       .map((c) => c.trim())
       .filter(Boolean)
-      .map(normalizeCode);
+      .map(getTanrendSubjectCode);
 
     if (codes.length === 0) {
       error = "Enter at least one subject code.";
@@ -120,8 +113,11 @@
       isLoading = false;
 
       // Save query and results to localStorage
-      localStorage.setItem("tanrendQuery", query);
-      localStorage.setItem("tanrendResults", JSON.stringify(results));
+      localStorage.setItem(STORAGE_KEYS.tanrendQuery, query);
+      localStorage.setItem(
+        STORAGE_KEYS.tanrendResults,
+        JSON.stringify(results),
+      );
     }
   }
 
@@ -158,7 +154,7 @@
       .replace(/\s*L\+Pr\.\s*$/, "")
       .trim();
 
-    const apiCode = normalizeCode(row.code);
+    const apiCode = getTanrendSubjectCode(row.code);
 
     const isLecture = row.type.toLowerCase().includes("lecture");
     const isPractice = row.type.toLowerCase().includes("practice");
@@ -369,9 +365,6 @@
     min-height: 100vh;
     background: #121212;
   }
-  /* .header and h1 selectors removed as they are unused */
-  /* back link removed per request */
-
   .search {
     max-width: 1200px;
     margin: 0 auto;

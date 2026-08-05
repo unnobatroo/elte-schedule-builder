@@ -1,4 +1,6 @@
-export const SCHEDULES_STORAGE_KEY = "scheduleManager";
+import { STORAGE_KEYS } from "./storageKeys.js";
+
+export const SCHEDULES_STORAGE_KEY = STORAGE_KEYS.schedules;
 export const DEFAULT_SCHEDULE_NAME = "Default schedule";
 
 function createScheduleId() {
@@ -30,10 +32,6 @@ function normalizeSchedule(schedule, fallbackName, makeId) {
   };
 }
 
-export function createEmptySchedule(name, makeId = createScheduleId) {
-  return normalizeSchedule({}, name, makeId);
-}
-
 export function saveScheduleStore(storage, store) {
   storage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(store));
   return store;
@@ -61,8 +59,16 @@ export function loadScheduleStore(storage, makeId = createScheduleId) {
     return normalized;
   }
 
-  const legacySubjects = readJson(storage, "savedSubjects", []);
-  const legacyExemption = readJson(storage, "lectureExemption", false);
+  const legacySubjects = readJson(
+    storage,
+    STORAGE_KEYS.legacySavedSubjects,
+    [],
+  );
+  const legacyExemption = readJson(
+    storage,
+    STORAGE_KEYS.legacyLectureExemption,
+    false,
+  );
   const schedule = normalizeSchedule(
     {
       name: DEFAULT_SCHEDULE_NAME,

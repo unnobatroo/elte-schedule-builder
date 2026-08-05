@@ -32,6 +32,7 @@
     setSubjectEnabled,
     toggleScheduleEvent,
   } from "./utils/scheduleState.js";
+  import { STORAGE_KEYS } from "./utils/storageKeys.js";
 
   let events = $state([]);
   let allSubjects = $state([]);
@@ -76,23 +77,25 @@
     applyScheduleStore(storedSchedules);
 
     // Check if warning was shown before
-    const warningShown = localStorage.getItem("warningShown");
+    const warningShown = localStorage.getItem(STORAGE_KEYS.warningShown);
     if (!warningShown) {
       showWarning = true;
     }
 
     // Check if FAQ was read before
-    faqRead = localStorage.getItem("faqRead") === "true";
+    faqRead = localStorage.getItem(STORAGE_KEYS.faqRead) === "true";
 
     const mql = window.matchMedia(
       "(max-width: 768px) and (orientation: portrait)",
     );
-    const mobileWarningShown = localStorage.getItem("mobileWarningShown");
+    const mobileWarningShown = localStorage.getItem(
+      STORAGE_KEYS.mobileWarningShown,
+    );
     showMobileWarning = mql.matches && !mobileWarningShown;
 
     const handleOrientationChange = (e) => {
       showMobileWarning =
-        e.matches && !localStorage.getItem("mobileWarningShown");
+        e.matches && !localStorage.getItem(STORAGE_KEYS.mobileWarningShown);
     };
 
     const handleStoredScheduleUpdate = () => {
@@ -110,12 +113,12 @@
 
   function closeWarning() {
     showWarning = false;
-    localStorage.setItem("warningShown", "true");
+    localStorage.setItem(STORAGE_KEYS.warningShown, "true");
   }
 
   function closeMobileWarning() {
     showMobileWarning = false;
-    localStorage.setItem("mobileWarningShown", "true");
+    localStorage.setItem(STORAGE_KEYS.mobileWarningShown, "true");
   }
 
   function handleScheduleUpdate(eventData) {
@@ -227,7 +230,7 @@
     showFAQ = false;
     if (!faqRead) {
       faqRead = true;
-      localStorage.setItem("faqRead", "true");
+      localStorage.setItem(STORAGE_KEYS.faqRead, "true");
     }
   }
 
@@ -285,7 +288,7 @@
             showFAQ = true;
             if (!faqRead) {
               faqRead = true;
-              localStorage.setItem("faqRead", "true");
+              localStorage.setItem(STORAGE_KEYS.faqRead, "true");
             }
           }}
         >

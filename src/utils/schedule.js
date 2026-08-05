@@ -1,13 +1,3 @@
-export function getCurrentTerm() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const semester = month >= 6 ? 1 : 2;
-  return `${
-    semester === 1 ? `${year}-${year + 1}` : `${year - 1}-${year}`
-  }-${semester}`;
-}
-
 export async function fetchSubjectData(subjectCode) {
   const response = await fetch(
     `/api/subject/${encodeURIComponent(subjectCode)}`,
@@ -79,8 +69,12 @@ export function processSubjectCode(code) {
   return parts.join("-");
 }
 
-export function extractBaseCodesFromFull(fullCodes) {
-  return [...new Set(fullCodes.map(processSubjectCode))];
+// Tanrend codes such as DEMO-1 are already base codes. Only strip a group
+// suffix when the code contains at least three dash-separated segments.
+export function getTanrendSubjectCode(code) {
+  const parts = code.split("-");
+  if (parts.length > 2) parts.pop();
+  return parts.join("-");
 }
 
 export function createCalendarEvents(classes) {

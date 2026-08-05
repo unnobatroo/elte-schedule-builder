@@ -1,11 +1,11 @@
 <script>
   import { onMount } from "svelte";
+  import { STORAGE_KEYS } from "../utils/storageKeys.js";
 
-  const STORAGE_KEY = "legendVisible";
   let isVisible = $state(true);
 
   onMount(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEYS.legendVisible);
     if (stored !== null) {
       isVisible = stored === "true";
     }
@@ -13,7 +13,10 @@
 
   function toggleVisibility() {
     isVisible = !isVisible;
-    localStorage.setItem(STORAGE_KEY, isVisible ? "true" : "false");
+    localStorage.setItem(
+      STORAGE_KEYS.legendVisible,
+      isVisible ? "true" : "false",
+    );
   }
 
   let { lectureExemption = false, onToggleLectureExemption } = $props();
@@ -23,11 +26,7 @@
   }
 </script>
 
-<div
-  class="color-legend {lectureExemption ? 'exemption-active' : ''} {!isVisible
-    ? 'hidden'
-    : ''}"
->
+<div class:hidden={!isVisible} class="color-legend">
   <button
     class="toggle-btn"
     onclick={toggleVisibility}
