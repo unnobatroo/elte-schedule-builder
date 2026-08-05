@@ -1,4 +1,5 @@
 <script>
+  import { onDestroy } from "svelte";
   import "temporal-polyfill/global";
   import { ScheduleXCalendar } from "@schedule-x/svelte";
   import { createCalendar, createViewWeek } from "@schedule-x/calendar";
@@ -69,6 +70,7 @@
 
   const calendarApp = createCalendar({
     views: [createViewWeek()],
+    timezone: CALENDAR_TIME_ZONE,
     isDark: true,
     defaultView: "week",
     dayBoundaries: {
@@ -91,6 +93,10 @@
 
   $effect(() => {
     eventsServicePlugin.set(formatEvents(events));
+  });
+
+  onDestroy(() => {
+    calendarApp.destroy();
   });
 </script>
 
