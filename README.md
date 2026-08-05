@@ -102,6 +102,9 @@ an in-memory SQLite cache, and exercises only the local `DEMO-*` data.
 - SQLite response cache
 - Vitest tests
 
+The compatibility-sensitive design choices are recorded in
+[docs/decisions.md](docs/decisions.md).
+
 Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and
 keep behavior changes covered by tests—the app is used by real students during
 registration.

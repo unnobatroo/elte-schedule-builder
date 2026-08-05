@@ -15,6 +15,7 @@
 - `server.js` is an Express proxy. It fetches Tanrend data, throttles upstream requests, and caches responses in SQLite.
 - `tests/` uses Vitest and Testing Library. Tests must import production utilities instead of copying their implementations.
 - The in-app FAQ is embedded in `src/components/FAQ.svelte`; it does not read `README.md`.
+- `docs/decisions.md` records the rationale and consequences for compatibility-sensitive architecture choices.
 
 ## Setup and commands
 
