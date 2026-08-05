@@ -15,6 +15,7 @@ import {
   trimCache,
   validateSubjectCode,
 } from "./server-utils.js";
+import { createSecurityHeaders } from "./security-headers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -125,6 +126,7 @@ const subjectRequestQueue = new SubjectRequestQueue({
   },
 });
 
+app.use(createSecurityHeaders());
 app.use(cors());
 const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS, 10);
 if (Number.isInteger(trustProxyHops) && trustProxyHops > 0) {
