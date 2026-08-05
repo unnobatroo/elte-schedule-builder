@@ -9,22 +9,17 @@ export function getCurrentTerm() {
 }
 
 export async function fetchSubjectData(subjectCode) {
-  try {
-    const response = await fetch(
-      `/api/subject/${encodeURIComponent(subjectCode)}`
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    const rows = doc.querySelectorAll("#resulttable tbody tr");
-    return Array.from(rows).map(parseTableRow).filter(Boolean); // Remove null results
-  } catch (error) {
-    console.error(`Error fetching data for ${subjectCode}:`, error);
-    return [];
+  const response = await fetch(
+    `/api/subject/${encodeURIComponent(subjectCode)}`
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
+  const html = await response.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const rows = doc.querySelectorAll("#resulttable tbody tr");
+  return Array.from(rows).map(parseTableRow).filter(Boolean);
 }
 
 export function parseTableRow(row) {
