@@ -27,6 +27,8 @@ npm start
 npm test -- --run
 npm run test:coverage
 npm run build
+npx playwright install chromium
+npm run test:e2e
 ```
 
 The frontend runs on port 5173 and proxies `/api` to the backend on port 3000. `DEMO-1` through `DEMO-6` can exercise the app without depending on live Tanrend results.
@@ -57,6 +59,7 @@ Run focused tests while working. Before handing off any code change, run:
 ```bash
 npm test -- --run
 npm run build
+npm run test:e2e
 git diff --check
 ```
 

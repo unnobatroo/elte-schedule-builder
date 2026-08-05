@@ -39,6 +39,12 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run DEMO browser flow
+        run: npm run test:e2e
+
       - name: Generate coverage report
         run: npm run test:coverage
         continue-on-error: true
