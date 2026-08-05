@@ -107,6 +107,7 @@ The compatibility-sensitive design choices are recorded in
 
 Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and
 keep behavior changes covered by tests—the app is used by real students during
-registration.
+registration. Participation is governed by the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 Using a coding agent? Start it from the repository root so it picks up [AGENTS.md](AGENTS.md), which contains the architecture notes, safety rules, and verification commands for this project.
