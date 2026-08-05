@@ -18,6 +18,9 @@
     "lint": "eslint .",
     "check": "npm run format:check && npm run lint"
   },
+  "overrides": {
+    "brace-expansion@^1.0.0": "1.1.18"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.61.1",
