@@ -37,6 +37,16 @@ npm run build      # create a production build
 npm start          # serve the API and built frontend
 ```
 
+The browser happy-path test uses Chromium. Install it once, then run the test:
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+The E2E command builds the production frontend, starts the Express server with
+an in-memory SQLite cache, and exercises only the local `DEMO-*` data.
+
 ## How it is put together
 
 - Svelte 5 + Vite frontend

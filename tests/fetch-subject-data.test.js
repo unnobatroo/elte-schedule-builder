@@ -17,4 +17,21 @@ describe("fetchSubjectData", () => {
 
     expect(fetchMock).toHaveBeenCalledWith("/api/subject/IP%26k%3Dother");
   });
+
+  it("rejects HTTP failures so the UI can show an error", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+    }));
+
+    await expect(fetchSubjectData("IK-FAIL")).rejects.toThrow(
+      "HTTP error! status: 503"
+    );
+  });
+
+  it("rejects network failures so the UI can show an error", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+
+    await expect(fetchSubjectData("IK-OFFLINE")).rejects.toThrow("offline");
+  });
 });

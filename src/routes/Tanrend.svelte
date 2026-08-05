@@ -106,6 +106,9 @@
         const rows = await fetchSubjectData(code);
         aggregated.push(...refineRows(rows));
       }
+      if (aggregated.length === 0) {
+        error = "No results found for the provided subject code(s).";
+      }
     } catch (e) {
       console.error(e);
       error = "Failed to fetch data. Please try again.";

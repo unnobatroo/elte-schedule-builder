@@ -7,6 +7,8 @@
   import ColorLegend from "./components/ColorLegend.svelte";
   import GitHubStarLink from "./components/GitHubStarLink.svelte";
   import ScheduleManager from "./components/ScheduleManager.svelte";
+  import SubjectControls from "./components/SubjectControls.svelte";
+  import AppNotices from "./components/AppNotices.svelte";
   import {
     decodeSchedule,
     encodeSchedule,
@@ -23,11 +25,16 @@
     saveScheduleStore,
     updateActiveSchedule,
   } from "./utils/scheduleStorage.js";
+  import {
+    getEnabledEventCodes,
+    getEnabledEvents,
+    mergeScheduleEvents,
+    setSubjectEnabled,
+    toggleScheduleEvent,
+  } from "./utils/scheduleState.js";
 
   let events = $state([]);
   let allSubjects = $state([]);
-  let hoveredSubject = $state(null);
-  let hoverTimeout = $state(null);
   let showFAQ = $state(false);
   let showWarning = $state(false);
   let showExportModal = $state(false);
@@ -109,74 +116,7 @@
   }
 
   function handleScheduleUpdate(eventData) {
-
-    // Group events by subject title (removing anything in parentheses)
-    const eventsByTitle = eventData.reduce((acc, event) => {
-      // Extract code from description
-      const code = event.description.split("\n")[0].trim();
-      // Get clean title without anything in parentheses and remove trailing L/P/L+Pr
-      const cleanTitle = event.title
-        .split("(")[0]
-        .trim()
-        .replace(/\s*[LP]\.\s*$/, "") // Remove trailing L or P
-        .replace(/\s*L\+Pr\.\s*$/, "") // Remove trailing L+Pr. (with dot)
-        .trim();
-
-      if (!acc[cleanTitle]) {
-        acc[cleanTitle] = [];
-      }
-      acc[cleanTitle].push({
-        ...event,
-        code,
-      });
-      return acc;
-    }, {});
-
-    // Update allSubjects with new events
-    const updatedSubjects = [...allSubjects];
-    Object.entries(eventsByTitle).forEach(([title, events]) => {
-      const existingIndex = updatedSubjects.findIndex((s) => s.title === title);
-      if (existingIndex === -1) {
-        // Add new subject
-        updatedSubjects.push({
-          title,
-          // Join all unique codes with comma
-          code: [...new Set(events.map((e) => e.code))].join(", "),
-          events: events,
-          enabled: events.some((e) => e.enabled),
-        });
-      } else {
-        // Update existing subject, preserving enabled states
-        const existingEvents = updatedSubjects[existingIndex].events;
-        const updatedEvents = events.map((newEvent) => {
-          const existingEvent = existingEvents.find(
-            (e) =>
-              e.dayOfWeek === newEvent.dayOfWeek &&
-              e.startTime === newEvent.startTime &&
-              e.type === newEvent.type
-          );
-          return {
-            ...newEvent,
-            enabled: existingEvent ? existingEvent.enabled : newEvent.enabled,
-          };
-        });
-
-        updatedSubjects[existingIndex] = {
-          ...updatedSubjects[existingIndex],
-          events: updatedEvents,
-          // Update codes in case new ones were added
-          code: [
-            ...new Set([
-              ...updatedSubjects[existingIndex].code.split(", "),
-              ...events.map((e) => e.code),
-            ]),
-          ].join(", "),
-          enabled: updatedEvents.some((e) => e.enabled),
-        };
-      }
-    });
-
-    allSubjects = updatedSubjects;
+    allSubjects = mergeScheduleEvents(allSubjects, eventData);
     computeConflicts();
     saveAndUpdate();
     if (importedCodes.fullCodes.length > 0) {
@@ -202,7 +142,6 @@
     const activeSchedule = getActiveSchedule(store);
     allSubjects = activeSchedule.subjects;
     lectureExemption = activeSchedule.lectureExemption;
-    hoveredSubject = null;
     computeConflicts();
   }
 
@@ -234,46 +173,17 @@
   }
 
   function updateEvents() {
-    events = allSubjects
-      .filter((subject) => subject.enabled)
-      .flatMap((subject) => subject.events.filter((event) => event.enabled));
+    events = getEnabledEvents(allSubjects);
   }
 
   function toggleSubject(title, allEnabled = null) {
-    allSubjects = allSubjects.map((subject) => {
-      if (subject.title === title) {
-        const newEnabled = allEnabled ?? !subject.enabled;
-        return {
-          ...subject,
-          enabled: newEnabled,
-          events: subject.events.map((event) => ({
-            ...event,
-            enabled: newEnabled,
-          })),
-        };
-      }
-      return subject;
-    });
+    allSubjects = setSubjectEnabled(allSubjects, title, allEnabled);
     computeConflicts();
     saveAndUpdate();
   }
 
   function toggleEvent(subjectTitle, eventIndex) {
-    allSubjects = allSubjects.map((subject) => {
-      if (subject.title === subjectTitle) {
-        const updatedEvents = subject.events.map((event, idx) =>
-          idx === eventIndex ? { ...event, enabled: !event.enabled } : event
-        );
-
-        // Update subject's enabled state based on events
-        return {
-          ...subject,
-          enabled: updatedEvents.some((e) => e.enabled),
-          events: updatedEvents,
-        };
-      }
-      return subject;
-    });
+    allSubjects = toggleScheduleEvent(allSubjects, subjectTitle, eventIndex);
     computeConflicts();
     saveAndUpdate();
   }
@@ -292,29 +202,9 @@
     }
   }
 
-  function formatEventLabel(event) {
-    const type = event.extendedProps?.type || "";
-    const shortType = type.includes("lecture") ? "L" : "Pr";
-    return `${shortType} ${event.dayOfWeek} ${event.startTime}-${event.endTime}`;
-  }
-
   function handleExportToGoogle() {
     if (!events.length) return;
     showExportModal = true;
-  }
-
-  function handleMouseEnter(code) {
-    clearTimeout(hoverTimeout);
-    hoveredSubject = code;
-  }
-
-  function handleMouseLeave(code) {
-    clearTimeout(hoverTimeout);
-    hoverTimeout = setTimeout(() => {
-      if (hoveredSubject === code) {
-        hoveredSubject = null;
-      }
-    }, 300); // 300ms delay before closing
   }
 
   function computeConflicts() {
@@ -337,10 +227,7 @@
   }
 
   function getActiveCodes() {
-    return allSubjects
-      .filter((subject) => subject.enabled)
-      .flatMap((subject) => subject.events.filter((event) => event.enabled))
-      .map((event) => event.description.split("\n")[0]);
+    return getEnabledEventCodes(allSubjects);
   }
 
   async function handleShare() {
@@ -414,66 +301,12 @@
       />
     {/key}
     {#if allSubjects.length > 0}
-      <div class="subject-toggles">
-        {#each allSubjects as subject (subject.title)}
-          <div
-            class="toggle-container"
-            role="button"
-            tabindex="0"
-            aria-expanded={hoveredSubject === subject.title}
-            aria-label={`Toggle ${subject.title} events`}
-            onmouseenter={() => handleMouseEnter(subject.title)}
-            onmouseleave={() => handleMouseLeave(subject.title)}
-            onkeydown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                hoveredSubject =
-                  hoveredSubject === subject.title ? null : subject.title;
-              }
-            }}
-          >
-            <label class="toggle">
-              <input
-                type="checkbox"
-                checked={subject.enabled}
-                onchange={() => toggleSubject(subject.title)}
-              />
-              <span class="toggle-label">{subject.title}</span>
-            </label>
-            <button
-              class="delete-btn"
-              onclick={() => deleteSubject(subject.title)}
-              title="Remove subject"
-            >
-              ×
-            </button>
-            {#if hoveredSubject === subject.title}
-              <div
-                class="event-dropdown"
-                role="menu"
-                aria-label={`${subject.title} events`}
-                tabindex="0"
-                onmouseenter={() => handleMouseEnter(subject.title)}
-                onmouseleave={() => handleMouseLeave(subject.title)}
-              >
-                {#each subject.events as event, eventIndex}
-                  <label
-                    class="event-toggle {event.hasConflict ? 'conflict' : ''}"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={event.enabled}
-                      aria-checked={event.enabled}
-                      onchange={() => toggleEvent(subject.title, eventIndex)}
-                    />
-                    <span class="event-label">{formatEventLabel(event)}</span>
-                  </label>
-                {/each}
-              </div>
-            {/if}
-          </div>
-        {/each}
-      </div>
+      <SubjectControls
+        subjects={allSubjects}
+        onToggleSubject={toggleSubject}
+        onToggleEvent={toggleEvent}
+        onDeleteSubject={deleteSubject}
+      />
     {/if}
     <Calendar {events} {lectureExemption} />
     <footer class="footer">
@@ -530,78 +363,12 @@
   {events}
 />
 
-{#if showWarning}
-  <div class="warning-backdrop">
-    <div
-      class="warning-modal"
-      role="dialog"
-      tabindex="0"
-      aria-modal="true"
-      onclick={(e) => e.stopPropagation()}
-      onkeydown={(e) => {
-        if (e.key === "Escape") closeWarning();
-      }}
-    >
-      <h2>⚠️ Important Notice ⚠️</h2>
-      <div class="warning-content">
-        <ul>
-          <li>
-            <strong>Not affiliated</strong> with ELTE University.
-          </li>
-          <li>
-            Data is fetched from Tanrend. It is there, you just can't see it.
-          </li>
-          <li>
-            Developer takes <strong>no responsibility</strong> for errors or
-            inaccuracies.
-            <br />
-            <i>(I don't have control over the source data)</i>
-          </li>
-          <li>Found a bug? Please contact the developer.</li>
-        </ul>
-        <div class="acknowledge-container">
-          <button class="understand-btn" onclick={closeWarning}
-            >I Understand</button
-          >
-        </div>
-      </div>
-    </div>
-  </div>
-{/if}
-
-{#if showMobileWarning}
-  <div class="warning-backdrop">
-    <div
-      class="warning-modal mobile-warning"
-      role="dialog"
-      tabindex="0"
-      aria-modal="true"
-      onclick={(e) => e.stopPropagation()}
-      onkeydown={(e) => {
-        if (e.key === "Escape") closeMobileWarning();
-      }}
-    >
-      <h2>📱 Mobile Device Detected</h2>
-      <div class="warning-content">
-        <p>This website is designed for desktop/laptop viewing.</p>
-        <ul>
-          <li>
-            For the best experience, please use a desktop or laptop computer.
-          </li>
-          <li>
-            If you must use a mobile device, try rotating your device to
-            landscape mode.
-          </li>
-        </ul>
-        <div class="acknowledge-container">
-          <button class="understand-btn" onclick={closeMobileWarning}
-            >Continue Anyway</button
-          >
-        </div>
-      </div>
-    </div>
-  </div>
-{/if}
+<AppNotices
+  {showWarning}
+  {showMobileWarning}
+  onCloseWarning={closeWarning}
+  onCloseMobileWarning={closeMobileWarning}
+/>
 
 <style>
   :global(body) {
@@ -642,63 +409,6 @@
     color: #4caf50;
   }
 
-  .subject-toggles {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: #2d2d2d;
-    border-radius: 8px;
-  }
-
-  .toggle-container {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    position: relative;
-  }
-
-  .toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    background: #3d3d3d;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .toggle:hover {
-    background: #4d4d4d;
-  }
-
-  .toggle input {
-    margin: 0;
-  }
-
-  .toggle-label {
-    font-size: 0.9em;
-    white-space: nowrap;
-  }
-
-  .delete-btn {
-    padding: 4px 8px;
-    background: #ff4444;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-size: 1.2em;
-    line-height: 1;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .delete-btn:hover {
-    background: #ff6666;
-  }
-
   .reset-btn {
     padding: 8px 16px;
     background: #d32f2f;
@@ -722,41 +432,6 @@
     h1 {
       font-size: 1.5em;
     }
-
-    .subject-toggles {
-      padding: 10px;
-    }
-  }
-
-  .event-dropdown {
-    position: absolute;
-    top: calc(100% - 4px); /* Reduce the gap to prevent mouse leaving */
-    left: 0;
-    z-index: 10;
-    background: #3d3d3d;
-    border-radius: 4px;
-    padding: 8px;
-    margin-top: 4px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    min-width: 200px;
-  }
-
-  .event-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 8px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .event-toggle:hover {
-    background: #4d4d4d;
-  }
-
-  .event-label {
-    font-size: 0.85em;
-    white-space: nowrap;
   }
 
   .header-buttons {
@@ -871,124 +546,6 @@
     }
 
     .separator {
-      display: none;
-    }
-  }
-
-  .warning-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-  }
-
-  .warning-modal {
-    background: #2d2d2d;
-    border-radius: 8px;
-    padding: 24px;
-    max-width: 500px;
-    margin: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    animation: slideIn 0.3s ease-out;
-  }
-
-  @keyframes slideIn {
-    from {
-      transform: translateY(-20px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  .warning-modal h2 {
-    color: #ffa726;
-    margin: 0 0 16px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .warning-content {
-    color: #ffffff;
-  }
-
-  .warning-content p {
-    margin: 0 0 12px 0;
-  }
-
-  .warning-content ul {
-    margin: 0 0 20px 0;
-    padding-left: 0;
-    list-style-type: none;
-  }
-
-  .warning-content li {
-    margin-bottom: 8px;
-    line-height: 1.5;
-  }
-
-  .warning-content strong {
-    color: #ff5252;
-  }
-
-  .acknowledge-container {
-    text-align: center;
-  }
-
-  .understand-btn {
-    width: auto;
-    padding: 12px 24px;
-    background: #4caf50;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .understand-btn:hover {
-    background: #45a049;
-  }
-
-  /* Style for conflicting events in the dropdown */
-  .event-toggle.conflict .event-label {
-    color: #ff4444; /* Red color for conflicts */
-    font-weight: bold;
-  }
-
-  /* Optionally, add a tooltip or an icon to indicate conflict */
-  .event-toggle.conflict .event-label::after {
-    content: " ⚠️";
-    margin-left: 4px;
-  }
-
-  /* Ensure non-conflicting events have normal styling */
-  .event-toggle:not(.conflict) .event-label {
-    color: #ffffff;
-  }
-
-  .mobile-warning {
-    max-width: 90%;
-    width: 400px;
-  }
-
-  .mobile-warning h2 {
-    color: #64b5f6;
-  }
-
-  @media (orientation: landscape) {
-    .mobile-warning {
       display: none;
     }
   }

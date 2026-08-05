@@ -18,7 +18,6 @@ import {
 import { createSecurityHeaders } from "./security-headers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const app = express();
 const port = Number(process.env.PORT) || 3000;
 
 // Cache configuration
@@ -40,17 +39,19 @@ const UPSTREAM_TIMEOUT = readPositiveInteger(
 );
 const MAX_UPSTREAM_RESPONSE_SIZE = 2 * 1024 * 1024;
 
-// Database setup
-let db;
-async function setupDatabase() {
-  await mkdir(path.join(__dirname, "data"), { recursive: true });
-  db = await open({
-    filename: path.join(__dirname, "data", "cache.db"),
+export async function setupDatabase(
+  filename = path.join(__dirname, "data", "cache.db")
+) {
+  if (filename !== ":memory:") {
+    await mkdir(path.dirname(filename), { recursive: true });
+  }
+  const database = await open({
+    filename,
     driver: sqlite3.Database,
   });
 
   // Create cache table if it doesn't exist
-  await db.exec(`
+  await database.exec(`
     CREATE TABLE IF NOT EXISTS cache (
       key TEXT PRIMARY KEY,
       data TEXT NOT NULL,
@@ -59,44 +60,45 @@ async function setupDatabase() {
   `);
 
   // Create index on timestamp for faster cleanup queries
-  await db.exec(`
+  await database.exec(`
     CREATE INDEX IF NOT EXISTS idx_timestamp ON cache(timestamp)
   `);
+  return database;
 }
 
-async function getCachedData(key) {
-  const entry = await db.get(
+async function getCachedData(database, key, cacheDuration, now) {
+  const entry = await database.get(
     "SELECT * FROM cache WHERE key = ? AND timestamp > ?",
     key,
-    Date.now() - CACHE_DURATION
+    now() - cacheDuration
   );
   return entry
     ? { data: JSON.parse(entry.data), timestamp: entry.timestamp }
     : null;
 }
 
-async function setCachedData(key, data) {
-  await db.run(
+async function setCachedData(database, key, data, maxEntries, now) {
+  await database.run(
     "INSERT OR REPLACE INTO cache (key, data, timestamp) VALUES (?, ?, ?)",
     key,
     JSON.stringify(data),
-    Date.now()
+    now()
   );
-  await trimCache(db, MAX_CACHE_ENTRIES);
+  await trimCache(database, maxEntries);
 }
 
-async function cleanupCache() {
-  const expiredTime = Date.now() - CACHE_DURATION;
-  const result = await db.run(
+async function cleanupCache(database, cacheDuration, now, logger) {
+  const expiredTime = now() - cacheDuration;
+  const result = await database.run(
     "DELETE FROM cache WHERE timestamp < ?",
     expiredTime
   );
   if (result.changes > 0) {
-    console.log(`Cleaned up ${result.changes} expired cache entries`);
+    logger.log(`Cleaned up ${result.changes} expired cache entries`);
   }
 }
 
-async function fetchSubjectData(subjectCode, term) {
+export async function fetchSubjectData(subjectCode, term) {
   const targetUrl = buildTanrendUrl(subjectCode, term);
 
   const response = await axios.get(targetUrl, {
@@ -114,34 +116,6 @@ async function fetchSubjectData(subjectCode, term) {
 
   return response.data;
 }
-
-const subjectRequestQueue = new SubjectRequestQueue({
-  delay: REQUEST_DELAY,
-  maxQueued: MAX_QUEUE_LENGTH,
-  handler: async (subjectCode, term) => {
-    console.log(`Processing queued request for ${subjectCode}`);
-    const data = await fetchSubjectData(subjectCode, term);
-    await setCachedData(`${term}-${subjectCode}`, data);
-    return data;
-  },
-});
-
-app.use(createSecurityHeaders());
-app.use(cors());
-const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS, 10);
-if (Number.isInteger(trustProxyHops) && trustProxyHops > 0) {
-  app.set("trust proxy", trustProxyHops);
-}
-
-app.use(
-  "/api/subject",
-  createRateLimiter({
-    windowMs: 60 * 1000,
-    limit: readPositiveInteger(process.env.SUBJECT_RATE_LIMIT, 60),
-  })
-);
-// Serve the built files from the dist directory
-app.use(express.static(path.join(__dirname, "dist")));
 
 function getCurrentTerm() {
   const date = new Date();
@@ -453,62 +427,144 @@ function generateDemoData(subjectCode) {
   return demoData[subjectCode] || null;
 }
 
-app.get("/api/subject/:code", validateSubjectCode, async (req, res) => {
-  try {
-    const term = getCurrentTerm();
-    const subjectCode = req.params.code;
-    const cacheKey = `${term}-${subjectCode}`;
+export function createApp({
+  database,
+  fetchSubject = fetchSubjectData,
+  termProvider = getCurrentTerm,
+  cacheDuration = CACHE_DURATION,
+  maxCacheEntries = MAX_CACHE_ENTRIES,
+  requestDelay = REQUEST_DELAY,
+  maxQueueLength = MAX_QUEUE_LENGTH,
+  subjectRateLimit = readPositiveInteger(
+    process.env.SUBJECT_RATE_LIMIT,
+    60
+  ),
+  now = Date.now,
+  staticDirectory = path.join(__dirname, "dist"),
+  trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS, 10),
+  logger = console,
+} = {}) {
+  if (!database) throw new TypeError("createApp requires a database");
 
-    // Check if this is a demo subject
-    const demoData = generateDemoData(subjectCode);
-    if (demoData) {
-      console.log(`Returning demo data for ${subjectCode}`);
-      return res.send(demoData);
-    }
+  const app = express();
+  const subjectRequestQueue = new SubjectRequestQueue({
+    delay: requestDelay,
+    maxQueued: maxQueueLength,
+    handler: async (subjectCode, term) => {
+      logger.log(`Processing queued request for ${subjectCode}`);
+      const data = await fetchSubject(subjectCode, term);
+      await setCachedData(
+        database,
+        `${term}-${subjectCode}`,
+        data,
+        maxCacheEntries,
+        now
+      );
+      return data;
+    },
+  });
 
-    // Check cache first
-    const cachedData = await getCachedData(cacheKey);
-    if (cachedData) {
-      console.log(`Cache hit for ${subjectCode}`);
-      return res.send(cachedData.data);
-    }
-
-    // If not in cache, queue the request
-    console.log(`Cache miss for ${subjectCode}, adding to queue`);
-    const data = await subjectRequestQueue.enqueue(subjectCode, term);
-    res.send(data);
-  } catch (error) {
-    console.error(`Error fetching data for subject ${req.params.code}:`, error);
-    if (error instanceof QueueCapacityError) {
-      res.set("Retry-After", "1");
-      return res.status(error.status).json({ error: error.message });
-    }
-    res.status(error.response?.status || 500).json({
-      error: "Failed to fetch subject data",
-    });
+  app.use(createSecurityHeaders());
+  app.use(cors());
+  if (Number.isInteger(trustProxyHops) && trustProxyHops > 0) {
+    app.set("trust proxy", trustProxyHops);
   }
-});
+  app.use(
+    "/api/subject",
+    createRateLimiter({
+      windowMs: 60 * 1000,
+      limit: subjectRateLimit,
+      now,
+    })
+  );
+  app.use(express.static(staticDirectory));
 
-await setupDatabase();
+  app.get("/api/subject/:code", validateSubjectCode, async (req, res) => {
+    try {
+      const term = termProvider();
+      const subjectCode = req.params.code;
+      const cacheKey = `${term}-${subjectCode}`;
+      const demoData = generateDemoData(subjectCode);
 
-const cacheCleanupInterval = setInterval(cleanupCache, 60 * 60 * 1000);
+      if (demoData) {
+        logger.log(`Returning demo data for ${subjectCode}`);
+        return res.send(demoData);
+      }
 
-// Handle SPA routing
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
+      const cachedData = await getCachedData(
+        database,
+        cacheKey,
+        cacheDuration,
+        now
+      );
+      if (cachedData) {
+        logger.log(`Cache hit for ${subjectCode}`);
+        return res.send(cachedData.data);
+      }
 
-const server = app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+      logger.log(`Cache miss for ${subjectCode}, adding to queue`);
+      const data = await subjectRequestQueue.enqueue(subjectCode, term);
+      return res.send(data);
+    } catch (error) {
+      logger.error(`Error fetching data for subject ${req.params.code}:`, error);
+      if (error instanceof QueueCapacityError) {
+        res.set("Retry-After", "1");
+        return res.status(error.status).json({ error: error.message });
+      }
+      return res.status(error.response?.status || 500).json({
+        error: "Failed to fetch subject data",
+      });
+    }
+  });
+
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(staticDirectory, "index.html"));
+  });
+
+  return {
+    app,
+    cleanupCache: () => cleanupCache(database, cacheDuration, now, logger),
+  };
+}
+
+export async function startServer({
+  listenPort = port,
+  databaseFilename = process.env.CACHE_DB_PATH ||
+    path.join(__dirname, "data", "cache.db"),
+  logger = console,
+} = {}) {
+  const database = await setupDatabase(databaseFilename);
+  const { app, cleanupCache: cleanup } = createApp({ database, logger });
+  const cacheCleanupInterval = setInterval(cleanup, 60 * 60 * 1000);
+  const server = app.listen(listenPort, () => {
+    logger.log(`Server running at http://localhost:${listenPort}`);
+  });
+
+  return {
+    app,
+    database,
+    server,
+    async close() {
+      clearInterval(cacheCleanupInterval);
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+      });
+      await database.close();
+    },
+  };
+}
+
+let defaultRuntime;
+const isMainModule = process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMainModule) {
+  defaultRuntime = await startServer();
+}
 
 export async function closeServer() {
-  clearInterval(cacheCleanupInterval);
-  await new Promise((resolve, reject) => {
-    server.close((error) => {
-      if (error) reject(error);
-      else resolve();
-    });
-  });
-  await db.close();
+  await defaultRuntime?.close();
+  defaultRuntime = undefined;
 }
