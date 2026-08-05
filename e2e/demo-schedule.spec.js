@@ -23,6 +23,12 @@ test("adds a DEMO class and keeps it after reload", async ({ page }) => {
     name: "Introduction to Web Development",
   });
   await expect(subject).toBeChecked();
+  await expect(
+    page
+      .locator(".sx__event")
+      .filter({ hasText: "Introduction to Web Development" })
+      .first(),
+  ).toBeVisible();
 
   await page.reload();
 

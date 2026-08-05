@@ -55,3 +55,40 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 30
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build production image
+        run: docker build --tag elte-schedule-builder:ci .
+
+      - name: Start production image
+        run: |
+          docker run --detach \
+            --name elte-schedule-builder-ci \
+            --publish 127.0.0.1:3000:3000 \
+            --env CACHE_DB_PATH=:memory: \
+            --env NODE_ENV=test \
+            elte-schedule-builder:ci
+
+      - name: Verify DEMO API from the container
+        shell: bash
+        run: |
+          for attempt in {1..30}; do
+            if response="$(curl --fail --silent http://127.0.0.1:3000/api/subject/DEMO-1)" \
+              && grep --quiet "Introduction to Web Development" <<<"$response"; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          docker logs elte-schedule-builder-ci
+          exit 1
+
+      - name: Stop production image
+        if: always()
+        run: docker rm --force elte-schedule-builder-ci || true

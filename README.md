@@ -73,6 +73,10 @@ Want Docker instead?
 docker compose -f docker-compose.dev.yml up --build
 ```
 
+Production images and the Dokploy release procedure are documented in
+[docs/deployment.md](docs/deployment.md). Published changes are listed in the
+[changelog](CHANGELOG.md).
+
 ## Useful commands
 
 ```bash

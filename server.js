@@ -517,7 +517,7 @@ export function createApp({
     }
   });
 
-  app.get("*", (_req, res) => {
+  app.get("/{*path}", (_req, res) => {
     res.sendFile(path.join(staticDirectory, "index.html"));
   });
 
