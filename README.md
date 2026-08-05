@@ -98,6 +98,8 @@ an in-memory SQLite cache, and exercises only the local `DEMO-*` data.
 - SQLite response cache
 - Vitest tests
 
-Contributions are welcome. Please keep behavior changes covered by tests—the app is used by real students during registration.
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and
+keep behavior changes covered by tests—the app is used by real students during
+registration.
 
 Using a coding agent? Start it from the repository root so it picks up [AGENTS.md](AGENTS.md), which contains the architecture notes, safety rules, and verification commands for this project.
