@@ -77,7 +77,7 @@
           onmouseenter={() => showEvents(subject.title)}
           onmouseleave={() => hideEvents(subject.title)}
         >
-          {#each subject.events as event, eventIndex}
+          {#each subject.events as event, eventIndex (event)}
             <label class="event-toggle" class:conflict={event.hasConflict}>
               <input
                 type="checkbox"

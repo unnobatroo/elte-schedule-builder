@@ -19,7 +19,8 @@ function readJson(storage, key, fallback) {
 
 function normalizeSchedule(schedule, fallbackName, makeId) {
   return {
-    id: typeof schedule?.id === "string" && schedule.id ? schedule.id : makeId(),
+    id:
+      typeof schedule?.id === "string" && schedule.id ? schedule.id : makeId(),
     name:
       typeof schedule?.name === "string" && schedule.name.trim()
         ? schedule.name.trim()
@@ -40,12 +41,16 @@ export function saveScheduleStore(storage, store) {
 
 export function loadScheduleStore(storage, makeId = createScheduleId) {
   const stored = readJson(storage, SCHEDULES_STORAGE_KEY, null);
-  if (stored && Array.isArray(stored.schedules) && stored.schedules.length > 0) {
+  if (
+    stored &&
+    Array.isArray(stored.schedules) &&
+    stored.schedules.length > 0
+  ) {
     const schedules = stored.schedules.map((schedule, index) =>
-      normalizeSchedule(schedule, `Schedule ${index + 1}`, makeId)
+      normalizeSchedule(schedule, `Schedule ${index + 1}`, makeId),
     );
     const activeScheduleId = schedules.some(
-      (schedule) => schedule.id === stored.activeScheduleId
+      (schedule) => schedule.id === stored.activeScheduleId,
     )
       ? stored.activeScheduleId
       : schedules[0].id;
@@ -65,7 +70,7 @@ export function loadScheduleStore(storage, makeId = createScheduleId) {
       lectureExemption: legacyExemption === true,
     },
     DEFAULT_SCHEDULE_NAME,
-    makeId
+    makeId,
   );
   return saveScheduleStore(storage, {
     version: 1,
@@ -77,7 +82,7 @@ export function loadScheduleStore(storage, makeId = createScheduleId) {
 export function getActiveSchedule(store) {
   return (
     store.schedules.find(
-      (schedule) => schedule.id === store.activeScheduleId
+      (schedule) => schedule.id === store.activeScheduleId,
     ) ?? store.schedules[0]
   );
 }
@@ -88,7 +93,7 @@ export function updateActiveSchedule(store, updates) {
     schedules: store.schedules.map((schedule) =>
       schedule.id === store.activeScheduleId
         ? { ...schedule, ...updates, id: schedule.id }
-        : schedule
+        : schedule,
     ),
   };
 }
@@ -96,12 +101,12 @@ export function updateActiveSchedule(store, updates) {
 export function addSchedule(
   store,
   { name, subjects = [], lectureExemption = false } = {},
-  makeId = createScheduleId
+  makeId = createScheduleId,
 ) {
   const schedule = normalizeSchedule(
     { name, subjects, lectureExemption },
     getUniqueScheduleName(store, "New schedule"),
-    makeId
+    makeId,
   );
   return {
     ...store,
@@ -116,7 +121,9 @@ export function renameSchedule(store, scheduleId, name) {
   return {
     ...store,
     schedules: store.schedules.map((schedule) =>
-      schedule.id === scheduleId ? { ...schedule, name: trimmedName } : schedule
+      schedule.id === scheduleId
+        ? { ...schedule, name: trimmedName }
+        : schedule,
     ),
   };
 }
@@ -124,12 +131,12 @@ export function renameSchedule(store, scheduleId, name) {
 export function removeSchedule(store, scheduleId) {
   if (store.schedules.length === 1) return store;
   const removedIndex = store.schedules.findIndex(
-    (schedule) => schedule.id === scheduleId
+    (schedule) => schedule.id === scheduleId,
   );
   if (removedIndex === -1) return store;
 
   const schedules = store.schedules.filter(
-    (schedule) => schedule.id !== scheduleId
+    (schedule) => schedule.id !== scheduleId,
   );
   const activeScheduleId =
     store.activeScheduleId === scheduleId
@@ -147,7 +154,9 @@ export function activateSchedule(store, scheduleId) {
 
 export function getUniqueScheduleName(store, preferredName) {
   const baseName = preferredName.trim() || "Schedule";
-  const existingNames = new Set(store.schedules.map((schedule) => schedule.name));
+  const existingNames = new Set(
+    store.schedules.map((schedule) => schedule.name),
+  );
   if (!existingNames.has(baseName)) return baseName;
   let suffix = 2;
   while (existingNames.has(`${baseName} ${suffix}`)) suffix += 1;

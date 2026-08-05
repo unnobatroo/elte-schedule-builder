@@ -16,7 +16,7 @@ async function startApp(options = {}) {
   });
   server = await new Promise((resolve) => {
     const listeningServer = app.listen(0, "127.0.0.1", () =>
-      resolve(listeningServer)
+      resolve(listeningServer),
     );
   });
   const { port } = server.address();
@@ -35,7 +35,7 @@ beforeEach(async () => {
 afterEach(async () => {
   if (server) {
     await new Promise((resolve, reject) => {
-      server.close((error) => error ? reject(error) : resolve());
+      server.close((error) => (error ? reject(error) : resolve()));
     });
     server = undefined;
   }
@@ -68,7 +68,8 @@ describe("subject API integration", () => {
   });
 
   it("caches an upstream response and reuses it", async () => {
-    const upstreamHtml = '<table id="resulttable"><tbody><tr><td>cached</td></tr></tbody></table>';
+    const upstreamHtml =
+      '<table id="resulttable"><tbody><tr><td>cached</td></tr></tbody></table>';
     const fetchSubject = vi.fn().mockResolvedValue(upstreamHtml);
     const { get } = await startApp({ fetchSubject });
 
@@ -79,15 +80,19 @@ describe("subject API integration", () => {
     expect(await second.text()).toBe(upstreamHtml);
     expect(fetchSubject).toHaveBeenCalledOnce();
     expect(fetchSubject).toHaveBeenCalledWith("IK-TEST", "2026-2027-1");
-    await expect(database.get("SELECT COUNT(*) AS count FROM cache")).resolves
-      .toEqual({ count: 1 });
+    await expect(
+      database.get("SELECT COUNT(*) AS count FROM cache"),
+    ).resolves.toEqual({ count: 1 });
   });
 
   it("coalesces concurrent cache misses for the same subject", async () => {
     let release;
-    const fetchSubject = vi.fn(() => new Promise((resolve) => {
-      release = resolve;
-    }));
+    const fetchSubject = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
     const { get } = await startApp({ fetchSubject });
 
     const first = get("/api/subject/IK-SAME");
@@ -123,7 +128,7 @@ describe("subject API integration", () => {
       "INSERT INTO cache VALUES (?, ?, ?)",
       "current",
       '"current"',
-      currentTime
+      currentTime,
     );
     const { cleanupCache } = await startApp({
       cacheDuration: 1_000,
@@ -132,7 +137,8 @@ describe("subject API integration", () => {
 
     await cleanupCache();
 
-    await expect(database.all("SELECT key FROM cache ORDER BY key")).resolves
-      .toEqual([{ key: "current" }]);
+    await expect(
+      database.all("SELECT key FROM cache ORDER BY key"),
+    ).resolves.toEqual([{ key: "current" }]);
   });
 });

@@ -12,9 +12,11 @@ function getEventCode(event) {
 }
 
 function matchesExistingEvent(existingEvent, newEvent) {
-  return existingEvent.dayOfWeek === newEvent.dayOfWeek &&
+  return (
+    existingEvent.dayOfWeek === newEvent.dayOfWeek &&
     existingEvent.startTime === newEvent.startTime &&
-    existingEvent.type === newEvent.type;
+    existingEvent.type === newEvent.type
+  );
 }
 
 export function mergeScheduleEvents(subjects, eventData) {
@@ -30,7 +32,7 @@ export function mergeScheduleEvents(subjects, eventData) {
   const updatedSubjects = [...subjects];
   for (const [title, events] of eventsByTitle) {
     const existingIndex = updatedSubjects.findIndex(
-      (subject) => subject.title === title
+      (subject) => subject.title === title,
     );
 
     if (existingIndex === -1) {
@@ -46,7 +48,7 @@ export function mergeScheduleEvents(subjects, eventData) {
     const existingSubject = updatedSubjects[existingIndex];
     const updatedEvents = events.map((newEvent) => {
       const existingEvent = existingSubject.events.find((event) =>
-        matchesExistingEvent(event, newEvent)
+        matchesExistingEvent(event, newEvent),
       );
       return {
         ...newEvent,
@@ -95,7 +97,7 @@ export function toggleScheduleEvent(subjects, subjectTitle, eventIndex) {
   return subjects.map((subject) => {
     if (subject.title !== subjectTitle) return subject;
     const events = subject.events.map((event, index) =>
-      index === eventIndex ? { ...event, enabled: !event.enabled } : event
+      index === eventIndex ? { ...event, enabled: !event.enabled } : event,
     );
     return {
       ...subject,

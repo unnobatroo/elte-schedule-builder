@@ -61,7 +61,7 @@ describe("Subject Code Processing", () => {
 
     it("should parse mixed separators", () => {
       const result = parseSubjectCodes(
-        "IP-18fWPEG, IP-18fKVFPG\nMATH-201 CS-101"
+        "IP-18fWPEG, IP-18fKVFPG\nMATH-201 CS-101",
       );
       expect(result).toEqual([
         "IP-18fWPEG",

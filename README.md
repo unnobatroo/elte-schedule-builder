@@ -32,9 +32,12 @@ docker compose -f docker-compose.dev.yml up --build
 ## Useful commands
 
 ```bash
-npm test -- --run  # run the test suite once
-npm run build      # create a production build
-npm start          # serve the API and built frontend
+npm run check          # verify formatting and lint rules
+npm test -- --run      # run the test suite once
+npm run test:coverage  # run tests and enforce coverage thresholds
+npm run test:e2e       # run the browser happy path
+npm run build          # create a production build
+npm start              # serve the API and built frontend
 ```
 
 The browser happy-path test uses Chromium. Install it once, then run the test:

@@ -24,6 +24,7 @@ Use Node.js 20.17 or newer and npm. Do not add another lockfile.
 npm ci
 npm run dev
 npm start
+npm run check
 npm test -- --run
 npm run test:coverage
 npm run build
@@ -57,6 +58,7 @@ The frontend runs on port 5173 and proxies `/api` to the backend on port 3000. `
 Run focused tests while working. Before handing off any code change, run:
 
 ```bash
+npm run check
 npm test -- --run
 npm run build
 npm run test:e2e

@@ -57,8 +57,11 @@
     // Shared schedules always get their own profile, preserving local schedules.
     if (path.startsWith("/import/")) {
       const base64String = path.split("/import/")[1];
-      const { baseCodes, fullCodes, lectureExemption: importedExemption } =
-        decodeSchedule(base64String);
+      const {
+        baseCodes,
+        fullCodes,
+        lectureExemption: importedExemption,
+      } = decodeSchedule(base64String);
       if (fullCodes.length > 0) {
         storedSchedules = addSchedule(storedSchedules, {
           name: getUniqueScheduleName(storedSchedules, "Imported schedule"),
@@ -82,7 +85,7 @@
     faqRead = localStorage.getItem("faqRead") === "true";
 
     const mql = window.matchMedia(
-      "(max-width: 768px) and (orientation: portrait)"
+      "(max-width: 768px) and (orientation: portrait)",
     );
     const mobileWarningShown = localStorage.getItem("mobileWarningShown");
     showMobileWarning = mql.matches && !mobileWarningShown;
@@ -151,7 +154,9 @@
   }
 
   function createSchedule() {
-    persistAndApply(addSchedule(scheduleStore ?? loadScheduleStore(localStorage)));
+    persistAndApply(
+      addSchedule(scheduleStore ?? loadScheduleStore(localStorage)),
+    );
   }
 
   function switchSchedule(scheduleId) {
@@ -296,7 +301,8 @@
         onScheduleUpdate={handleScheduleUpdate}
         onExportToGoogle={handleExportToGoogle}
         onShare={handleShare}
-        onImportComplete={() => (importedCodes = { baseCodes: "", fullCodes: [] })}
+        onImportComplete={() =>
+          (importedCodes = { baseCodes: "", fullCodes: [] })}
         {importedCodes}
       />
     {/key}
@@ -376,8 +382,9 @@
     padding: 0;
     background: #121212;
     color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
+      Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   }
 
   main {

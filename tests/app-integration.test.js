@@ -31,11 +31,14 @@ describe("App integration", () => {
     localStorage.setItem("mobileWarningShown", "true");
     fetchSubjectData.mockReset();
     fetchSubjectData.mockResolvedValue([importedClass]);
-    vi.stubGlobal("matchMedia", vi.fn(() => ({
-      matches: false,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    })));
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
   });
 
   afterEach(() => {
@@ -46,7 +49,9 @@ describe("App integration", () => {
   it("imports into a new active schedule while preserving local schedules", async () => {
     let store = loadScheduleStore(localStorage, () => "local-schedule");
     store = updateActiveSchedule(store, {
-      subjects: [{ title: "Local subject", code: "LOCAL-1", enabled: false, events: [] }],
+      subjects: [
+        { title: "Local subject", code: "LOCAL-1", enabled: false, events: [] },
+      ],
     });
     saveScheduleStore(localStorage, store);
     const encoded = encodeSchedule([importedClass.code], true);

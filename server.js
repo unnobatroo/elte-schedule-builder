@@ -24,23 +24,20 @@ const port = Number(process.env.PORT) || 3000;
 const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
 const MAX_CACHE_ENTRIES = readPositiveInteger(
   process.env.MAX_CACHE_ENTRIES,
-  1000
+  1000,
 );
 
 // Queue configuration
 const REQUEST_DELAY = 500; // 500ms between requests
-const MAX_QUEUE_LENGTH = readPositiveInteger(
-  process.env.MAX_QUEUE_LENGTH,
-  100
-);
+const MAX_QUEUE_LENGTH = readPositiveInteger(process.env.MAX_QUEUE_LENGTH, 100);
 const UPSTREAM_TIMEOUT = readPositiveInteger(
   process.env.UPSTREAM_TIMEOUT_MS,
-  10000
+  10000,
 );
 const MAX_UPSTREAM_RESPONSE_SIZE = 2 * 1024 * 1024;
 
 export async function setupDatabase(
-  filename = path.join(__dirname, "data", "cache.db")
+  filename = path.join(__dirname, "data", "cache.db"),
 ) {
   if (filename !== ":memory:") {
     await mkdir(path.dirname(filename), { recursive: true });
@@ -70,7 +67,7 @@ async function getCachedData(database, key, cacheDuration, now) {
   const entry = await database.get(
     "SELECT * FROM cache WHERE key = ? AND timestamp > ?",
     key,
-    now() - cacheDuration
+    now() - cacheDuration,
   );
   return entry
     ? { data: JSON.parse(entry.data), timestamp: entry.timestamp }
@@ -82,7 +79,7 @@ async function setCachedData(database, key, data, maxEntries, now) {
     "INSERT OR REPLACE INTO cache (key, data, timestamp) VALUES (?, ?, ?)",
     key,
     JSON.stringify(data),
-    now()
+    now(),
   );
   await trimCache(database, maxEntries);
 }
@@ -91,7 +88,7 @@ async function cleanupCache(database, cacheDuration, now, logger) {
   const expiredTime = now() - cacheDuration;
   const result = await database.run(
     "DELETE FROM cache WHERE timestamp < ?",
-    expiredTime
+    expiredTime,
   );
   if (result.changes > 0) {
     logger.log(`Cleaned up ${result.changes} expired cache entries`);
@@ -435,10 +432,7 @@ export function createApp({
   maxCacheEntries = MAX_CACHE_ENTRIES,
   requestDelay = REQUEST_DELAY,
   maxQueueLength = MAX_QUEUE_LENGTH,
-  subjectRateLimit = readPositiveInteger(
-    process.env.SUBJECT_RATE_LIMIT,
-    60
-  ),
+  subjectRateLimit = readPositiveInteger(process.env.SUBJECT_RATE_LIMIT, 60),
   now = Date.now,
   staticDirectory = path.join(__dirname, "dist"),
   trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS, 10),
@@ -458,7 +452,7 @@ export function createApp({
         `${term}-${subjectCode}`,
         data,
         maxCacheEntries,
-        now
+        now,
       );
       return data;
     },
@@ -475,7 +469,7 @@ export function createApp({
       windowMs: 60 * 1000,
       limit: subjectRateLimit,
       now,
-    })
+    }),
   );
   app.use(express.static(staticDirectory));
 
@@ -495,7 +489,7 @@ export function createApp({
         database,
         cacheKey,
         cacheDuration,
-        now
+        now,
       );
       if (cachedData) {
         logger.log(`Cache hit for ${subjectCode}`);
@@ -506,7 +500,10 @@ export function createApp({
       const data = await subjectRequestQueue.enqueue(subjectCode, term);
       return res.send(data);
     } catch (error) {
-      logger.error(`Error fetching data for subject ${req.params.code}:`, error);
+      logger.error(
+        `Error fetching data for subject ${req.params.code}:`,
+        error,
+      );
       if (error instanceof QueueCapacityError) {
         res.set("Retry-After", "1");
         return res.status(error.status).json({ error: error.message });
@@ -558,7 +555,8 @@ export async function startServer({
 }
 
 let defaultRuntime;
-const isMainModule = process.argv[1] &&
+const isMainModule =
+  process.argv[1] &&
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMainModule) {
   defaultRuntime = await startServer();

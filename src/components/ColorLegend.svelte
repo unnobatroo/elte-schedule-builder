@@ -199,5 +199,4 @@
   .color-box.conflict {
     background-color: #ff4444;
   }
-
 </style>

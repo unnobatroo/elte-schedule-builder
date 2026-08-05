@@ -2,18 +2,22 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import SubjectControls from "../src/components/SubjectControls.svelte";
 
-const subjects = [{
-  title: "Algorithms",
-  enabled: true,
-  events: [{
-    dayOfWeek: "Monday",
-    startTime: "10:00",
-    endTime: "11:30",
+const subjects = [
+  {
+    title: "Algorithms",
     enabled: true,
-    hasConflict: true,
-    extendedProps: { type: "practice" },
-  }],
-}];
+    events: [
+      {
+        dayOfWeek: "Monday",
+        startTime: "10:00",
+        endTime: "11:30",
+        enabled: true,
+        hasConflict: true,
+        extendedProps: { type: "practice" },
+      },
+    ],
+  },
+];
 
 describe("SubjectControls", () => {
   it("forwards subject and delete actions", async () => {
@@ -33,7 +37,7 @@ describe("SubjectControls", () => {
     render(SubjectControls, { subjects, onToggleEvent });
 
     await fireEvent.mouseEnter(
-      screen.getByRole("button", { name: "Toggle Algorithms events" })
+      screen.getByRole("button", { name: "Toggle Algorithms events" }),
     );
     const menu = screen.getByRole("menu", { name: "Algorithms events" });
     const checkbox = menu.querySelector('input[type="checkbox"]');

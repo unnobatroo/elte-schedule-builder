@@ -3,7 +3,7 @@
 
   const event = $derived(calendarEvent.originalEvent ?? {});
   const groupNumber = $derived(
-    event.description?.split("-")[2]?.split("\n")[0] || ""
+    event.description?.split("-")[2]?.split("\n")[0] || "",
   );
 </script>
 

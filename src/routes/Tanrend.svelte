@@ -114,7 +114,8 @@
       error = "Failed to fetch data. Please try again.";
     } finally {
       results = sortRows(aggregated).map(
-        ({ dayIndex, startMinutes, ...display }) => display
+        ({ dayIndex: _dayIndex, startMinutes: _startMinutes, ...display }) =>
+          display,
       );
       isLoading = false;
 
@@ -132,9 +133,11 @@
 
   function eventMatchesRow(event, row) {
     const [dayOfWeek, timeRange] = row.when.split(" ");
-    return event.dayOfWeek === dayOfWeek &&
+    return (
+      event.dayOfWeek === dayOfWeek &&
       event.startTime === timeRange.split("-")[0] &&
-      (event.code ?? event.description.split("\n")[0]) === row.code;
+      (event.code ?? event.description.split("\n")[0]) === row.code
+    );
   }
 
   function createSelectableEvents(classes, row) {
@@ -161,13 +164,15 @@
     const isPractice = row.type.toLowerCase().includes("practice");
 
     const scheduleStore = loadScheduleStore(localStorage);
-    const allSubjects = structuredClone(getActiveSchedule(scheduleStore).subjects);
+    const allSubjects = structuredClone(
+      getActiveSchedule(scheduleStore).subjects,
+    );
 
     const existingSubject = allSubjects.find((s) => s.title === cleanTitle);
 
     if (existingSubject) {
       const eventExists = existingSubject.events.some(
-        (event) => event.description.split("\n")[0] === row.code
+        (event) => event.description.split("\n")[0] === row.code,
       );
 
       if (eventExists) {
@@ -235,7 +240,7 @@
           ].join(", ");
 
           existingSubject.enabled = existingSubject.events.some(
-            (e) => e.enabled
+            (e) => e.enabled,
           );
         } catch (err) {
           console.error("Error fetching subject data:", err);
@@ -273,7 +278,7 @@
 
     saveScheduleStore(
       localStorage,
-      updateActiveSchedule(scheduleStore, { subjects: allSubjects })
+      updateActiveSchedule(scheduleStore, { subjects: allSubjects }),
     );
 
     window.dispatchEvent(new CustomEvent("scheduleUpdated"));
@@ -328,7 +333,7 @@
           </tr>
         </thead>
         <tbody>
-          {#each results as r}
+          {#each results as r (r)}
             <tr>
               <td class="time">
                 <div class="when">{r.when}</div>

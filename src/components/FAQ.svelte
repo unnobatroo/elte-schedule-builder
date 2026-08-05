@@ -73,8 +73,15 @@ Use the \`My schedules\` panel at the bottom of the Schedule Builder to create, 
     onkeydown={(event) => event.key === "Escape" && onClose()}
   >
     <div class="modal-content" role="dialog" aria-modal="true" tabindex="-1">
-      <button type="button" class="close-btn" aria-label="Close guide" onclick={onClose}>×</button>
+      <button
+        type="button"
+        class="close-btn"
+        aria-label="Close guide"
+        onclick={onClose}>×</button
+      >
       <div class="markdown-content">
+        <!-- guideMarkdown is a repository-owned constant, not user-provided content. -->
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html marked(guideMarkdown)}
       </div>
     </div>

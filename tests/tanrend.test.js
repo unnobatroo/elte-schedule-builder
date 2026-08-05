@@ -49,16 +49,20 @@ describe("Tanrend", () => {
     window.addEventListener("scheduleUpdated", scheduleUpdated, { once: true });
     render(Tanrend);
 
-    await fireEvent.input(screen.getByPlaceholderText("Search by subject code"), {
-      target: { value: "DEMO-1" },
-    });
+    await fireEvent.input(
+      screen.getByPlaceholderText("Search by subject code"),
+      {
+        target: { value: "DEMO-1" },
+      },
+    );
     await fireEvent.click(screen.getByRole("button", { name: "Search" }));
     await fireEvent.click(
-      await screen.findByRole("button", { name: "Add to schedule" })
+      await screen.findByRole("button", { name: "Add to schedule" }),
     );
 
-    expect(await screen.findByText(/Added "Introduction to Web Development"/))
-      .toBeTruthy();
+    expect(
+      await screen.findByText(/Added "Introduction to Web Development"/),
+    ).toBeTruthy();
     const active = getActiveSchedule(loadScheduleStore(localStorage));
     expect(active.subjects).toEqual([
       expect.objectContaining({
@@ -77,29 +81,38 @@ describe("Tanrend", () => {
     };
     let store = loadScheduleStore(localStorage, () => "schedule-one");
     store = updateActiveSchedule(store, {
-      subjects: [{
-        title: "Introduction to Web Development",
-        code: firstLecture.code,
-        enabled: true,
-        events: [initialEvent],
-      }],
+      subjects: [
+        {
+          title: "Introduction to Web Development",
+          code: firstLecture.code,
+          enabled: true,
+          events: [initialEvent],
+        },
+      ],
     });
     saveScheduleStore(localStorage, store);
     fetchSubjectData.mockResolvedValue([secondLecture]);
     render(Tanrend);
 
-    await fireEvent.input(screen.getByPlaceholderText("Search by subject code"), {
-      target: { value: secondLecture.code },
-    });
+    await fireEvent.input(
+      screen.getByPlaceholderText("Search by subject code"),
+      {
+        target: { value: secondLecture.code },
+      },
+    );
     await fireEvent.click(screen.getByRole("button", { name: "Search" }));
     await fireEvent.click(
-      await screen.findByRole("button", { name: "Add to schedule" })
+      await screen.findByRole("button", { name: "Add to schedule" }),
     );
 
     await waitFor(() => {
-      const subject = getActiveSchedule(loadScheduleStore(localStorage)).subjects[0];
+      const subject = getActiveSchedule(loadScheduleStore(localStorage))
+        .subjects[0];
       expect(subject.events).toHaveLength(2);
-      expect(subject.events.map(({ enabled }) => enabled)).toEqual([false, true]);
+      expect(subject.events.map(({ enabled }) => enabled)).toEqual([
+        false,
+        true,
+      ]);
     });
   });
 
@@ -107,13 +120,17 @@ describe("Tanrend", () => {
     fetchSubjectData.mockRejectedValue(new Error("offline"));
     render(Tanrend);
 
-    await fireEvent.input(screen.getByPlaceholderText("Search by subject code"), {
-      target: { value: "IK-FAIL" },
-    });
+    await fireEvent.input(
+      screen.getByPlaceholderText("Search by subject code"),
+      {
+        target: { value: "IK-FAIL" },
+      },
+    );
     await fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
-    expect(await screen.findByText("Failed to fetch data. Please try again."))
-      .toBeTruthy();
+    expect(
+      await screen.findByText("Failed to fetch data. Please try again."),
+    ).toBeTruthy();
     expect(localStorage.getItem("scheduleManager")).toBeNull();
   });
 
@@ -121,14 +138,19 @@ describe("Tanrend", () => {
     fetchSubjectData.mockResolvedValue([]);
     render(Tanrend);
 
-    await fireEvent.input(screen.getByPlaceholderText("Search by subject code"), {
-      target: { value: "IK-EMPTY" },
-    });
+    await fireEvent.input(
+      screen.getByPlaceholderText("Search by subject code"),
+      {
+        target: { value: "IK-EMPTY" },
+      },
+    );
     await fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
-    expect(await screen.findByText(
-      "No results found for the provided subject code(s)."
-    )).toBeTruthy();
+    expect(
+      await screen.findByText(
+        "No results found for the provided subject code(s).",
+      ),
+    ).toBeTruthy();
     expect(localStorage.getItem("scheduleManager")).toBeNull();
   });
 });
