@@ -6,6 +6,41 @@ The useful bit is that you can plan ahead. Tanrend exposes the underlying course
 
 Requests go through a tiny Express API with a SQLite cache. Your schedule stays in your browser's local storage.
 
+This is an independent student project. It is not affiliated with, endorsed by,
+or operated by Eötvös Loránd University (ELTE). Tanrend remains the authoritative
+source for course information.
+
+## Use the planner
+
+You can paste Neptun subject codes into the Schedule Builder or search Tanrend
+from the Search page and add a specific class. Use `DEMO-1` through `DEMO-6` to
+try the complete workflow without depending on live Tanrend results.
+
+The planner can compare groups, mark overlapping classes, hide individual
+events, keep multiple local schedules, create share links, and open visible
+events as Google Calendar templates. See the [user guide](docs/user-guide.md)
+for the full workflow and limitations.
+
+## Status and support
+
+The application is actively maintained on a best-effort basis and is used by
+students during registration. Course data can be incomplete or stale, so always
+verify the final schedule in official ELTE systems.
+
+## Data and privacy
+
+- No account is required.
+- Subject codes are sent to this application's Express API, which requests
+  Tanrend and caches responses in SQLite.
+- Schedules and interface preferences are stored in the browser's
+  `localStorage` and are not synchronized between devices.
+- Share links contain the enabled class codes and lecture-exemption setting.
+  Anyone with a link can read that information.
+- Google receives event details only when you choose an event in the export
+  dialog and open its Google Calendar template.
+- The in-app guide currently loads screenshots hosted by Imgur, so opening the
+  guide can make requests to that third party.
+
 ## Run it locally
 
 You need Node.js 20.17 or newer.
