@@ -23,6 +23,10 @@ npm start
 
 Open <http://localhost:5173>. The API runs on port 3000 and Vite proxies `/api` requests to it.
 
+Optional local configuration lives in `.env`. Copy `.env.example` and adjust the
+documented ports, proxy target, cache path, and backend safeguards as needed.
+Invalid port or proxy URL values stop startup with a clear error.
+
 Want Docker instead?
 
 ```bash

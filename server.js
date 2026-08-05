@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import axios from "axios";
@@ -16,9 +17,10 @@ import {
   validateSubjectCode,
 } from "./server-utils.js";
 import { createSecurityHeaders } from "./security-headers.js";
+import { readPort } from "./runtime-config.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const port = Number(process.env.PORT) || 3000;
+const port = readPort(process.env.PORT, 3000, "PORT");
 
 // Cache configuration
 const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
