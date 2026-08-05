@@ -6,6 +6,16 @@ import { fileURLToPath } from "url";
 import { mkdir } from "fs/promises";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
+import {
+  buildTanrendUrl,
+  createRateLimiter,
+  QueueCapacityError,
+  readPositiveInteger,
+  SubjectRequestQueue,
+  trimCache,
+  validateSubjectCode,
+} from "./server-utils.js";
+import { createSecurityHeaders } from "./security-headers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -13,11 +23,22 @@ const port = Number(process.env.PORT) || 3000;
 
 // Cache configuration
 const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+const MAX_CACHE_ENTRIES = readPositiveInteger(
+  process.env.MAX_CACHE_ENTRIES,
+  1000
+);
 
 // Queue configuration
 const REQUEST_DELAY = 500; // 500ms between requests
-let requestQueue = [];
-let isProcessingQueue = false;
+const MAX_QUEUE_LENGTH = readPositiveInteger(
+  process.env.MAX_QUEUE_LENGTH,
+  100
+);
+const UPSTREAM_TIMEOUT = readPositiveInteger(
+  process.env.UPSTREAM_TIMEOUT_MS,
+  10000
+);
+const MAX_UPSTREAM_RESPONSE_SIZE = 2 * 1024 * 1024;
 
 // Database setup
 let db;
@@ -61,6 +82,7 @@ async function setCachedData(key, data) {
     JSON.stringify(data),
     Date.now()
   );
+  await trimCache(db, MAX_CACHE_ENTRIES);
 }
 
 async function cleanupCache() {
@@ -75,9 +97,12 @@ async function cleanupCache() {
 }
 
 async function fetchSubjectData(subjectCode, term) {
-  const targetUrl = `https://tanrend.elte.hu/tanrendnavigation_en.php?f=${term}&m=keres_kod_azon&k=${subjectCode}`;
+  const targetUrl = buildTanrendUrl(subjectCode, term);
 
   const response = await axios.get(targetUrl, {
+    timeout: UPSTREAM_TIMEOUT,
+    maxContentLength: MAX_UPSTREAM_RESPONSE_SIZE,
+    maxBodyLength: MAX_UPSTREAM_RESPONSE_SIZE,
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
@@ -90,43 +115,31 @@ async function fetchSubjectData(subjectCode, term) {
   return response.data;
 }
 
-async function processQueue() {
-  if (isProcessingQueue || requestQueue.length === 0) return;
+const subjectRequestQueue = new SubjectRequestQueue({
+  delay: REQUEST_DELAY,
+  maxQueued: MAX_QUEUE_LENGTH,
+  handler: async (subjectCode, term) => {
+    console.log(`Processing queued request for ${subjectCode}`);
+    const data = await fetchSubjectData(subjectCode, term);
+    await setCachedData(`${term}-${subjectCode}`, data);
+    return data;
+  },
+});
 
-  isProcessingQueue = true;
-
-  while (requestQueue.length > 0) {
-    const { subjectCode, term, resolve, reject } = requestQueue.shift();
-    try {
-      console.log(`Processing queued request for ${subjectCode}`);
-      const data = await fetchSubjectData(subjectCode, term);
-      await setCachedData(`${term}-${subjectCode}`, data);
-      resolve(data);
-    } catch (error) {
-      console.error(
-        `Error processing queued request for ${subjectCode}:`,
-        error
-      );
-      reject(error);
-    }
-
-    // Wait before processing next request
-    if (requestQueue.length > 0) {
-      await new Promise((resolve) => setTimeout(resolve, REQUEST_DELAY));
-    }
-  }
-
-  isProcessingQueue = false;
-}
-
-function queueRequest(subjectCode, term) {
-  return new Promise((resolve, reject) => {
-    requestQueue.push({ subjectCode, term, resolve, reject });
-    processQueue(); // Start processing if not already running
-  });
-}
-
+app.use(createSecurityHeaders());
 app.use(cors());
+const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS, 10);
+if (Number.isInteger(trustProxyHops) && trustProxyHops > 0) {
+  app.set("trust proxy", trustProxyHops);
+}
+
+app.use(
+  "/api/subject",
+  createRateLimiter({
+    windowMs: 60 * 1000,
+    limit: readPositiveInteger(process.env.SUBJECT_RATE_LIMIT, 60),
+  })
+);
 // Serve the built files from the dist directory
 app.use(express.static(path.join(__dirname, "dist")));
 
@@ -440,7 +453,7 @@ function generateDemoData(subjectCode) {
   return demoData[subjectCode] || null;
 }
 
-app.get("/api/subject/:code", async (req, res) => {
+app.get("/api/subject/:code", validateSubjectCode, async (req, res) => {
   try {
     const term = getCurrentTerm();
     const subjectCode = req.params.code;
@@ -462,23 +475,40 @@ app.get("/api/subject/:code", async (req, res) => {
 
     // If not in cache, queue the request
     console.log(`Cache miss for ${subjectCode}, adding to queue`);
-    const data = await queueRequest(subjectCode, term);
+    const data = await subjectRequestQueue.enqueue(subjectCode, term);
     res.send(data);
   } catch (error) {
     console.error(`Error fetching data for subject ${req.params.code}:`, error);
-    res.status(error.response?.status || 500).send(error.message);
+    if (error instanceof QueueCapacityError) {
+      res.set("Retry-After", "1");
+      return res.status(error.status).json({ error: error.message });
+    }
+    res.status(error.response?.status || 500).json({
+      error: "Failed to fetch subject data",
+    });
   }
 });
 
 await setupDatabase();
 
-setInterval(cleanupCache, 60 * 60 * 1000);
+const cacheCleanupInterval = setInterval(cleanupCache, 60 * 60 * 1000);
 
 // Handle SPA routing
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
+
+export async function closeServer() {
+  clearInterval(cacheCleanupInterval);
+  await new Promise((resolve, reject) => {
+    server.close((error) => {
+      if (error) reject(error);
+      else resolve();
+    });
+  });
+  await db.close();
+}

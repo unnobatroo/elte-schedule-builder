@@ -9,6 +9,7 @@
   import { createEventModalPlugin } from "@schedule-x/event-modal";
   import "@schedule-x/theme-default/dist/index.css";
   import { getConflictPairs, getWeekDateForDay } from "../utils/schedule";
+  import TimeGridEvent from "./TimeGridEvent.svelte";
 
   let { events = [], lectureExemption = false } = $props();
 
@@ -59,18 +60,6 @@
         _options: {
           additionalClasses: classes,
         },
-        _customContent: {
-          timeGrid: `
-            <div class="event-details">
-              <div class="event-title">${event.title}</div>
-              <div class="event-group">Group ${groupNumber}</div>
-              <div class="event-code">${event.code}</div>
-              <div class="event-time">${event.startTime} - ${event.endTime}</div>
-              ${event.extendedProps?.instructor ? `<div class="event-instructor">${event.extendedProps.instructor}</div>` : ""}
-              ${event.extendedProps?.location ? `<div class="event-location">${event.extendedProps.location}</div>` : ""}
-            </div>
-          `,
-        },
         originalEvent: event,
       };
     });
@@ -104,7 +93,7 @@
 </script>
 
 <div class="calendar-wrapper">
-  <ScheduleXCalendar {calendarApp} />
+  <ScheduleXCalendar {calendarApp} timeGridEvent={TimeGridEvent} />
 </div>
 
 <style>
@@ -123,39 +112,6 @@
 
   :global(.is-dark) {
     --sx-color-primary: #ffffff;
-  }
-
-  :global(.event-details) {
-    font-size: 1.2em;
-    padding: 4px;
-  }
-
-  :global(.event-title) {
-    font-weight: bold;
-    font-size: 0.9em;
-    margin-bottom: 2px;
-  }
-
-  :global(.event-code) {
-    font-size: 0.9em;
-    opacity: 0.9;
-  }
-
-  :global(.event-time) {
-    font-size: 0.8em;
-    opacity: 0.9;
-  }
-
-  :global(.event-group) {
-    font-size: 0.85em;
-    opacity: 0.9;
-    font-weight: 500;
-  }
-
-  :global(.event-location),
-  :global(.event-instructor) {
-    font-size: 0.8em;
-    opacity: 0.8;
   }
 
   :global(.sx-event--is-lecture) {
