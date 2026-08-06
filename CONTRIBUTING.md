@@ -1,8 +1,12 @@
-# Contributing
+# Contributing 🛠️
 
 Thanks for helping improve ELTE Schedule Builder. The application is used by
 students during registration, so small, behavior-preserving changes are easier
 to review and safer to release.
+
+> [!TIP]
+> A focused pull request with a regression test and exact verification commands
+> is the easiest kind to review.
 
 ## Before starting
 

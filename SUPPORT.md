@@ -1,4 +1,4 @@
-# Support
+# Support 💬
 
 ELTE Schedule Builder is maintained on a best-effort basis. It does not provide
 an availability guarantee, response-time guarantee, or official ELTE support.
@@ -18,6 +18,9 @@ actual behavior, browser and operating system, and a DEMO code when possible.
 Sanitize screenshots and logs. Do not publish credentials, private share links,
 or personal schedule information.
 
+> [!TIP]
+> A report using a `DEMO-*` subject is usually faster to reproduce and fix.
+
 ## Feature requests
 
 Use the feature-request form and describe the user problem and observable
@@ -26,8 +29,9 @@ calendar dates, or Tanrend behavior.
 
 ## Security reports
 
-Do not open a public issue for a suspected vulnerability. Follow
-[SECURITY.md](SECURITY.md) so details can be reviewed privately.
+> [!CAUTION]
+> Do not open a public issue for a suspected vulnerability. Follow
+> [SECURITY.md](SECURITY.md) so details can be reviewed privately.
 
 ## Course-data questions
 

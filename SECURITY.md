@@ -1,4 +1,4 @@
-# Security policy
+# Security policy 🔒
 
 ## Supported version
 
@@ -8,12 +8,13 @@ are not maintained by this project.
 
 ## Report a vulnerability privately
 
+> [!CAUTION]
+> Do not include vulnerability details in a public issue, discussion, or pull
+> request.
+
 Prefer [GitHub Private Vulnerability Reporting](https://github.com/w04m1/elte-schedule-builder/security/advisories/new).
 If that option is unavailable, email `w04m1@proton.me` with the subject
 `ELTE Schedule Builder security report`.
-
-Do not include vulnerability details in a public issue, discussion, or pull
-request.
 
 Include:
 
