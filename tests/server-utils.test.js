@@ -118,6 +118,36 @@ describe("subject API rate limiter", () => {
 });
 
 describe("SubjectRequestQueue", () => {
+  it("waits for the configured delay between upstream requests", async () => {
+    vi.useFakeTimers();
+    const handler = vi.fn().mockResolvedValue("done");
+    const queue = new SubjectRequestQueue({
+      handler,
+      delay: 500,
+      maxQueued: 2,
+    });
+
+    try {
+      const first = queue.enqueue("FIRST", "term");
+      const second = queue.enqueue("SECOND", "term");
+
+      await first;
+      expect(handler).toHaveBeenCalledOnce();
+
+      await vi.advanceTimersByTimeAsync(499);
+      expect(handler).toHaveBeenCalledOnce();
+
+      await vi.advanceTimersByTimeAsync(1);
+      await second;
+      expect(handler.mock.calls.map(([code]) => code)).toEqual([
+        "FIRST",
+        "SECOND",
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("coalesces matching requests", async () => {
     let release;
     const handler = vi.fn(

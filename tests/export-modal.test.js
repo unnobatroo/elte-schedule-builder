@@ -20,7 +20,7 @@ describe("ExportModal", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 7, 5, 12));
-    open = vi.spyOn(window, "open").mockImplementation(() => null);
+    open = vi.spyOn(window, "open").mockImplementation(() => ({}));
   });
 
   afterEach(() => {
@@ -50,5 +50,20 @@ describe("ExportModal", () => {
     expect(url.searchParams.get("location")).toBe("North Building 2.42");
     expect(url.searchParams.get("details")).toBe(event.description);
     expect(url.searchParams.get("recur")).toBe("RRULE:FREQ=WEEKLY");
+  });
+
+  it("explains how to recover when the calendar popup is blocked", async () => {
+    open.mockReturnValue(null);
+    render(ExportModal, {
+      props: { isOpen: true, events: [event], onClose: vi.fn() },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Add to Calendar" }),
+    );
+
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Allow pop-ups and try again",
+    );
   });
 });

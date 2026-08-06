@@ -5,6 +5,7 @@
   } from "../utils/schedule";
 
   let { isOpen = false, onClose, events = [] } = $props();
+  let exportError = $state("");
 
   function formatEventLabel(event) {
     const type = event.extendedProps?.type || "";
@@ -31,7 +32,15 @@
       `&details=${encodeURIComponent(`${event.description || ""}`)}` +
       `&recur=RRULE:FREQ=WEEKLY`;
 
-    window.open(url, "_blank");
+    try {
+      const popup = window.open(url, "_blank");
+      exportError = popup
+        ? ""
+        : "Google Calendar could not be opened. Allow pop-ups and try again.";
+    } catch {
+      exportError =
+        "Google Calendar could not be opened. Allow pop-ups and try again.";
+    }
   }
 </script>
 
@@ -49,6 +58,9 @@
     >
       <button class="close-btn" onclick={onClose}>×</button>
       <h2>Export to Google Calendar</h2>
+      {#if exportError}
+        <p class="export-error" role="alert">{exportError}</p>
+      {/if}
       <div class="events-list">
         {#each events as event (event)}
           <div class="event-item">
@@ -134,6 +146,11 @@
     gap: 12px;
     max-height: 70vh;
     overflow-y: auto;
+  }
+
+  .export-error {
+    margin: 0 0 16px;
+    color: #ff8a80;
   }
 
   .event-item {
