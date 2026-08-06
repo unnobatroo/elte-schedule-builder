@@ -23,7 +23,7 @@ to review and safer to release.
 
 ## Set up the project
 
-Use Node.js 20.17 or newer and npm 11.17 or newer.
+Use Node.js 24.15 through 24.x and npm 11.17 or newer.
 
 ```bash
 npm install --global npm@11.17.0

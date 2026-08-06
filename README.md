@@ -51,7 +51,7 @@ or open a Google Calendar export.
 
 ## Run it locally
 
-You need Node.js 20.17 or newer and npm 11.17 or newer. The supported npm
+You need Node.js 24.15 through 24.x and npm 11.17 or newer. The supported npm
 version is pinned in `package.json` because installs enforce an explicit
 dependency-script policy.
 
