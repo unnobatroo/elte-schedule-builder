@@ -10,6 +10,9 @@
 
 - `src/` is a Svelte 5 single-page application built with Vite.
 - `src/App.svelte` owns the main saved schedule and UI state.
+- `src/components/ScheduleWorkspace.svelte` owns sharing feedback and export
+  dialog coordination; `AppHeader.svelte` and `AppFooter.svelte` own their
+  presentation and styles.
 - `src/routes/Tanrend.svelte` searches Tanrend data and adds selected classes to the saved schedule.
 - `src/utils/schedule.js` contains shared parsing, date, event, conflict, and schedule-sharing logic.
 - `server.js` is an Express proxy. It fetches Tanrend data, throttles upstream requests, and caches responses in SQLite.
@@ -19,9 +22,10 @@
 
 ## Setup and commands
 
-Use Node.js 20.17 or newer and npm. Do not add another lockfile.
+Use Node.js 20.17 or newer and npm 11.17 or newer. Do not add another lockfile.
 
 ```bash
+npm install --global npm@11.17.0
 npm ci
 npm run dev
 npm start
@@ -38,6 +42,8 @@ The frontend runs on port 5173 and proxies `/api` to the backend on port 3000. `
 ## Working rules
 
 - Inspect `git status` before editing and preserve unrelated contributor changes.
+- Use [docs/task-handoff-template.md](docs/task-handoff-template.md) when work is
+  paused, transferred, or resumed across agent sessions.
 - Reuse or extend `src/utils/schedule.js` when logic is needed in multiple components. Do not maintain parallel implementations in components or tests.
 - Keep saved schedule data backward-compatible. Existing users may have older objects in `localStorage` without newly added fields.
 - Preserve the `/import/<base64>` sharing format unless a migration and compatibility test are included.

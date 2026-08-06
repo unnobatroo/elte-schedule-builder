@@ -1,5 +1,13 @@
 <script>
   import { marked } from "marked";
+  import calendarOverviewUrl from "../assets/guide/calendar-overview.png";
+  import conflictCalendarUrl from "../assets/guide/conflict-calendar.png";
+  import conflictDetailsUrl from "../assets/guide/conflict-details.png";
+  import eventDetailsUrl from "../assets/guide/event-details.png";
+  import googleCalendarExportUrl from "../assets/guide/google-calendar-export.png";
+  import missingSubjectsUrl from "../assets/guide/missing-subjects.png";
+  import subjectCodeInputUrl from "../assets/guide/subject-code-input.png";
+  import visibilityControlsUrl from "../assets/guide/visibility-controls.png";
   let { isOpen = false, onClose } = $props();
 
   const guideMarkdown = `# What is this?
@@ -11,11 +19,11 @@ Usually creating your schedule feels more like a casino rather than planning. We
 First of all, you need to acquire your subject codes from Neptun.
 
 Then you paste them into the input field and press \`Generate schedule\`.
-![image](https://i.imgur.com/ik8mQm2.png)
+![Subject codes entered in the schedule builder](${subjectCodeInputUrl})
     \` Loading might take a bit if data is old and needs to be refreshed.\`
 
 Upon loading, there might appear a window with missing subjects.
-![image](https://i.imgur.com/KdjPiH6.png)
+![Missing-subject warning](${missingSubjectsUrl})
 \`\`\`
 This might happen due to several reasons:
 - Professor has not updated the schedule yet -> come back for this subject later
@@ -23,19 +31,19 @@ This might happen due to several reasons:
 \`\`\`
 
 If there is information about subjects, you will see them in the calendar.
-![image](https://i.imgur.com/KO5VXfl.png)
+![Weekly calendar populated with classes](${calendarOverviewUrl})
 
 # Features
 
 ### Click event to see more information
-![image](https://i.imgur.com/pzAiecB.png)
+![Expanded event details](${eventDetailsUrl})
 
 ### Hide subjects from the calendar (single/several lessons or the whole subject) 
-![image](https://i.imgur.com/Mqobnon.png)
+![Subject and event visibility controls](${visibilityControlsUrl})
 
 ### Conflicts between subjects (you can see which subjects are conflicting with each other)
-![image](https://i.imgur.com/N17ZbBD.png)
-![image](https://i.imgur.com/nhcAE4u.png)
+![Conflicting events in the calendar](${conflictCalendarUrl})
+![Conflict details in the subject controls](${conflictDetailsUrl})
 
 ### Export to Google Calendar
 Once you are happy with your schedule and finished registering, you can proceed to export your calendar.
@@ -44,7 +52,7 @@ Once you are happy with your schedule and finished registering, you can proceed 
 
 When you click \`Export to Google Calendar\`, a window will open with your subjects and buttons next to them.
 Each button will open a new window with Google Calendar where you can adjust the information and save the event.
-![image](https://i.imgur.com/UnMDHHF.png)
+![Google Calendar export dialog](${googleCalendarExportUrl})
 
 ### Share your schedule
 

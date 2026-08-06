@@ -12,7 +12,7 @@ export function createSecurityHeaders({
         fontSrc: ["'self'", "data:"],
         formAction: ["'self'"],
         frameAncestors: ["'none'"],
-        imgSrc: ["'self'", "data:", "https://i.imgur.com"],
+        imgSrc: ["'self'", "data:"],
         objectSrc: ["'none'"],
         scriptSrc: ["'self'"],
         scriptSrcAttr: ["'none'"],

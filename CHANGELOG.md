@@ -7,6 +7,31 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Regression coverage for Tanrend queue timing, schedule sharing, lecture
+  exemption, export, schedule management, and blocked calendar popups.
+- A reusable contributor and agent handoff template with acceptance criteria,
+  verification evidence, deferred risks, and resume steps.
+
+### Changed
+
+- Split header, footer, sharing, and export coordination out of `App.svelte`.
+- Normalized repository text files to LF for consistent Windows and Linux
+  formatting checks.
+- Replaced externally hosted guide and social-preview images with documented,
+  repository-owned assets.
+
+### Security
+
+- Enabled production HSTS and documented deployment verification for the app
+  and DEMO API.
+- Restricted dependency install scripts to reviewed, version-pinned packages
+  and aligned npm policy across local development, CI, and Docker.
+- Protected `main` with required pull requests and CI checks, and enabled
+  private vulnerability reporting plus Dependabot vulnerability alerts and
+  security updates.
+
 ## [0.1.0] - 2026-08-05
 
 ### Added

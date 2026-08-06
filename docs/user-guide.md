@@ -57,6 +57,8 @@ class codes it contains.
 **Export to Google Calendar** lists the currently visible events. Each **Add to
 Calendar** button opens a Google Calendar template for one weekly event. Review
 the date, time, recurrence, and semester end before saving it in Google.
+If the browser blocks the new window, the export dialog explains that pop-ups
+must be allowed before trying again.
 
 ## Storage and troubleshooting
 

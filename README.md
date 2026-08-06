@@ -42,14 +42,17 @@ public issue.
   Anyone with a link can read that information.
 - Google receives event details only when you choose an event in the export
   dialog and open its Google Calendar template.
-- The in-app guide currently loads screenshots hosted by Imgur, so opening the
-  guide can make requests to that third party.
+- Guide screenshots and social-preview artwork are served by this application.
+  Their source and licensing record is in [docs/assets.md](docs/assets.md).
 
 ## Run it locally
 
-You need Node.js 20.17 or newer.
+You need Node.js 20.17 or newer and npm 11.17 or newer. The supported npm
+version is pinned in `package.json` because installs enforce an explicit
+dependency-script policy.
 
 ```bash
+npm install --global npm@11.17.0
 npm ci
 npm run dev
 ```
@@ -114,4 +117,8 @@ keep behavior changes covered by tests—the app is used by real students during
 registration. Participation is governed by the
 [Code of Conduct](CODE_OF_CONDUCT.md).
 
-Using a coding agent? Start it from the repository root so it picks up [AGENTS.md](AGENTS.md), which contains the architecture notes, safety rules, and verification commands for this project.
+Using a coding agent? Start it from the repository root so it picks up
+[AGENTS.md](AGENTS.md), which contains the architecture notes, safety rules, and
+verification commands for this project. Use the
+[task handoff template](docs/task-handoff-template.md) when work will continue in
+another session or with another contributor.
