@@ -3,7 +3,26 @@
 Production releases are built from version tags. A tag such as `v0.1.0` must
 match the version in `package.json`. The release workflow runs the complete test
 suite, publishes a multi-platform container to GitHub Container Registry
-(GHCR), and creates a GitHub release.
+(GHCR), and creates a GitHub release. Dokploy instance handles deployment outside GitHub
+Actions, so application deployment credentials do not need to be stored in this
+repository.
+
+## Automatic deployment triggers
+
+Dokploy maintains two independently triggered environments:
+
+- **Development — [schedule-dev.w04m1.dev](https://schedule-dev.w04m1.dev):**
+  Dokploy watches the `dev` branch and automatically rebuilds and deploys this
+  instance after every push to `dev`.
+- **Production — [schedule.w04m1.dev](https://schedule.w04m1.dev):** Pushing to
+  `main` does not deploy production by itself. A version tag starts the release
+  workflow; after that workflow successfully publishes the new Docker image and
+  GitHub release, Dokploy detects the new production image and deploys it
+  automatically.
+
+No manual deployment step is required during the normal development or release
+flow. The manual image selection described below is for initial configuration,
+recovery, and rollback.
 
 Each release publishes two image tags:
 
@@ -33,7 +52,8 @@ instead.
 
 ## Configure Dokploy
 
-Configure the application as an image-based deployment with these values:
+Configure the production application as an image-based deployment that watches
+for images published by the release workflow, using these values:
 
 - Image: the digest reference from the GitHub release. The full commit-SHA tag
   is a practical fallback if Dokploy requires a tag.
