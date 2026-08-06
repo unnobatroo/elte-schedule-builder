@@ -19,13 +19,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Split header, footer, sharing, and export coordination out of `App.svelte`.
 - Normalized repository text files to LF for consistent Windows and Linux
   formatting checks.
-- Replaced externally hosted guide and social-preview images with documented,
-  repository-owned assets.
 
 ### Security
 
 - Enabled production HSTS and documented deployment verification for the app
   and DEMO API.
+- Confined static responses to the resolved production build directory and
+  rejected dotfile, file-like, API-like, and encoded traversal fallback paths.
 - Restricted dependency install scripts to reviewed, version-pinned packages
   and aligned npm policy across local development, CI, and Docker.
 - Protected `main` with required pull requests and CI checks, and enabled

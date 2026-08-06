@@ -88,7 +88,7 @@ Use the \`My schedules\` panel at the bottom of the Schedule Builder to create, 
         onclick={onClose}>×</button
       >
       <div class="markdown-content">
-        <!-- guideMarkdown is a repository-owned constant, not user-provided content. -->
+        <!-- guideMarkdown is a static application constant, not user-provided content. -->
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         {@html marked(guideMarkdown)}
       </div>

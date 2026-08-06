@@ -1,10 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { createApp, setupDatabase } from "../server.js";
 
 const logger = { log: vi.fn(), error: vi.fn() };
 const termProvider = () => "2026-2027-1";
 let database;
 let server;
+let staticFixtureRoot;
 
 async function startApp(options = {}) {
   const { app, cleanupCache } = createApp({
@@ -40,9 +44,55 @@ afterEach(async () => {
     server = undefined;
   }
   await database.close();
+  if (staticFixtureRoot) {
+    await rm(staticFixtureRoot, { recursive: true, force: true });
+    staticFixtureRoot = undefined;
+  }
 });
 
 describe("subject API integration", () => {
+  it("serves only files inside the configured static root", async () => {
+    staticFixtureRoot = await mkdtemp(
+      path.join(tmpdir(), "elte-schedule-static-"),
+    );
+    const staticDirectory = path.join(staticFixtureRoot, "dist");
+    await mkdir(staticDirectory);
+    await writeFile(path.join(staticDirectory, "index.html"), "spa shell");
+    await writeFile(path.join(staticDirectory, "guide.png"), "public image");
+    await writeFile(
+      path.join(staticFixtureRoot, "secret.txt"),
+      "sibling secret",
+    );
+    await writeFile(path.join(staticDirectory, ".env"), "static secret");
+
+    const { get } = await startApp({ staticDirectory });
+
+    const publicAsset = await get("/guide.png");
+    expect(publicAsset.status).toBe(200);
+    expect(await publicAsset.text()).toBe("public image");
+
+    const spaNavigation = await get("/tanrend");
+    expect(spaNavigation.status).toBe(200);
+    expect(await spaNavigation.text()).toBe("spa shell");
+
+    for (const requestPath of [
+      "/.env",
+      "/.git/config",
+      "/package.json",
+      "/server.js",
+      "/../secret.txt",
+      "/%2e%2e%2fsecret.txt",
+      "/%252e%252e%252fsecret.txt",
+      "/api/private-file",
+    ]) {
+      const response = await get(requestPath);
+      const body = await response.text();
+      expect(response.status, requestPath).toBe(404);
+      expect(body, requestPath).not.toContain("sibling secret");
+      expect(body, requestPath).not.toContain("static secret");
+    }
+  });
+
   it("serves DEMO data without calling the upstream", async () => {
     const fetchSubject = vi.fn();
     const { get } = await startApp({ fetchSubject });

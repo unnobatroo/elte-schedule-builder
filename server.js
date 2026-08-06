@@ -444,6 +444,7 @@ export function createApp({
   if (!database) throw new TypeError("createApp requires a database");
 
   const app = express();
+  const staticRoot = path.resolve(staticDirectory);
   const subjectRequestQueue = new SubjectRequestQueue({
     delay: requestDelay,
     maxQueued: maxQueueLength,
@@ -474,7 +475,14 @@ export function createApp({
       now,
     }),
   );
-  app.use(express.static(staticDirectory));
+  app.use(
+    express.static(staticRoot, {
+      dotfiles: "deny",
+      fallthrough: true,
+      index: false,
+      redirect: false,
+    }),
+  );
 
   app.get("/api/subject/:code", validateSubjectCode, async (req, res) => {
     try {
@@ -517,8 +525,34 @@ export function createApp({
     }
   });
 
-  app.get("/{*path}", (_req, res) => {
-    res.sendFile(path.join(staticDirectory, "index.html"));
+  app.get("/{*path}", (req, res, next) => {
+    let decodedPath;
+    try {
+      decodedPath = decodeURIComponent(req.path);
+    } catch {
+      return res.sendStatus(404);
+    }
+
+    const pathSegments = decodedPath.split("/").filter(Boolean);
+    const isUnsafeOrFileLike =
+      decodedPath.includes("%") ||
+      decodedPath.includes("\\") ||
+      decodedPath === "/api" ||
+      decodedPath.startsWith("/api/") ||
+      pathSegments.some((segment) => segment.startsWith(".")) ||
+      path.posix.extname(decodedPath) !== "";
+
+    if (isUnsafeOrFileLike || !req.accepts("html")) {
+      return res.sendStatus(404);
+    }
+
+    return res.sendFile(
+      "index.html",
+      { root: staticRoot, dotfiles: "deny" },
+      (error) => {
+        if (error) next(error);
+      },
+    );
   });
 
   return {

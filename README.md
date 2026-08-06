@@ -42,8 +42,6 @@ public issue.
   Anyone with a link can read that information.
 - Google receives event details only when you choose an event in the export
   dialog and open its Google Calendar template.
-- Guide screenshots and social-preview artwork are served by this application.
-  Their source and licensing record is in [docs/assets.md](docs/assets.md).
 
 ## Run it locally
 
