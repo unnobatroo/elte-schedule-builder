@@ -17,7 +17,9 @@ describe("FAQ", () => {
     const guideImages = screen.getByRole("dialog").querySelectorAll("img");
     expect(guideImages).toHaveLength(8);
     expect(
-      [...guideImages].every((image) => !image.src.includes("i.imgur.com")),
+      [...guideImages].every(
+        (image) => image.alt && !image.src.includes("i.imgur.com"),
+      ),
     ).toBe(true);
     await fireEvent.click(screen.getByRole("button", { name: "Close guide" }));
     expect(onClose).toHaveBeenCalledOnce();
