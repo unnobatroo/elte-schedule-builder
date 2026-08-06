@@ -33,7 +33,8 @@ describe("security headers", () => {
     const csp = headers.get("content-security-policy");
 
     expect(csp).toContain("frame-ancestors 'none'");
-    expect(csp).toContain("img-src 'self' data: https://i.imgur.com");
+    expect(csp).toContain("img-src 'self' data:");
+    expect(csp).not.toContain("i.imgur.com");
     expect(csp).not.toContain("upgrade-insecure-requests");
     expect(headers.get("x-content-type-options")).toBe("nosniff");
     expect(headers.get("x-frame-options")).toBe("DENY");

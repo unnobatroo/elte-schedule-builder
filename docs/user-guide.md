@@ -1,8 +1,13 @@
-# User guide
+# User guide 🧭
 
 ELTE Schedule Builder helps compare class groups before registration and keep a
 personal schedule in one browser. It does not register classes and is not an
 official ELTE service.
+
+[Try DEMO data](#try-it-with-demo-data) · [Build a schedule](#build-a-schedule-from-subject-codes) · [Share](#share-a-schedule) · [Export](#export-to-google-calendar) · [Troubleshoot](#storage-and-troubleshooting)
+
+> [!IMPORTANT]
+> Always verify your final timetable in Neptun or another official ELTE system.
 
 ## Try it with DEMO data
 
@@ -34,8 +39,7 @@ preserving the rest of that subject.
 ## Conflicts and lecture exemption
 
 Enabled events that overlap are marked as conflicts. The lecture-exemption
-setting lets the planner ignore lectures when computing conflicts. This is only
-a planning aid; it does not confirm that ELTE permits an exemption.
+setting lets the planner ignore lectures when computing conflicts. Use this ONLY IF you have Lecture Exemption.
 
 ## Multiple schedules
 
@@ -57,6 +61,8 @@ class codes it contains.
 **Export to Google Calendar** lists the currently visible events. Each **Add to
 Calendar** button opens a Google Calendar template for one weekly event. Review
 the date, time, recurrence, and semester end before saving it in Google.
+If the browser blocks the new window, the export dialog explains that pop-ups
+must be allowed before trying again.
 
 ## Storage and troubleshooting
 
@@ -66,5 +72,3 @@ data, using private browsing, or changing browsers can remove or hide them.
 If a subject is missing, Tanrend may not have published it yet, the code may be
 incorrect, or the upstream service may be unavailable. Try a `DEMO-*` code to
 distinguish an application problem from unavailable live data.
-
-Always verify the final timetable in Neptun or another official ELTE system.

@@ -1,8 +1,12 @@
-# Contributing
+# Contributing 🛠️
 
 Thanks for helping improve ELTE Schedule Builder. The application is used by
 students during registration, so small, behavior-preserving changes are easier
 to review and safer to release.
+
+> [!TIP]
+> A focused pull request with a regression test and exact verification commands
+> is the easiest kind to review.
 
 ## Before starting
 
@@ -14,12 +18,15 @@ to review and safer to release.
 4. Read [AGENTS.md](AGENTS.md) for the current architecture, safety boundaries,
    and verification requirements. Those rules are canonical for both human and
    automated contributors.
+5. If you are continuing someone else's unfinished work, start from the
+   [task handoff template](docs/task-handoff-template.md).
 
 ## Set up the project
 
-Use Node.js 20.17 or newer and npm.
+Use Node.js 20.17 or newer and npm 11.17 or newer.
 
 ```bash
+npm install --global npm@11.17.0
 npm ci
 npx playwright install chromium
 ```

@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# Keep Windows-native scripts executable in their native shells.
+*.bat text eol=crlf
+*.cmd text eol=crlf

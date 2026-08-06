@@ -1,14 +1,17 @@
-# ELTE Schedule Builder
+# ELTE Schedule Builder 🎓
 
 A small schedule planner for ELTE students. Paste subject codes, compare groups, spot conflicts, hide classes you do not want, and export the result to Google Calendar.
+
+[Open the planner](https://schedule.w04m1.dev) · [Read the user guide](docs/user-guide.md) · [Get help](SUPPORT.md) · [Contribute](CONTRIBUTING.md)
 
 The useful bit is that you can plan ahead. Tanrend exposes the underlying course data through an endpoint before it shows that data in its regular frontend. This project uses that endpoint to make upcoming schedule information available earlier and in a much nicer format.
 
 Requests go through a tiny Express API with a SQLite cache. Your schedule stays in your browser's local storage.
 
-This is an independent student project. It is not affiliated with, endorsed by,
-or operated by Eötvös Loránd University (ELTE). Tanrend remains the authoritative
-source for course information.
+> [!IMPORTANT]
+> This is an independent student project. It is not affiliated with, endorsed
+> by, or operated by Eötvös Loránd University (ELTE). Tanrend remains the
+> authoritative source for course information.
 
 ## Use the planner
 
@@ -33,6 +36,9 @@ public issue.
 
 ## Data and privacy
 
+Your schedule stays in your browser unless you deliberately create a share link
+or open a Google Calendar export.
+
 - No account is required.
 - Subject codes are sent to this application's Express API, which requests
   Tanrend and caches responses in SQLite.
@@ -42,14 +48,15 @@ public issue.
   Anyone with a link can read that information.
 - Google receives event details only when you choose an event in the export
   dialog and open its Google Calendar template.
-- The in-app guide currently loads screenshots hosted by Imgur, so opening the
-  guide can make requests to that third party.
 
 ## Run it locally
 
-You need Node.js 20.17 or newer.
+You need Node.js 20.17 or newer and npm 11.17 or newer. The supported npm
+version is pinned in `package.json` because installs enforce an explicit
+dependency-script policy.
 
 ```bash
+npm install --global npm@11.17.0
 npm ci
 npm run dev
 ```
@@ -100,11 +107,13 @@ an in-memory SQLite cache, and exercises only the local `DEMO-*` data.
 
 ## How it is put together
 
-- Svelte 5 + Vite frontend
-- Schedule-X calendar
-- Express API
-- SQLite response cache
-- Vitest tests
+| Part     | Technology                 |
+| -------- | -------------------------- |
+| Frontend | Svelte 5 and Vite          |
+| Calendar | Schedule-X                 |
+| API      | Express                    |
+| Cache    | SQLite                     |
+| Tests    | Vitest and Testing Library |
 
 The compatibility-sensitive design choices are recorded in
 [docs/decisions.md](docs/decisions.md).
@@ -114,4 +123,8 @@ keep behavior changes covered by tests—the app is used by real students during
 registration. Participation is governed by the
 [Code of Conduct](CODE_OF_CONDUCT.md).
 
-Using a coding agent? Start it from the repository root so it picks up [AGENTS.md](AGENTS.md), which contains the architecture notes, safety rules, and verification commands for this project.
+Using a coding agent? Start it from the repository root so it picks up
+[AGENTS.md](AGENTS.md), which contains the architecture notes, safety rules, and
+verification commands for this project. Use the
+[task handoff template](docs/task-handoff-template.md) when work will continue in
+another session or with another contributor.

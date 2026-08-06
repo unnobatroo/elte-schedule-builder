@@ -14,6 +14,13 @@ describe("FAQ", () => {
 
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.getByText("Manage several schedules")).toBeTruthy();
+    const guideImages = screen.getByRole("dialog").querySelectorAll("img");
+    expect(guideImages).toHaveLength(8);
+    expect(
+      [...guideImages].every(
+        (image) => image.alt && !image.src.includes("i.imgur.com"),
+      ),
+    ).toBe(true);
     await fireEvent.click(screen.getByRole("button", { name: "Close guide" }));
     expect(onClose).toHaveBeenCalledOnce();
   });

@@ -1,19 +1,15 @@
 <script>
   import { onMount } from "svelte";
-  import ScheduleInput from "./components/ScheduleInput.svelte";
   import Calendar from "./components/Calendar.svelte";
   import FAQ from "./components/FAQ.svelte";
-  import ExportModal from "./components/ExportModal.svelte";
   import ColorLegend from "./components/ColorLegend.svelte";
-  import GitHubStarLink from "./components/GitHubStarLink.svelte";
   import ScheduleManager from "./components/ScheduleManager.svelte";
   import SubjectControls from "./components/SubjectControls.svelte";
   import AppNotices from "./components/AppNotices.svelte";
-  import {
-    decodeSchedule,
-    encodeSchedule,
-    markConflicts,
-  } from "./utils/schedule.js";
+  import AppFooter from "./components/AppFooter.svelte";
+  import AppHeader from "./components/AppHeader.svelte";
+  import ScheduleWorkspace from "./components/ScheduleWorkspace.svelte";
+  import { decodeSchedule, markConflicts } from "./utils/schedule.js";
   import {
     activateSchedule,
     addSchedule,
@@ -38,15 +34,14 @@
   let allSubjects = $state([]);
   let showFAQ = $state(false);
   let showWarning = $state(false);
-  let showExportModal = $state(false);
   let showMobileWarning = $state(false);
   let faqRead = $state(false);
-  let showCopiedIndicator = $state(false);
   let importedCodes = $state({ baseCodes: "", fullCodes: [] });
   let lectureExemption = $state(false);
   let scheduleStore = $state(null);
   let schedules = $state([]);
   let activeScheduleId = $state("");
+  let activeCodes = $derived(getEnabledEventCodes(allSubjects));
   const githubRepositoryUrl =
     import.meta.env.VITE_GITHUB_REPOSITORY_URL?.trim() ||
     "https://github.com/w04m1/elte-schedule-builder";
@@ -210,11 +205,6 @@
     }
   }
 
-  function handleExportToGoogle() {
-    if (!events.length) return;
-    showExportModal = true;
-  }
-
   function computeConflicts() {
     allSubjects = markConflicts(allSubjects, lectureExemption);
     updateEvents();
@@ -234,79 +224,33 @@
     }
   }
 
-  function getActiveCodes() {
-    return getEnabledEventCodes(allSubjects);
-  }
-
-  async function handleShare() {
-    const base64String = encodeSchedule(getActiveCodes(), lectureExemption);
-    const shareUrl = `${window.location.origin}/import/${base64String}`;
-
-    try {
-      // Try the modern clipboard API first
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-      } else {
-        // Fallback to older method
-        const textarea = document.createElement("textarea");
-        textarea.value = shareUrl;
-        textarea.style.position = "fixed"; // Avoid scrolling to bottom
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-
-        try {
-          document.execCommand("copy");
-        } catch (err) {
-          console.error("Fallback clipboard copy failed:", err);
-        }
-
-        document.body.removeChild(textarea);
-      }
-
-      showCopiedIndicator = true;
-      setTimeout(() => {
-        showCopiedIndicator = false;
-      }, 2000);
-    } catch (err) {
-      console.error("Failed to copy to clipboard:", err);
+  function openFAQ() {
+    showFAQ = true;
+    if (!faqRead) {
+      faqRead = true;
+      localStorage.setItem(STORAGE_KEYS.faqRead, "true");
     }
   }
 </script>
 
 <main>
   <div class="container">
-    <div class="header">
-      <h1>ELTE Schedule Builder</h1>
-      <div class="header-buttons">
-        {#if githubRepositoryUrl}
-          <GitHubStarLink href={githubRepositoryUrl} />
-        {/if}
-        <button
-          class="faq-btn {!faqRead ? 'glow' : ''}"
-          onclick={() => {
-            showFAQ = true;
-            if (!faqRead) {
-              faqRead = true;
-              localStorage.setItem(STORAGE_KEYS.faqRead, "true");
-            }
-          }}
-        >
-          FAQ & Guide
-        </button>
-        {#if allSubjects.length > 0}
-          <button class="reset-btn" onclick={resetAll}>Reset All</button>
-        {/if}
-      </div>
-    </div>
+    <AppHeader
+      {githubRepositoryUrl}
+      {faqRead}
+      hasSubjects={allSubjects.length > 0}
+      onOpenFAQ={openFAQ}
+      onReset={resetAll}
+    />
     {#key activeScheduleId}
-      <ScheduleInput
+      <ScheduleWorkspace
+        {events}
+        {activeCodes}
+        {lectureExemption}
+        {importedCodes}
         onScheduleUpdate={handleScheduleUpdate}
-        onExportToGoogle={handleExportToGoogle}
-        onShare={handleShare}
         onImportComplete={() =>
           (importedCodes = { baseCodes: "", fullCodes: [] })}
-        {importedCodes}
       />
     {/key}
     {#if allSubjects.length > 0}
@@ -318,34 +262,7 @@
       />
     {/if}
     <Calendar {events} {lectureExemption} />
-    <footer class="footer">
-      {#if githubRepositoryUrl}
-        <div class="github-footer-callout">
-          <span>Found this useful? Support the project:</span>
-          <GitHubStarLink href={githubRepositoryUrl} />
-        </div>
-      {/if}
-      <div class="contact-info">
-        <span>Contact:</span>
-        <a href="mailto:w04m1@proton.me" class="contact-link">w04m1@proton.me</a
-        >
-        <span class="separator">•</span>
-        <a
-          href="https://t.me/igenigenigen"
-          class="contact-link"
-          target="_blank"
-          rel="noopener noreferrer">Telegram</a
-        >
-      </div>
-      <div class="credits">
-        by <a
-          href="https://blog.w04m1.dev"
-          class="contact-link"
-          target="_blank"
-          rel="noopener noreferrer">Daniil Sherstennikov</a
-        > 😶‍🌫️
-      </div>
-    </footer>
+    <AppFooter {githubRepositoryUrl} />
   </div>
   <ColorLegend
     {lectureExemption}
@@ -359,18 +276,9 @@
     onRename={handleRenameSchedule}
     onDelete={deleteSchedule}
   />
-  {#if showCopiedIndicator}
-    <div class="copied-indicator">Share link copied to clipboard!</div>
-  {/if}
 </main>
 
 <FAQ isOpen={showFAQ} onClose={closeFAQ} />
-
-<ExportModal
-  isOpen={showExportModal}
-  onClose={() => (showExportModal = false)}
-  {events}
-/>
 
 <AppNotices
   {showWarning}
@@ -404,193 +312,9 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   }
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-  }
-
-  h1 {
-    margin: 0;
-    margin-right: 20px;
-    font-size: 2em;
-    font-weight: 600;
-    color: #4caf50;
-  }
-
-  .reset-btn {
-    padding: 8px 16px;
-    background: #d32f2f;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .reset-btn:hover {
-    background: #f44336;
-  }
-
   @media (max-width: 768px) {
     .container {
       padding: 15px;
-    }
-
-    h1 {
-      font-size: 1.5em;
-    }
-  }
-
-  .header-buttons {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .faq-btn {
-    padding: 8px 16px;
-    background: #4caf50;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .faq-btn.glow {
-    animation: glow 2s ease-in-out infinite;
-    box-shadow: 0 0 10px #4caf50;
-  }
-
-  @keyframes glow {
-    0% {
-      box-shadow: 0 0 10px #4caf50;
-    }
-    50% {
-      box-shadow:
-        0 0 20px #4caf50,
-        0 0 30px #45a049;
-    }
-    100% {
-      box-shadow: 0 0 10px #4caf50;
-    }
-  }
-
-  .faq-btn:hover {
-    background: #45a049;
-  }
-
-  @media (max-width: 768px) {
-    .header {
-      flex-direction: column;
-      gap: 12px;
-      align-items: flex-start;
-    }
-
-    .header-buttons {
-      width: 100%;
-      justify-content: flex-end;
-    }
-  }
-
-  .footer {
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid #2d2d2d;
-    text-align: center;
-  }
-
-  .github-footer-callout {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 18px;
-    color: #d0d0d0;
-  }
-
-  .contact-info {
-    color: #b0b0b0;
-    font-size: 0.9em;
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  .contact-link {
-    color: #4caf50;
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-
-  .contact-link:hover {
-    color: #45a049;
-    text-decoration: underline;
-  }
-
-  .separator {
-    color: #4d4d4d;
-  }
-
-  .credits {
-    margin-top: 12px;
-    color: #808080;
-    font-size: 1em;
-    text-align: center;
-  }
-
-  @media (max-width: 768px) {
-    .github-footer-callout {
-      flex-direction: column;
-    }
-
-    .contact-info {
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .separator {
-      display: none;
-    }
-  }
-
-  .copied-indicator {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #4caf50;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    animation: fadeInOut 2s ease-in-out;
-    outline: 2px solid #121212;
-  }
-
-  @keyframes fadeInOut {
-    0% {
-      opacity: 0;
-      transform: translate(-50%, 20px);
-    }
-    15% {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-    85% {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-    100% {
-      opacity: 0;
-      transform: translate(-50%, -20px);
     }
   }
 </style>

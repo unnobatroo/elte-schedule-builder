@@ -1,6 +1,9 @@
 services:
   backend:
-    image: node:20
+    build:
+      context: .
+      target: development
+    image: elte-schedule-builder-development
     working_dir: /workspace
     environment:
       NODE_ENV: development
@@ -14,7 +17,10 @@ services:
       - "3000:3000"
 
   frontend:
-    image: node:20
+    build:
+      context: .
+      target: development
+    image: elte-schedule-builder-development
     working_dir: /workspace
     environment:
       NODE_ENV: development
