@@ -44,18 +44,18 @@
     "vitest": "^3.2.7"
   },
   "dependencies": {
-    "@preact/signals": "^2.9.4",
+    "@preact/signals": "^2.10.1",
     "@schedule-x/calendar": "^3.7.3",
     "@schedule-x/event-modal": "^3.7.3",
     "@schedule-x/events-service": "^3.7.3",
     "@schedule-x/svelte": "^3.0.0",
     "@schedule-x/theme-default": "^3.7.3",
     "axios": "^1.7.9",
-    "cors": "^2.8.5",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "helmet": "^8.3.0",
-    "preact": "^10.29.7",
+    "preact": "^10.29.8",
     "sqlite": "^5.1.1",
     "sqlite3": "^6.0.1",
     "temporal-polyfill": "^0.3.0"
