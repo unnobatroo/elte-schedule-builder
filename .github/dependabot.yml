@@ -20,6 +20,24 @@ updates:
         update-types:
           - minor
           - patch
+      eslint-major:
+        patterns:
+          - eslint
+          - "@eslint/js"
+        update-types:
+          - major
+      vite-major:
+        patterns:
+          - vite
+          - "@sveltejs/vite-plugin-svelte"
+        update-types:
+          - major
+      vitest-major:
+        patterns:
+          - vitest
+          - "@vitest/*"
+        update-types:
+          - major
     commit-message:
       prefix: deps
 
@@ -32,6 +50,10 @@ updates:
       timezone: Europe/Budapest
     commit-message:
       prefix: deps(docker)
+    ignore:
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
