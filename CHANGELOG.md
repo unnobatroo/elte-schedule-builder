@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-06
+
 ### Added
 
 - Regression coverage for Tanrend queue timing, schedule sharing, lecture
@@ -19,6 +21,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Split header, footer, sharing, and export coordination out of `App.svelte`.
 - Normalized repository text files to LF for consistent Windows and Linux
   formatting checks.
+- Adopted Node.js 24 LTS as the supported production and development runtime.
+- Upgraded the Vite, Vitest, ESLint, Schedule-X events service, and GitHub
+  Actions toolchains for the first stable release.
 
 ### Security
 
@@ -47,5 +52,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Upgraded the application to Express 5, Marked 18, and Schedule-X 3.
 - Pinned the production Node.js container image by digest for reproducible builds.
 
-[Unreleased]: https://github.com/w04m1/elte-schedule-builder/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/w04m1/elte-schedule-builder/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/w04m1/elte-schedule-builder/releases/tag/v0.1.0
