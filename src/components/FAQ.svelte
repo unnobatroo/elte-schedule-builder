@@ -142,6 +142,15 @@
           to create, switch, rename, or delete local schedules. Each schedule keeps
           its own subjects and lecture-exemption setting.
         </p>
+
+        <h1>Data and privacy</h1>
+        <p>
+          Saved schedules and interface preferences remain in this browser's
+          local storage instead of being synchronized to an account. The
+          production site uses self-hosted analytics, session recording, and
+          heatmaps, which receive page-view and interaction data to help improve
+          the application.
+        </p>
       </div>
     </div>
   </div>

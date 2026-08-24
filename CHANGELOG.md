@@ -7,6 +7,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-08-25
+
+### Added
+
+- Restored production analytics, session recording, and heatmap collection.
+
+### Security
+
+- Allowed the analytics service's exact HTTPS origin for script loading and
+  event reporting while retaining the remaining Content Security Policy.
+
 ## [1.0.0] - 2026-08-06
 
 ### Added
@@ -52,6 +63,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Upgraded the application to Express 5, Marked 18, and Schedule-X 3.
 - Pinned the production Node.js container image by digest for reproducible builds.
 
-[Unreleased]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/w04m1/elte-schedule-builder/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/w04m1/elte-schedule-builder/releases/tag/v0.1.0

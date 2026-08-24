@@ -36,14 +36,17 @@ public issue.
 
 ## Data and privacy
 
-Your schedule stays in your browser unless you deliberately create a share link
-or open a Google Calendar export.
+Saved schedules remain in your browser's local storage instead of being synced
+to an account. The production site also uses self-hosted analytics, session
+recording, and heatmaps to understand usage and improve the application.
 
 - No account is required.
 - Subject codes are sent to this application's Express API, which requests
   Tanrend and caches responses in SQLite.
 - Schedules and interface preferences are stored in the browser's
   `localStorage` and are not synchronized between devices.
+- The analytics service receives page-view and interaction data, including
+  session-replay events.
 - Share links contain the enabled class codes and lecture-exemption setting.
   Anyone with a link can read that information.
 - Google receives event details only when you choose an event in the export
