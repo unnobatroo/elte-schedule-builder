@@ -34,6 +34,12 @@ describe("security headers", () => {
 
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("img-src 'self' data:");
+    expect(csp).toContain(
+      "script-src 'self' https://yep-im-trackinnnn.w04m1.dev",
+    );
+    expect(csp).toContain(
+      "connect-src 'self' https://yep-im-trackinnnn.w04m1.dev",
+    );
     expect(csp).not.toContain("i.imgur.com");
     expect(csp).not.toContain("upgrade-insecure-requests");
     expect(headers.get("x-content-type-options")).toBe("nosniff");

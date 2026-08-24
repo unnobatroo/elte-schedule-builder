@@ -14,6 +14,8 @@ describe("FAQ", () => {
 
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.getByText("Manage several schedules")).toBeTruthy();
+    expect(screen.getByText("Data and privacy")).toBeTruthy();
+    expect(screen.getByText(/session recording, and heatmaps/)).toBeTruthy();
     const guideImages = screen.getByRole("dialog").querySelectorAll("img");
     expect(guideImages).toHaveLength(8);
     expect(
