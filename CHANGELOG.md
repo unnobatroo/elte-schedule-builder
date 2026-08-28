@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-08-28
+
+### Changed
+
+- Updated the footer Telegram contact link to the new username.
+
 ## [1.0.1] - 2026-08-25
 
 ### Added
@@ -63,7 +69,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Upgraded the application to Express 5, Marked 18, and Schedule-X 3.
 - Pinned the production Node.js container image by digest for reproducible builds.
 
-[Unreleased]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/w04m1/elte-schedule-builder/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/w04m1/elte-schedule-builder/releases/tag/v0.1.0

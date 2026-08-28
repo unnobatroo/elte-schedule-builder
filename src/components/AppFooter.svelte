@@ -16,7 +16,7 @@
     <a href="mailto:w04m1@proton.me" class="contact-link">w04m1@proton.me</a>
     <span class="separator">•</span>
     <a
-      href="https://t.me/igenigenigen"
+      href="https://t.me/w04m1"
       class="contact-link"
       target="_blank"
       rel="noopener noreferrer">Telegram</a
