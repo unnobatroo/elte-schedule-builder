@@ -11,7 +11,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Updated the footer Telegram contact link to the new username.
+- Updated the footer Telegram contact link to a stable redirect.
 
 ## [1.0.1] - 2026-08-25
 
