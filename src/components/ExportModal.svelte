@@ -1,5 +1,6 @@
 <script>
   import {
+    getEventGroupNumber,
     getNextWeekDateForDay,
     formatDateToCompact,
   } from "../utils/schedule";
@@ -10,8 +11,7 @@
   function formatEventLabel(event) {
     const type = event.extendedProps?.type || "";
     const shortType = type.includes("lecture") ? "Lecture" : "Practice";
-    const code = event.description.split("\n")[0].trim();
-    const group = code.split("-")[2] || "";
+    const group = getEventGroupNumber(event);
     return `${shortType} - Group ${group}`;
   }
 

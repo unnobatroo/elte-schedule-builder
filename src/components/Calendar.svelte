@@ -7,7 +7,11 @@
 
   import { createEventModalPlugin } from "@schedule-x/event-modal";
   import "@schedule-x/theme-default/dist/index.css";
-  import { getConflictPairs, getWeekDateForDay } from "../utils/schedule";
+  import {
+    getConflictPairs,
+    getEventGroupNumber,
+    getWeekDateForDay,
+  } from "../utils/schedule";
   import TimeGridEvent from "./TimeGridEvent.svelte";
 
   let { events = [], lectureExemption = false } = $props();
@@ -33,7 +37,7 @@
 
       const dateStr = getWeekDateForDay(event.dayOfWeek);
 
-      const groupNumber = event.description.split("-")[2]?.split("\n")[0] || "";
+      const groupNumber = getEventGroupNumber(event);
       const isLecture = event.extendedProps?.type?.includes("lecture");
       const eventId = event.id || index.toString();
       const hasConflict = overlappingEvents.has(index);
