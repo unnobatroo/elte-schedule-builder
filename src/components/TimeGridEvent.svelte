@@ -1,10 +1,10 @@
 <script>
+  import { getEventGroupNumber } from "../utils/schedule";
+
   let { calendarEvent } = $props();
 
   const event = $derived(calendarEvent.originalEvent ?? {});
-  const groupNumber = $derived(
-    event.description?.split("-")[2]?.split("\n")[0] || "",
-  );
+  const groupNumber = $derived(getEventGroupNumber(event));
 </script>
 
 <div class="event-details">

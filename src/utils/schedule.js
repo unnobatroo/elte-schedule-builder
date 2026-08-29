@@ -77,6 +77,18 @@ export function getTanrendSubjectCode(code) {
   return parts.join("-");
 }
 
+export function getEventGroupNumber(event) {
+  const eventCode =
+    typeof event?.code === "string" && event.code.trim()
+      ? event.code.trim()
+      : typeof event?.description === "string"
+        ? event.description.split("\n")[0].trim()
+        : "";
+  const parts = eventCode.split("-");
+
+  return parts.length >= 3 ? parts.at(-1).trim() : "";
+}
+
 export function createCalendarEvents(classes) {
   if (!Array.isArray(classes)) return [];
 

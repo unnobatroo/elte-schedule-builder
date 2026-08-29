@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  getEventGroupNumber,
   getTanrendSubjectCode,
   parseSubjectCodes,
   processSubjectCode,
@@ -110,6 +111,30 @@ describe("Subject Code Processing", () => {
     it("removes a group suffix from longer Tanrend codes", () => {
       expect(getTanrendSubjectCode("IP-18fWPEG-90")).toBe("IP-18fWPEG");
       expect(getTanrendSubjectCode("CS-101-A-01")).toBe("CS-101-A");
+    });
+  });
+
+  describe("getEventGroupNumber", () => {
+    it("returns the group suffix from a standard event code", () => {
+      expect(getEventGroupNumber({ code: "IP-18fWPEG-90" })).toBe("90");
+    });
+
+    it("uses the final segment of longer event codes", () => {
+      expect(getEventGroupNumber({ code: "CS-101-A-01" })).toBe("01");
+    });
+
+    it("falls back to the description for older saved events", () => {
+      expect(
+        getEventGroupNumber({
+          description: "IP-18fKVFPG-91\nInstructor: Teaching Assistant",
+        }),
+      ).toBe("91");
+    });
+
+    it("returns an empty value for missing or group-less codes", () => {
+      expect(getEventGroupNumber({ code: "DEMO-1" })).toBe("");
+      expect(getEventGroupNumber({ code: "" })).toBe("");
+      expect(getEventGroupNumber()).toBe("");
     });
   });
 });
