@@ -7,6 +7,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-08-30
+
+### Added
+
+- Group numbers in the subject event dropdown, presented in aligned group,
+  type, day, and time columns with responsive overflow handling.
+- Legacy-compatible group parsing for older saved events that only contain the
+  full subject code in their description.
+
+### Changed
+
+- Updated compatible Preact, Schedule-X plugin, Svelte, Vite, Vitest, ESLint,
+  and GitHub Actions dependencies.
+
 ## [1.0.2] - 2026-08-28
 
 ### Changed
@@ -69,7 +83,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Upgraded the application to Express 5, Marked 18, and Schedule-X 3.
 - Pinned the production Node.js container image by digest for reproducible builds.
 
-[Unreleased]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/w04m1/elte-schedule-builder/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/w04m1/elte-schedule-builder/compare/v0.1.0...v1.0.0
