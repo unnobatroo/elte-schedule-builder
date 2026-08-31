@@ -67,6 +67,7 @@ function mockMatchMedia(prefersDark) {
       if (index >= 0) listeners.splice(index, 1);
     },
     trigger: () => listeners.forEach((listener) => listener()),
+    listenerCount: () => listeners.length,
   };
   vi.stubGlobal(
     "matchMedia",
@@ -155,6 +156,19 @@ describe("theme", () => {
     query.trigger();
     expect(get(resolvedTheme)).toBe("dark");
     expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+
+  it("replaces the previous device listener when initialized again", () => {
+    const query = mockMatchMedia(false);
+    const storage = createStorage();
+
+    initTheme(storage);
+    initTheme(storage);
+
+    expect(query.listenerCount()).toBe(1);
+    query.matches = true;
+    query.trigger();
+    expect(get(resolvedTheme)).toBe("dark");
   });
 
   it("does not follow device changes after an explicit preference", () => {

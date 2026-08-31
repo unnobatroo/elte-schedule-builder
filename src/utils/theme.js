@@ -44,6 +44,8 @@ let mediaListener;
  * color-scheme setting while no explicit preference was saved.
  */
 export function initTheme(storage = localStorage) {
+  mediaQuery?.removeEventListener?.("change", mediaListener);
+
   const preference = readStoredPreference(storage);
   themePreference.set(preference);
   applyPreference(preference);
