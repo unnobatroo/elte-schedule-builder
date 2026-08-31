@@ -15,55 +15,67 @@ const event = {
 };
 
 describe("ExportModal", () => {
-  let open;
+  let createObjectURL;
+  let revokeObjectURL;
+  let click;
 
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 7, 5, 12));
-    open = vi.spyOn(window, "open").mockImplementation(() => ({}));
+    createObjectURL = vi.fn(() => "blob:calendar-export");
+    revokeObjectURL = vi.fn();
+    vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
+    click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
   });
 
   afterEach(() => {
-    open.mockRestore();
+    click.mockRestore();
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
-  it("opens a complete Google Calendar template using local calendar dates", async () => {
+  it("downloads the complete timetable as one recurring iCalendar pack", async () => {
     render(ExportModal, {
-      props: { isOpen: true, events: [event], onClose: vi.fn() },
+      props: {
+        isOpen: true,
+        events: [
+          event,
+          {
+            ...event,
+            title: "Second",
+            description: "DEMO-2-1\nInstructor: Dr. Jane Smith",
+          },
+        ],
+        onClose: vi.fn(),
+      },
     });
 
     await fireEvent.click(
-      screen.getByRole("button", { name: /Add .* to Google Calendar/ }),
+      screen.getByRole("button", { name: /Download iCalendar pack/ }),
     );
 
-    expect(open).toHaveBeenCalledWith(expect.any(String), "_blank");
-    const url = new URL(open.mock.calls[0][0]);
-    expect(url.origin + url.pathname).toBe(
-      "https://calendar.google.com/calendar/render",
-    );
-    expect(url.searchParams.get("action")).toBe("TEMPLATE");
-    expect(url.searchParams.get("text")).toBe(event.title);
-    expect(url.searchParams.get("dates")).toBe(
-      "20260810T100000/20260810T113000",
-    );
-    expect(url.searchParams.get("location")).toBe("North Building 2.42");
-    expect(url.searchParams.get("details")).toBe(event.description);
-    expect(url.searchParams.get("recur")).toBe("RRULE:FREQ=WEEKLY");
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(createObjectURL.mock.calls[0][0]).toBeInstanceOf(Blob);
+    expect(click).toHaveBeenCalledOnce();
+    expect(screen.getByRole("status").textContent).toContain("2 classes");
   });
 
-  it("explains how to recover when the calendar popup is blocked", async () => {
-    open.mockReturnValue(null);
+  it("downloads the complete timetable as one Google CSV pack", async () => {
     render(ExportModal, {
       props: { isOpen: true, events: [event], onClose: vi.fn() },
     });
 
     await fireEvent.click(
-      screen.getByRole("button", { name: /Add .* to Google Calendar/ }),
+      screen.getByRole("button", { name: /Download Google Calendar CSV pack/ }),
     );
 
-    expect(screen.getByRole("alert").textContent).toContain(
-      "Allow pop-ups and try again",
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(createObjectURL.mock.calls[0][0].type).toBe(
+      "text/csv;charset=utf-8",
     );
+    expect(click).toHaveBeenCalledOnce();
+    expect(screen.getByRole("status").textContent).toContain("1 class");
   });
 });

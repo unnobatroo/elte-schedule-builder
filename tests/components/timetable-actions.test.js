@@ -46,7 +46,7 @@ describe("TimetableActions", () => {
       screen.getByRole("button", { name: "Export calendar" }),
     );
     expect(
-      screen.getByRole("heading", { name: "Export to Google Calendar" }),
+      screen.getByRole("heading", { name: "Export timetable" }),
     ).toBeTruthy();
 
     await fireEvent.click(

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -171,6 +172,44 @@ test("adds a DEMO class and keeps it after reload", async ({ page }) => {
       name: "Introduction to Web Development",
     }),
   ).toBeChecked();
+});
+
+test("downloads every enabled class in complete calendar packs", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByLabel("Subject code, course name, or professor")
+    .fill("DEMO-1");
+  await page.getByRole("button", { name: "Find courses" }).click();
+  await page
+    .getByRole("button", {
+      name: /Select class: Introduction to Web Development, Lecture, Monday/,
+    })
+    .click();
+  await page
+    .getByRole("button", {
+      name: /Select class: Introduction to Web Development, Practice, Wednesday/,
+    })
+    .click();
+
+  await page.getByRole("button", { name: "Export calendar" }).click();
+
+  const icsDownloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download iCalendar pack" }).click();
+  const icsPath = await (await icsDownloadPromise).path();
+  const ics = await readFile(icsPath, "utf8");
+  expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
+  expect(ics.match(/RRULE:FREQ=WEEKLY/g)).toHaveLength(2);
+
+  const csvDownloadPromise = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Download Google Calendar CSV pack" })
+    .click();
+  const csvPath = await (await csvDownloadPromise).path();
+  const csv = await readFile(csvPath, "utf8");
+  expect(csv).toContain("Subject,Start Date,Start Time,End Date,End Time");
+  expect(csv.match(/Introduction to Web Development/g)).toHaveLength(2);
 });
 
 test("keeps the mobile search action clickable while suggestions are open", async ({

@@ -145,9 +145,10 @@
           a meglévőket pedig megtartja.
         </p>
         <p>
-          A <strong>Naptárexport</strong> felsorolja az engedélyezett alkalmakat.
-          Mentés előtt ellenőrizd a dátumot, időpontot, ismétlődést és a félév végét
-          a Google Naptárban.
+          A <strong>Naptárexport</strong> az összes engedélyezett órát egyetlen csomagban
+          tölti le. Az iCalendar (.ics) hetente ismétlődő órákat tartalmaz, és több
+          naptáralkalmazással használható. A Google CSV minden óra következő időpontját
+          tartalmazza, heti ismétlődés nélkül.
         </p>
       </section>
 
@@ -298,8 +299,10 @@
           creates a new local plan and preserves existing plans.
         </p>
         <p>
-          <strong>Export calendar</strong> lists the enabled meetings. Review every
-          date, time, recurrence rule, and semester end in Google before saving.
+          <strong>Export calendar</strong> downloads every enabled class in one pack.
+          The iCalendar (.ics) pack contains weekly recurring events and works with
+          several calendar apps. The Google CSV pack contains the next occurrence
+          of every class without weekly recurrence.
         </p>
       </section>
 

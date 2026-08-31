@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Full-timetable iCalendar and Google Calendar CSV downloads generated locally
+  as one pack instead of separate per-class calendar links.
 - English and Hungarian interface localization with device-language defaults.
 - Universal course, code, and professor search with ranked autocomplete and
   typo-tolerant human-name matching.

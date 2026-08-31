@@ -175,12 +175,26 @@ const MESSAGES = {
     conflictCount: "{count} conflict",
     conflictCountPlural: "{count} conflicts",
     keepsSelection: "This option keeps every currently selected group.",
-    exportDialogTitle: "Export to Google Calendar",
+    calendarPack: "Full timetable",
+    exportDialogTitle: "Export timetable",
+    exportDialogDescription:
+      "Download every enabled class together in one calendar file.",
     closeExport: "Close export dialog",
-    addToCalendar: "Add to Calendar",
-    addEventToGoogle: "Add {name} ({label}) to Google Calendar",
-    googleCalendarFailed:
-      "Google Calendar could not be opened. Allow pop-ups and try again.",
+    classIncluded: "{count} class included",
+    classesIncluded: "{count} classes included",
+    icalendarTitle: "iCalendar (.ics)",
+    recommended: "Recommended",
+    icalendarDescription:
+      "A recurring weekly timetable for Apple Calendar, Outlook, Google Calendar, and other calendar apps.",
+    downloadICalendar: "Download iCalendar pack",
+    googleCsvTitle: "Google Calendar (.csv)",
+    googleCsvDescription:
+      "A Google-compatible pack containing the next occurrence of every class. CSV does not preserve weekly recurrence.",
+    downloadGoogleCsv: "Download Google Calendar CSV pack",
+    exportComplete: "Downloaded a pack containing {count} class.",
+    exportCompletePlural: "Downloaded a pack containing {count} classes.",
+    calendarExportFailed:
+      "The calendar pack could not be created. Please try again.",
     helpTitle: "Help and guide",
     closeGuide: "Close guide",
   },
@@ -361,12 +375,26 @@ const MESSAGES = {
     conflictCountPlural: "{count} ütközés",
     keepsSelection:
       "Ez a lehetőség megtart minden jelenleg kiválasztott csoportot.",
-    exportDialogTitle: "Exportálás Google Naptárba",
+    calendarPack: "Teljes órarend",
+    exportDialogTitle: "Órarend exportálása",
+    exportDialogDescription:
+      "Töltsd le az összes engedélyezett órát együtt, egyetlen naptárfájlban.",
     closeExport: "Exportálási ablak bezárása",
-    addToCalendar: "Hozzáadás a naptárhoz",
-    addEventToGoogle: "{name} ({label}) hozzáadása a Google Naptárhoz",
-    googleCalendarFailed:
-      "A Google Naptárat nem sikerült megnyitni. Engedélyezd a felugró ablakokat, majd próbáld újra.",
+    classIncluded: "{count} óra a csomagban",
+    classesIncluded: "{count} óra a csomagban",
+    icalendarTitle: "iCalendar (.ics)",
+    recommended: "Ajánlott",
+    icalendarDescription:
+      "Hetente ismétlődő órarend Apple Naptárhoz, Outlookhoz, Google Naptárhoz és más naptáralkalmazásokhoz.",
+    downloadICalendar: "iCalendar-csomag letöltése",
+    googleCsvTitle: "Google Naptár (.csv)",
+    googleCsvDescription:
+      "Google-kompatibilis csomag minden óra következő időpontjával. A CSV nem őrzi meg a heti ismétlődést.",
+    downloadGoogleCsv: "Google Naptár CSV-csomag letöltése",
+    exportComplete: "Letöltött csomag: {count} óra.",
+    exportCompletePlural: "Letöltött csomag: {count} óra.",
+    calendarExportFailed:
+      "Nem sikerült létrehozni a naptárcsomagot. Próbáld újra.",
     helpTitle: "Súgó és útmutató",
     closeGuide: "Útmutató bezárása",
   },

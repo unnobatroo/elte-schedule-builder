@@ -1,6 +1,6 @@
 # ELTE Schedule Builder 🎓
 
-A small schedule planner for ELTE students. Search by subject code, course name, or professor, compare groups, spot conflicts, hide classes you do not want, and export the result to Google Calendar.
+A small schedule planner for ELTE students. Search by subject code, course name, or professor, compare groups, spot conflicts, hide classes you do not want, and export the complete timetable to a calendar app.
 
 [Open the planner](https://schedule.w04m1.dev) · [Read the user guide](docs/user-guide.md) · [Get help](.github/SUPPORT.md) · [Contribute](.github/CONTRIBUTING.md)
 
@@ -21,9 +21,9 @@ subject export. Use `DEMO-1` through `DEMO-6` to try the complete workflow
 without depending on live Tanrend results.
 
 The planner can compare groups, mark overlapping classes, hide individual
-events, keep multiple local schedules, create share links, and open visible
-events as Google Calendar templates. See the [user guide](docs/user-guide.md)
-for the full workflow and limitations.
+events, keep multiple local schedules, create share links, and download the
+complete visible timetable as an iCalendar or Google Calendar CSV pack. See the
+[user guide](docs/user-guide.md) for the full workflow and limitations.
 
 The interface is available in English and Hungarian. On the first visit it
 uses Hungarian only when Hungarian is the device's primary language; otherwise
@@ -55,8 +55,8 @@ recording, and heatmaps to understand usage and improve the application.
   session-replay events.
 - Share links contain the enabled class codes and lecture-exemption setting.
   Anyone with a link can read that information.
-- Google receives event details only when you choose an event in the export
-  dialog and open its Google Calendar template.
+- Calendar exports are generated locally. A calendar provider receives the
+  event details only when the downloaded file is imported there.
 
 ## Run it locally
 

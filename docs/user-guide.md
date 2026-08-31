@@ -6,7 +6,7 @@ official ELTE service.
 
 [Try DEMO data](#try-it-with-demo-data) ·
 [Build a schedule](#build-a-schedule-from-a-code-course-or-professor) ·
-[Share](#share-a-schedule) · [Export](#export-to-google-calendar) ·
+[Share](#share-a-schedule) · [Export](#export-a-timetable) ·
 [Troubleshoot](#storage-and-troubleshooting)
 
 > [!IMPORTANT]
@@ -114,13 +114,20 @@ overwriting schedules already saved in that browser.
 Treat share links as readable information: anyone with the URL can recover the
 class codes it contains.
 
-## Export to Google Calendar
+## Export a timetable
 
-**Export calendar** lists the currently visible events. Each **Add to
-Calendar** button opens a Google Calendar template for one weekly event. Review
-the date, time, recurrence, and semester end before saving it in Google.
-If the browser blocks the new window, the export dialog explains that pop-ups
-must be allowed before trying again.
+**Export calendar** downloads every enabled class together as one pack; it does
+not extract individual courses. Choose the format that matches the destination:
+
+- **iCalendar (.ics)** is the recommended option. It contains the complete
+  timetable as weekly recurring events and can be imported into Apple Calendar,
+  Outlook, Google Calendar, and other calendar apps.
+- **Google Calendar (.csv)** contains the next occurrence of every enabled
+  meeting in Google's import format. CSV imports do not preserve weekly
+  recurrence, so use iCalendar when recurring classes are required.
+
+Both files are created locally in the browser. Review imported dates, times,
+recurrence, and the semester end in the destination calendar.
 
 ## Storage and troubleshooting
 

@@ -2,47 +2,53 @@
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
   import {
-    getEventGroupNumber,
-    getNextWeekDateForDay,
-    formatDateToCompact,
-    isLectureType,
-  } from "../utils/schedule.js";
+    buildGoogleCalendarCsv,
+    buildICalendar,
+    getCalendarEventCount,
+  } from "../utils/calendarExport.js";
   import { language, t } from "../utils/i18n.js";
 
   let { isOpen = false, onClose, events = [] } = $props();
   let exportError = $state("");
+  let exportStatus = $state("");
+  let eventCount = $derived(getCalendarEventCount(events));
 
-  function formatEventLabel(event) {
-    const type = event.extendedProps?.type || "";
-    const shortType = isLectureType(type)
-      ? t($language, "lecture")
-      : t($language, "practice");
-    const group = getEventGroupNumber(event);
-    return `${shortType} - ${t($language, "group")} ${group}`;
+  function downloadFile(content, filename, type) {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
   }
 
-  function handleExport(event) {
-    const isoDateStr = getNextWeekDateForDay(event.dayOfWeek);
-    const [year, month, day] = isoDateStr.split("-").map(Number);
-    const eventDateObj = new Date(year, month - 1, day);
-    const dateStr = formatDateToCompact(eventDateObj);
-
-    const startTime = event.startTime.replace(":", "") + "00";
-    const endTime = event.endTime.replace(":", "") + "00";
-
-    const url =
-      `https://calendar.google.com/calendar/render?action=TEMPLATE` +
-      `&text=${encodeURIComponent(event.title)}` +
-      `&dates=${dateStr}T${startTime}/${dateStr}T${endTime}` +
-      `&location=${encodeURIComponent(event.extendedProps?.location || "")}` +
-      `&details=${encodeURIComponent(`${event.description || ""}`)}` +
-      `&recur=RRULE:FREQ=WEEKLY`;
+  function handleExport(format) {
+    exportError = "";
+    exportStatus = "";
 
     try {
-      const popup = window.open(url, "_blank");
-      exportError = popup ? "" : t($language, "googleCalendarFailed");
+      if (format === "ics") {
+        downloadFile(
+          buildICalendar(events),
+          "elte-timetable.ics",
+          "text/calendar;charset=utf-8",
+        );
+      } else {
+        downloadFile(
+          buildGoogleCalendarCsv(events),
+          "elte-timetable-google.csv",
+          "text/csv;charset=utf-8",
+        );
+      }
+      exportStatus = t(
+        $language,
+        eventCount === 1 ? "exportComplete" : "exportCompletePlural",
+        { count: eventCount },
+      );
     } catch {
-      exportError = t($language, "googleCalendarFailed");
+      exportError = t($language, "calendarExportFailed");
     }
   }
 </script>
@@ -57,45 +63,64 @@
     >
       <Icon name="x" size={22} />
     </button>
-    <h2>{t($language, "exportDialogTitle")}</h2>
+
+    <header>
+      <p class="eyebrow">{t($language, "calendarPack")}</p>
+      <h2>{t($language, "exportDialogTitle")}</h2>
+      <p class="intro">{t($language, "exportDialogDescription")}</p>
+    </header>
+
+    <p class="included">
+      {t($language, eventCount === 1 ? "classIncluded" : "classesIncluded", {
+        count: eventCount,
+      })}
+    </p>
+
     {#if exportError}
-      <p class="export-error" role="alert">{exportError}</p>
+      <p class="message error" role="alert">{exportError}</p>
     {/if}
-    <ul class="events-list">
-      {#each events as event (event)}
-        <li class="event-item">
-          <div class="event-info">
-            <div class="event-title">{event.title}</div>
-            <div class="event-details">
-              <span class="event-type">{formatEventLabel(event)}</span>
-              <span class="event-time"
-                ><Icon name="clock" size={14} />
-                {event.dayOfWeek}
-                {event.startTime}-{event.endTime}</span
-              >
-              {#if event.extendedProps?.location}
-                <span class="event-location"
-                  ><Icon name="map-pin" size={14} />
-                  {event.extendedProps.location}</span
-                >
-              {/if}
-            </div>
+    {#if exportStatus}
+      <p class="message success" role="status">{exportStatus}</p>
+    {/if}
+
+    <div class="formats">
+      <section class="format-card recommended">
+        <div class="format-copy">
+          <div class="format-heading">
+            <h3>{t($language, "icalendarTitle")}</h3>
+            <span class="badge">{t($language, "recommended")}</span>
           </div>
-          <button
-            type="button"
-            class="button button-transfer export-btn"
-            aria-label={t($language, "addEventToGoogle", {
-              name: event.title,
-              label: formatEventLabel(event),
-            })}
-            onclick={() => handleExport(event)}
-          >
-            <Icon name="external-link" size={16} />
-            {t($language, "addToCalendar")}
-          </button>
-        </li>
-      {/each}
-    </ul>
+          <p>{t($language, "icalendarDescription")}</p>
+        </div>
+        <button
+          type="button"
+          class="button button-primary"
+          disabled={eventCount === 0}
+          onclick={() => handleExport("ics")}
+        >
+          <Icon name="download" size={18} />
+          {t($language, "downloadICalendar")}
+        </button>
+      </section>
+
+      <section class="format-card">
+        <div class="format-copy">
+          <div class="format-heading">
+            <h3>{t($language, "googleCsvTitle")}</h3>
+          </div>
+          <p>{t($language, "googleCsvDescription")}</p>
+        </div>
+        <button
+          type="button"
+          class="button button-secondary"
+          disabled={eventCount === 0}
+          onclick={() => handleExport("csv")}
+        >
+          <Icon name="download" size={18} />
+          {t($language, "downloadGoogleCsv")}
+        </button>
+      </section>
+    </div>
   </div>
 </Modal>
 
@@ -103,13 +128,27 @@
   .export-panel {
     position: relative;
   }
-
+  header {
+    max-width: 680px;
+  }
+  .eyebrow {
+    margin: 0 0 var(--space-2);
+    color: var(--color-accent);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
   h2 {
-    color: var(--color-accent-strong);
-    margin: 0 0 var(--space-5);
+    margin: 0;
+    color: var(--color-text);
     font-size: var(--text-2xl);
   }
-
+  .intro {
+    margin: var(--space-2) 0 0;
+    color: var(--color-text-muted);
+    line-height: 1.55;
+  }
   .close-btn {
     position: absolute;
     top: -4px;
@@ -118,87 +157,79 @@
     min-width: var(--control-sm);
     min-height: var(--control-sm);
   }
-
-  .events-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    max-height: 70vh;
-    overflow-y: auto;
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  .included {
+    margin: var(--space-5) 0 var(--space-3);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
   }
-
-  .export-error {
-    margin: 0 0 16px;
+  .message {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-sm);
+  }
+  .error {
     color: var(--color-danger);
   }
-
-  .event-item {
-    background: var(--color-surface-2);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-4);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-4);
+  .success {
+    color: var(--color-success);
   }
-
-  .event-info {
-    flex: 1;
+  .formats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  .format-card {
+    display: flex;
     min-width: 0;
-    display: flex;
     flex-direction: column;
-    gap: 4px;
-    text-align: left;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-2);
   }
-
-  .event-title {
-    font-weight: var(--weight-semibold);
-    color: var(--color-text);
+  .format-card.recommended {
+    border-color: var(--color-accent);
   }
-
-  .event-details {
+  .format-heading {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-3);
-    font-size: var(--text-sm);
-    color: var(--color-text-muted);
-  }
-
-  .event-details span {
-    display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-2);
+  }
+  h3 {
+    margin: 0;
+    color: var(--color-text);
+    font-size: var(--text-lg);
+  }
+  .format-copy p {
+    margin: var(--space-2) 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+  .badge {
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    color: var(--color-accent-strong);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+  }
+  .format-card .button {
+    align-self: flex-start;
   }
 
-  .event-type {
-    color: var(--color-accent);
-    font-weight: 500;
-  }
-
-  .event-time {
-    color: var(--color-warning);
-  }
-
-  .event-location {
-    color: var(--color-info);
-  }
-
-  .export-btn {
-    white-space: nowrap;
-  }
-
-  @media (max-width: 768px) {
-    .event-item {
-      flex-direction: column;
-      align-items: stretch;
+  @media (max-width: 680px) {
+    .formats {
+      grid-template-columns: 1fr;
     }
-
-    .export-btn {
-      margin-top: 12px;
+    .format-card {
+      padding: var(--space-4);
+    }
+    .format-card .button {
+      width: 100%;
       justify-content: center;
     }
   }

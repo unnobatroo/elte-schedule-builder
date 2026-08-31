@@ -235,10 +235,10 @@ describe("App integration", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Export to Google Calendar" }),
+      screen.getByRole("heading", { name: "Export timetable" }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: /Add .* to Google Calendar/ }),
+      screen.getByRole("button", { name: "Download iCalendar pack" }),
     ).toBeTruthy();
   });
 

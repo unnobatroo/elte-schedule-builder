@@ -6,7 +6,7 @@ coverage.
 
 ## Local calendar dates
 
-**Decision:** Treat schedule dates and Google Calendar export dates as local
+**Decision:** Treat schedule dates and calendar export dates as local
 calendar dates. Construct them from local year, month, and day values and do not
 round-trip them through `Date.prototype.toISOString()`.
 
@@ -19,6 +19,19 @@ timestamps but does not match the schedule's calendar-date semantics.
 
 **Consequence:** Date utilities and export behavior need tests around week and
 year boundaries in the local timezone.
+
+## Full-calendar export packs
+
+**Decision:** Export every enabled meeting in one file. Use recurring iCalendar
+as the primary cross-platform format and offer Google's documented CSV format
+as a complete, non-recurring alternative.
+
+**Why:** A timetable is imported as a unit. Per-event browser pop-ups made users
+repeat the same operation and could leave a calendar partially imported.
+
+**Consequence:** iCalendar is the recommended format because it preserves weekly
+recurrence. The export dialog must explain that CSV contains only each meeting's
+next occurrence.
 
 ## Stable shared-schedule URLs
 
