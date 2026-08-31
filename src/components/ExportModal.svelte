@@ -1,18 +1,24 @@
 <script>
+  import Icon from "./Icon.svelte";
+  import Modal from "./Modal.svelte";
   import {
     getEventGroupNumber,
     getNextWeekDateForDay,
     formatDateToCompact,
-  } from "../utils/schedule";
+    isLectureType,
+  } from "../utils/schedule.js";
+  import { language, t } from "../utils/i18n.js";
 
   let { isOpen = false, onClose, events = [] } = $props();
   let exportError = $state("");
 
   function formatEventLabel(event) {
     const type = event.extendedProps?.type || "";
-    const shortType = type.includes("lecture") ? "Lecture" : "Practice";
+    const shortType = isLectureType(type)
+      ? t($language, "lecture")
+      : t($language, "practice");
     const group = getEventGroupNumber(event);
-    return `${shortType} - Group ${group}`;
+    return `${shortType} - ${t($language, "group")} ${group}`;
   }
 
   function handleExport(event) {
@@ -34,133 +40,110 @@
 
     try {
       const popup = window.open(url, "_blank");
-      exportError = popup
-        ? ""
-        : "Google Calendar could not be opened. Allow pop-ups and try again.";
+      exportError = popup ? "" : t($language, "googleCalendarFailed");
     } catch {
-      exportError =
-        "Google Calendar could not be opened. Allow pop-ups and try again.";
+      exportError = t($language, "googleCalendarFailed");
     }
   }
 </script>
 
-{#if isOpen}
-  <div class="modal-backdrop">
-    <div
-      class="modal-content"
-      role="dialog"
-      tabindex="0"
-      aria-modal="true"
-      onclick={(e) => e.stopPropagation()}
-      onkeydown={(e) => {
-        if (e.key === "Escape") onClose();
-      }}
+<Modal open={isOpen} wide label={t($language, "exportDialogTitle")} {onClose}>
+  <div class="export-panel">
+    <button
+      type="button"
+      class="button button-ghost button-icon close-btn"
+      aria-label={t($language, "closeExport")}
+      onclick={onClose}
     >
-      <button class="close-btn" onclick={onClose}>×</button>
-      <h2>Export to Google Calendar</h2>
-      {#if exportError}
-        <p class="export-error" role="alert">{exportError}</p>
-      {/if}
-      <div class="events-list">
-        {#each events as event (event)}
-          <div class="event-item">
-            <div class="event-info">
-              <div class="event-title">{event.title}</div>
-              <div class="event-details">
-                <span class="event-type">{formatEventLabel(event)}</span>
-                <span class="event-time"
-                  >{event.dayOfWeek} {event.startTime}-{event.endTime}</span
+      <Icon name="x" size={22} />
+    </button>
+    <h2>{t($language, "exportDialogTitle")}</h2>
+    {#if exportError}
+      <p class="export-error" role="alert">{exportError}</p>
+    {/if}
+    <ul class="events-list">
+      {#each events as event (event)}
+        <li class="event-item">
+          <div class="event-info">
+            <div class="event-title">{event.title}</div>
+            <div class="event-details">
+              <span class="event-type">{formatEventLabel(event)}</span>
+              <span class="event-time"
+                ><Icon name="clock" size={14} />
+                {event.dayOfWeek}
+                {event.startTime}-{event.endTime}</span
+              >
+              {#if event.extendedProps?.location}
+                <span class="event-location"
+                  ><Icon name="map-pin" size={14} />
+                  {event.extendedProps.location}</span
                 >
-                {#if event.extendedProps?.location}
-                  <span class="event-location"
-                    >{event.extendedProps.location}</span
-                  >
-                {/if}
-              </div>
+              {/if}
             </div>
-            <button class="export-btn" onclick={() => handleExport(event)}>
-              Add to Calendar
-            </button>
           </div>
-        {/each}
-      </div>
-    </div>
+          <button
+            type="button"
+            class="button button-transfer export-btn"
+            aria-label={t($language, "addEventToGoogle", {
+              name: event.title,
+              label: formatEventLabel(event),
+            })}
+            onclick={() => handleExport(event)}
+          >
+            <Icon name="external-link" size={16} />
+            {t($language, "addToCalendar")}
+          </button>
+        </li>
+      {/each}
+    </ul>
   </div>
-{/if}
+</Modal>
 
 <style>
-  .modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    z-index: 1000;
-    overflow-y: auto;
-    padding: 20px;
-  }
-
-  .modal-content {
-    background: #2d2d2d;
-    border-radius: 8px;
-    padding: 24px;
-    max-width: 800px;
-    width: 90%;
-    margin: 20px auto;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  .export-panel {
     position: relative;
   }
 
   h2 {
-    color: #4caf50;
-    margin: 0 0 20px 0;
-    font-size: 1.5em;
+    color: var(--color-accent-strong);
+    margin: 0 0 var(--space-5);
+    font-size: var(--text-2xl);
   }
 
   .close-btn {
     position: absolute;
-    top: 16px;
-    right: 16px;
-    background: none;
-    border: none;
-    color: #b0b0b0;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    z-index: 2;
-  }
-
-  .close-btn:hover {
-    color: #ffffff;
-    background: #3d3d3d;
+    top: -4px;
+    right: -4px;
+    width: var(--control-sm);
+    min-width: var(--control-sm);
+    min-height: var(--control-sm);
   }
 
   .events-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-3);
     max-height: 70vh;
     overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
 
   .export-error {
     margin: 0 0 16px;
-    color: #ff8a80;
+    color: var(--color-danger);
   }
 
   .event-item {
-    background: #1a1a1a;
-    border-radius: 6px;
-    padding: 16px;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-4);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
+    gap: var(--space-4);
   }
 
   .event-info {
@@ -169,59 +152,46 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    text-align: left;
   }
 
   .event-title {
-    font-weight: 500;
-    color: #ffffff;
-    text-align: left;
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
   }
 
   .event-details {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    font-size: 0.9em;
-    color: #b0b0b0;
-    justify-content: flex-start;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .event-details span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .event-type {
-    color: #4caf50;
+    color: var(--color-accent);
+    font-weight: 500;
   }
 
   .event-time {
-    color: #ffa726;
+    color: var(--color-warning);
   }
 
   .event-location {
-    color: #64b5f6;
+    color: var(--color-info);
   }
 
   .export-btn {
-    padding: 8px 16px;
-    background: #4caf50;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
     white-space: nowrap;
   }
 
-  .export-btn:hover {
-    background: #45a049;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
   @media (max-width: 768px) {
-    .modal-content {
-      padding: 16px;
-      margin: 16px;
-    }
-
     .event-item {
       flex-direction: column;
       align-items: stretch;
@@ -229,6 +199,7 @@
 
     .export-btn {
       margin-top: 12px;
+      justify-content: center;
     }
   }
 </style>
