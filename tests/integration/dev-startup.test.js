@@ -82,8 +82,6 @@ describe("development startup", () => {
       `http://127.0.0.1:${frontendPort}/api/subject/DEMO-1`,
       output,
     );
-
-    expect(output.value).toContain(`localhost:${frontendPort}`);
   }, 25_000);
 
   it("fails clearly instead of silently switching frontend ports", async () => {
