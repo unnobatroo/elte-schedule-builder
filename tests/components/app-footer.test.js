@@ -25,6 +25,10 @@ describe("AppFooter", () => {
     expect(daniil.getAttribute("rel")).toBe("noopener noreferrer");
     expect(jaloliddin.getAttribute("rel")).toBe("noopener noreferrer");
     expect(
+      jaloliddin.compareDocumentPosition(daniil) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
       screen
         .getByRole("link", { name: "Star on GitHub (opens in a new tab)" })
         .getAttribute("href"),

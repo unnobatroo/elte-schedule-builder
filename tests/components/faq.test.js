@@ -33,7 +33,7 @@ describe("FAQ", () => {
       screen.getByText("Clear schedule").parentElement.textContent,
     ).toMatch(/current plan/);
     expect(screen.queryByText(/under Search by/)).toBeNull();
-    expect(screen.getByText(/session recording, and heatmaps/)).toBeTruthy();
+    expect(screen.getByText(/does not include analytics/)).toBeTruthy();
     await fireEvent.click(screen.getByRole("button", { name: "Close guide" }));
     expect(onClose).toHaveBeenCalledOnce();
   });

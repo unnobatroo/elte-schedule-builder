@@ -84,6 +84,27 @@ than the live Tanrend service. The browser and API remain same-origin in
 production, while Vite proxies `/api` during development; the backend therefore
 does not expose a permissive cross-origin API.
 
+## Deployment-specific cache adapters
+
+**Decision:** Keep one Express application and inject a cache store at its
+composition boundary. Local and container deployments use the SQLite adapter;
+Vercel functions use a bounded in-memory TTL adapter.
+
+**Why:** Vercel function filesystems are ephemeral, and the native SQLite build
+is not a portable serverless contract. The cache is an optimization rather than
+the source of schedule truth, so a warm-instance cache preserves correctness
+without adding an external database service.
+
+**Alternative considered:** Proxy the fork to another deployment's API or add a
+managed cache dependency. The former makes this deployment depend on another
+owner; the latter adds credentials, cost, and operational work that current
+traffic does not justify.
+
+**Consequence:** Cold starts begin with an empty cache and rate limiting remains
+per function instance. The Tanrend queue, validation, and API response contract
+are shared across environments. A managed cache can replace the in-memory
+adapter later without changing the browser or Tanrend service.
+
 ## Deterministic DEMO subjects
 
 **Decision:** Serve `DEMO-1` through `DEMO-6` locally without calling Tanrend.

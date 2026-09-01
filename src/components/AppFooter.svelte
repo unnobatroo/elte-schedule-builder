@@ -12,17 +12,17 @@
       <strong>{t($language, "notAffiliated")}</strong>
       <p>
         {t($language, "builtBy")}
+        <a href="https://jalols.page/" target="_blank" rel="noopener noreferrer"
+          >Jaloliddin Ismailov<span class="sr-only">
+            ({t($language, "opensNewTab")})</span
+          ></a
+        >
+        {t($language, "and")}
         <a
           href="https://blog.w04m1.dev/"
           target="_blank"
           rel="noopener noreferrer"
           >Daniil Sherstennikov<span class="sr-only">
-            ({t($language, "opensNewTab")})</span
-          ></a
-        >
-        {t($language, "and")}
-        <a href="https://jalols.page/" target="_blank" rel="noopener noreferrer"
-          >Jaloliddin Ismailov<span class="sr-only">
             ({t($language, "opensNewTab")})</span
           ></a
         >.

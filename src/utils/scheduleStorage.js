@@ -6,7 +6,7 @@ import {
 } from "./scheduleState.js";
 
 export const SCHEDULES_STORAGE_KEY = STORAGE_KEYS.schedules;
-export const DEFAULT_SCHEDULE_NAME = "Default schedule";
+const DEFAULT_SCHEDULE_NAME = "Default schedule";
 
 function createScheduleId() {
   if (globalThis.crypto?.randomUUID) {

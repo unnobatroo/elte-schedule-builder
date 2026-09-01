@@ -31,11 +31,11 @@ export function getEventInstructor(event) {
   return description.match(/(?:^|\n)Instructor:\s*(.*)$/im)?.[1]?.trim() ?? "";
 }
 
-export function getEventLocation(event) {
+function getEventLocation(event) {
   return String(event.extendedProps?.location ?? event.location ?? "").trim();
 }
 
-export function getEventVariantIdentity(event) {
+function getEventVariantIdentity(event) {
   return [
     normalizeIdentityValue(getEventCode(event)),
     normalizeIdentityValue(getEventType(event)),

@@ -1,8 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdir } from "node:fs/promises";
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
 
 const projectRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -12,6 +10,11 @@ const projectRoot = path.resolve(
 export const DEFAULT_CACHE_DB_PATH = path.join(projectRoot, "data", "cache.db");
 
 export async function setupDatabase(filename = DEFAULT_CACHE_DB_PATH) {
+  const [{ default: sqlite3 }, { open }] = await Promise.all([
+    import("sqlite3"),
+    import("sqlite"),
+  ]);
+
   if (filename !== ":memory:") {
     await mkdir(path.dirname(filename), { recursive: true });
   }
@@ -35,7 +38,7 @@ export async function setupDatabase(filename = DEFAULT_CACHE_DB_PATH) {
   return database;
 }
 
-export async function getCachedData(database, key, cacheDuration, now) {
+async function getCachedData(database, key, cacheDuration, now) {
   const entry = await database.get(
     "SELECT * FROM cache WHERE key = ? AND timestamp > ?",
     key,
@@ -46,7 +49,7 @@ export async function getCachedData(database, key, cacheDuration, now) {
     : null;
 }
 
-export async function setCachedData(database, key, data, maxEntries, now) {
+async function setCachedData(database, key, data, maxEntries, now) {
   await database.run(
     "INSERT OR REPLACE INTO cache (key, data, timestamp) VALUES (?, ?, ?)",
     key,
@@ -56,7 +59,7 @@ export async function setCachedData(database, key, data, maxEntries, now) {
   await trimCache(database, maxEntries);
 }
 
-export async function cleanupCache(database, cacheDuration, now, logger) {
+async function cleanupCache(database, cacheDuration, now, logger) {
   const expiredTime = now() - cacheDuration;
   const result = await database.run(
     "DELETE FROM cache WHERE timestamp < ?",
@@ -77,4 +80,57 @@ export async function trimCache(db, maxEntries) {
      )`,
     maxEntries,
   );
+}
+
+export function createSqliteCacheStore({
+  database,
+  cacheDuration,
+  maxEntries,
+  now = Date.now,
+  logger = console,
+}) {
+  return {
+    get: (key) => getCachedData(database, key, cacheDuration, now),
+    set: (key, data) => setCachedData(database, key, data, maxEntries, now),
+    cleanup: () => cleanupCache(database, cacheDuration, now, logger),
+  };
+}
+
+export function createMemoryCacheStore({
+  cacheDuration = 3 * 60 * 60 * 1000,
+  maxEntries = 1000,
+  now = Date.now,
+  logger = console,
+} = {}) {
+  const entries = new Map();
+
+  return {
+    async get(key) {
+      const entry = entries.get(key);
+      if (!entry || entry.timestamp <= now() - cacheDuration) {
+        entries.delete(key);
+        return null;
+      }
+      return entry;
+    },
+    async set(key, data) {
+      entries.delete(key);
+      entries.set(key, { data, timestamp: now() });
+      while (entries.size > maxEntries) {
+        entries.delete(entries.keys().next().value);
+      }
+    },
+    async cleanup() {
+      const expiredTime = now() - cacheDuration;
+      let removed = 0;
+      for (const [key, entry] of entries) {
+        if (entry.timestamp < expiredTime) {
+          entries.delete(key);
+          removed += 1;
+        }
+      }
+      if (removed > 0)
+        logger.log(`Cleaned up ${removed} expired cache entries`);
+    },
+  };
 }

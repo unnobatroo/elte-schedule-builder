@@ -57,7 +57,7 @@
   });
   const githubRepositoryUrl =
     import.meta.env.VITE_GITHUB_REPOSITORY_URL?.trim() ||
-    "https://github.com/w04m1/elte-schedule-builder";
+    "https://github.com/unnobatroo/elte-schedule-builder";
 
   onMount(() => {
     const path = window.location.pathname;

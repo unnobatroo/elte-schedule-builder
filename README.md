@@ -2,7 +2,7 @@
 
 A small schedule planner for ELTE students. Search by subject code, course name, or professor, compare groups, spot conflicts, hide classes you do not want, and export the complete timetable to a calendar app.
 
-[Open the planner](https://schedule.w04m1.dev) · [Read the user guide](docs/user-guide.md) · [Get help](.github/SUPPORT.md) · [Contribute](.github/CONTRIBUTING.md)
+[Open the planner](https://schedule.jalols.page) · [Read the user guide](docs/user-guide.md) · [Get help](.github/SUPPORT.md) · [Contribute](.github/CONTRIBUTING.md)
 
 The useful bit is that you can plan ahead. Tanrend exposes the underlying course data through an endpoint before it shows that data in its regular frontend. This project uses that endpoint to make upcoming schedule information available earlier and in a much nicer format.
 
@@ -43,16 +43,13 @@ Report security concerns privately through
 ## Data and privacy
 
 Saved schedules remain in your browser's local storage instead of being synced
-to an account. The production site also uses self-hosted analytics, session
-recording, and heatmaps to understand usage and improve the application.
+to an account. The application does not include analytics or session recording.
 
 - No account is required.
 - Subject-code and subject-name searches are sent to this application's Express
-  API, which requests Tanrend and caches responses in SQLite.
+  API, which requests Tanrend and keeps a bounded response cache.
 - Schedules and interface preferences are stored in the browser's
   `localStorage` and are not synchronized between devices.
-- The analytics service receives page-view and interaction data, including
-  session-replay events.
 - Share links contain the enabled class codes and lecture-exemption setting.
   Anyone with a link can read that information.
 - Calendar exports are generated locally. A calendar provider receives the
@@ -88,6 +85,12 @@ docker compose -f deploy/compose.dev.yml up --build
 Production images and the Dokploy release procedure are documented in
 [docs/deployment.md](docs/deployment.md). Published changes are listed in the
 [changelog](CHANGELOG.md).
+
+The public fork is deployed to Vercel at
+[schedule.jalols.page](https://schedule.jalols.page). Vercel serves the Vite
+frontend and runs the same Express API through a thin adapter. Warm function
+instances use a bounded in-memory cache; local and container deployments keep
+the persistent SQLite cache.
 
 ## Useful commands
 

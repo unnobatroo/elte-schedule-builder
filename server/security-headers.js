@@ -1,7 +1,5 @@
 import helmet from "helmet";
 
-const analyticsOrigin = "https://yep-im-trackinnnn.w04m1.dev";
-
 export function createSecurityHeaders({
   enableHsts = process.env.NODE_ENV === "production",
 } = {}) {
@@ -10,13 +8,13 @@ export function createSecurityHeaders({
       directives: {
         defaultSrc: ["'self'"],
         baseUri: ["'self'"],
-        connectSrc: ["'self'", analyticsOrigin],
+        connectSrc: ["'self'"],
         fontSrc: ["'self'", "data:"],
         formAction: ["'self'"],
         frameAncestors: ["'none'"],
         imgSrc: ["'self'", "data:"],
         objectSrc: ["'none'"],
-        scriptSrc: ["'self'", analyticsOrigin],
+        scriptSrc: ["'self'"],
         scriptSrcAttr: ["'none'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         upgradeInsecureRequests: enableHsts ? [] : null,

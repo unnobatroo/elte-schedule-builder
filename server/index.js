@@ -11,10 +11,8 @@ import {
   validateSubjectSearch,
 } from "./tanrend.js";
 import {
-  cleanupCache,
+  createSqliteCacheStore,
   DEFAULT_CACHE_DB_PATH,
-  getCachedData,
-  setCachedData,
   setupDatabase,
 } from "./cache.js";
 import { generateDemoData } from "./demo-data.js";
@@ -28,67 +26,13 @@ const port = readPort(process.env.PORT, 3000, "PORT");
 const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
 const REQUEST_DELAY = 500; // 500ms between upstream requests
 
-export function createApp({
-  database,
-  fetchSubject = fetchSubjectData,
-  termProvider = getCurrentTerm,
-  cacheDuration = CACHE_DURATION,
-  maxCacheEntries = readPositiveInteger(process.env.MAX_CACHE_ENTRIES, 1000),
-  requestDelay = REQUEST_DELAY,
-  maxQueueLength = readPositiveInteger(process.env.MAX_QUEUE_LENGTH, 100),
-  subjectRateLimit = readPositiveInteger(process.env.SUBJECT_RATE_LIMIT, 60),
-  now = Date.now,
-  staticDirectory = path.join(projectRoot, "dist"),
-  trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS, 10),
-  logger = createServerLogger(),
-} = {}) {
-  if (!database) throw new TypeError("createApp requires a database");
-
-  const app = express();
-  const staticRoot = path.resolve(staticDirectory);
-  const subjectRequestQueue = new SubjectRequestQueue({
-    delay: requestDelay,
-    maxQueued: maxQueueLength,
-    handler: async (searchTerm, term, searchMode) => {
-      logger.log(`Processing queued ${searchMode} search for ${searchTerm}`);
-      const data =
-        searchMode === "code"
-          ? await fetchSubject(searchTerm, term)
-          : await fetchSubject(searchTerm, term, searchMode);
-      await setCachedData(
-        database,
-        `${term}-${searchMode}-${searchTerm}`,
-        data,
-        maxCacheEntries,
-        now,
-      );
-      return data;
-    },
-  });
-
-  app.use(createSecurityHeaders());
-  // The browser and API intentionally share one origin. Vite preserves that
-  // contract in development by proxying /api to this server.
-  if (Number.isInteger(trustProxyHops) && trustProxyHops > 0) {
-    app.set("trust proxy", trustProxyHops);
-  }
-  app.use(
-    "/api/subject",
-    createSubjectRateLimiter({
-      windowMs: 60 * 1000,
-      limit: subjectRateLimit,
-    }),
-  );
-  app.use(
-    express.static(staticRoot, {
-      dotfiles: "deny",
-      fallthrough: true,
-      index: false,
-      redirect: false,
-    }),
-  );
-
-  app.get("/api/subject/:query", validateSubjectSearch, async (req, res) => {
+function createSubjectHandler({
+  cache,
+  subjectRequestQueue,
+  termProvider,
+  logger,
+}) {
+  return async (req, res) => {
     try {
       const term = termProvider();
       const searchTerm = req.params.query.trim();
@@ -102,12 +46,7 @@ export function createApp({
         return res.send(demoData);
       }
 
-      const cachedData = await getCachedData(
-        database,
-        cacheKey,
-        cacheDuration,
-        now,
-      );
+      const cachedData = await cache.get(cacheKey);
       if (cachedData) {
         logger.log(`Cache hit for ${searchMode} search ${searchTerm}`);
         return res.send(cachedData.data);
@@ -133,9 +72,11 @@ export function createApp({
         error: "Failed to fetch subject data",
       });
     }
-  });
+  };
+}
 
-  app.get("/{*path}", (req, res, next) => {
+function createSpaHandler(staticRoot) {
+  return (req, res, next) => {
     let decodedPath;
     try {
       decodedPath = decodeURIComponent(req.path);
@@ -163,11 +104,86 @@ export function createApp({
         if (error) next(error);
       },
     );
+  };
+}
+
+export function createApp({
+  database,
+  cacheStore,
+  fetchSubject = fetchSubjectData,
+  termProvider = getCurrentTerm,
+  cacheDuration = CACHE_DURATION,
+  maxCacheEntries = readPositiveInteger(process.env.MAX_CACHE_ENTRIES, 1000),
+  requestDelay = REQUEST_DELAY,
+  maxQueueLength = readPositiveInteger(process.env.MAX_QUEUE_LENGTH, 100),
+  subjectRateLimit = readPositiveInteger(process.env.SUBJECT_RATE_LIMIT, 60),
+  now = Date.now,
+  staticDirectory = path.join(projectRoot, "dist"),
+  trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS, 10),
+  logger = createServerLogger(),
+} = {}) {
+  if (!database && !cacheStore) {
+    throw new TypeError("createApp requires a database or cache store");
+  }
+
+  const app = express();
+  const staticRoot = path.resolve(staticDirectory);
+  const cache =
+    cacheStore ??
+    createSqliteCacheStore({
+      database,
+      cacheDuration,
+      maxEntries: maxCacheEntries,
+      now,
+      logger,
+    });
+  const subjectRequestQueue = new SubjectRequestQueue({
+    delay: requestDelay,
+    maxQueued: maxQueueLength,
+    handler: async (searchTerm, term, searchMode) => {
+      logger.log(`Processing queued ${searchMode} search for ${searchTerm}`);
+      const data =
+        searchMode === "code"
+          ? await fetchSubject(searchTerm, term)
+          : await fetchSubject(searchTerm, term, searchMode);
+      await cache.set(`${term}-${searchMode}-${searchTerm}`, data);
+      return data;
+    },
   });
+
+  app.use(createSecurityHeaders());
+  // The browser and API intentionally share one origin. Vite preserves that
+  // contract in development by proxying /api to this server.
+  if (Number.isInteger(trustProxyHops) && trustProxyHops > 0) {
+    app.set("trust proxy", trustProxyHops);
+  }
+  app.use(
+    "/api/subject",
+    createSubjectRateLimiter({
+      windowMs: 60 * 1000,
+      limit: subjectRateLimit,
+    }),
+  );
+  app.use(
+    express.static(staticRoot, {
+      dotfiles: "deny",
+      fallthrough: true,
+      index: false,
+      redirect: false,
+    }),
+  );
+
+  app.get(
+    "/api/subject/:query",
+    validateSubjectSearch,
+    createSubjectHandler({ cache, subjectRequestQueue, termProvider, logger }),
+  );
+
+  app.get("/{*path}", createSpaHandler(staticRoot));
 
   return {
     app,
-    cleanupCache: () => cleanupCache(database, cacheDuration, now, logger),
+    cleanupCache: () => cache.cleanup(),
   };
 }
 

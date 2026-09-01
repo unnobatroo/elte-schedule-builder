@@ -19,7 +19,6 @@
     normalizeSubjectTitle,
     selectInitialScheduleGroups,
   } from "../utils/scheduleState.js";
-  import { readRegisteredSubjectCodes } from "../utils/registeredSubjectsFile.js";
 
   let {
     importedCodes = { baseCodes: "", fullCodes: [], eventIdentities: [] },
@@ -641,6 +640,9 @@
 
     error = "";
     try {
+      // Load the sizeable spreadsheet parser only when a file is selected.
+      const { readRegisteredSubjectCodes } =
+        await import("../utils/registeredSubjectsFile.js");
       const codes = await readRegisteredSubjectCodes(file);
       if (codes.length === 0) {
         error = t($language, "noCodesInFile");

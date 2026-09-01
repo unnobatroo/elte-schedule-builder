@@ -312,11 +312,7 @@
           Schedules stay in this browser's local storage. Clearing site data,
           using private browsing, or changing browsers can remove or hide them.
         </p>
-        <p>
-          The production site also uses self-hosted analytics, session
-          recording, and heatmaps. These receive page-view and interaction data
-          to help improve the application.
-        </p>
+        <p>This site does not include analytics or session recording.</p>
       </section>
     </article>
   {/if}

@@ -3,12 +3,6 @@ import { STORAGE_KEYS } from "./storageKeys.js";
 
 export const THEME_PREFERENCES = ["system", "light", "dark"];
 
-export const THEME_LABELS = {
-  system: "Match device setting",
-  light: "Light",
-  dark: "Dark",
-};
-
 export const themePreference = writable("system");
 export const resolvedTheme = writable("light");
 

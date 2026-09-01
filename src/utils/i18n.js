@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import { STORAGE_KEYS } from "./storageKeys.js";
 
-export const SUPPORTED_LANGUAGES = Object.freeze(["en", "hu"]);
+const SUPPORTED_LANGUAGES = Object.freeze(["en", "hu"]);
 export const language = writable("en");
 
 const MESSAGES = {
