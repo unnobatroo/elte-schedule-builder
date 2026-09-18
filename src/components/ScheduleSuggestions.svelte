@@ -1,15 +1,32 @@
-<script>
+<script lang="ts">
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
+  import type {
+    CalendarEvent,
+    OptimizationSuggestion,
+    OptimizerChangeInfo,
+    OptimizerGroupInfo,
+    Subject,
+  } from "../types/schedule.js";
   import { getConflictPairs } from "../utils/schedule.js";
   import { getEnabledEvents } from "../utils/scheduleState.js";
   import { findScheduleSuggestions } from "../utils/scheduleOptimizer.js";
   import { language, t } from "../utils/i18n.js";
 
-  let { subjects = [], lectureExemption = false, onApplySuggestion } = $props();
+  interface Props {
+    subjects?: Subject[];
+    lectureExemption?: boolean;
+    onApplySuggestion?: (suggestion: OptimizationSuggestion) => void;
+  }
+
+  let {
+    subjects = [],
+    lectureExemption = false,
+    onApplySuggestion,
+  }: Props = $props();
 
   let isOpen = $state(false);
-  let suggestions = $state([]);
+  let suggestions = $state<OptimizationSuggestion[]>([]);
   let emptyState = $state("noSuggestionData");
 
   const currentConflicts = $derived(
@@ -43,12 +60,12 @@
     isOpen = false;
   }
 
-  function applySuggestion(suggestion) {
+  function applySuggestion(suggestion: OptimizationSuggestion) {
     onApplySuggestion?.(suggestion);
     closeSuggestions();
   }
 
-  const dayOrder = {
+  const dayOrder: Record<string, number> = {
     Monday: 0,
     Tuesday: 1,
     Wednesday: 2,
@@ -58,7 +75,7 @@
     Sunday: 6,
   };
 
-  function uniqueSortedEvents(events = []) {
+  function uniqueSortedEvents(events: CalendarEvent[] = []): CalendarEvent[] {
     const unique = events.filter(
       (event, index, allEvents) =>
         allEvents.findIndex(
@@ -77,7 +94,7 @@
     );
   }
 
-  function formatGroupTimes(group) {
+  function formatGroupTimes(group?: OptimizerGroupInfo): string {
     return uniqueSortedEvents(group?.events)
       .map(
         (event) =>
@@ -86,15 +103,22 @@
       .join(" · ");
   }
 
-  function formatType(typeClass) {
+  function formatType(typeClass: string): string {
     if (typeClass === "lecture") return t($language, "lecture");
     if (typeClass === "practice") return t($language, "practice");
     return typeClass.charAt(0).toUpperCase() + typeClass.slice(1);
   }
 
-  function getChangeDayGroups(suggestion) {
+  interface ChangeDayGroup {
+    day: string;
+    changes: OptimizerChangeInfo[];
+  }
+
+  function getChangeDayGroups(
+    suggestion: OptimizationSuggestion,
+  ): ChangeDayGroup[] {
     return (suggestion.changes ?? [])
-      .reduce((groups, change) => {
+      .reduce<ChangeDayGroup[]>((groups, change) => {
         const firstSuggestedEvent = uniqueSortedEvents(change.to.events)[0];
         const day = firstSuggestedEvent?.dayOfWeek ?? "Other";
         const existingGroup = groups.find((group) => group.day === day);

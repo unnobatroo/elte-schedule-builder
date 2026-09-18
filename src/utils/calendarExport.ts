@@ -2,6 +2,7 @@ import Papa from "papaparse";
 import fnv1a from "@sindresorhus/fnv1a";
 import { getNextWeekDateForDay } from "./schedule.js";
 import { getEventIdentity } from "./scheduleState.js";
+import type { CalendarEvent } from "../types/schedule.js";
 
 const TIMEZONE = "Europe/Budapest";
 const CSV_HEADERS = [
@@ -15,7 +16,7 @@ const CSV_HEADERS = [
   "Location",
   "Private",
 ];
-const dayOrder = {
+const dayOrder: Record<string, number> = {
   Monday: 0,
   Tuesday: 1,
   Wednesday: 2,
@@ -25,8 +26,8 @@ const dayOrder = {
   Sunday: 6,
 };
 
-function uniqueSortedEvents(events) {
-  const unique = new Map();
+function uniqueSortedEvents(events: CalendarEvent[]): CalendarEvent[] {
+  const unique = new Map<string, CalendarEvent>();
   for (const event of Array.isArray(events) ? events : []) {
     const identity = getEventIdentity(event);
     if (!unique.has(identity)) unique.set(identity, event);
@@ -40,19 +41,19 @@ function uniqueSortedEvents(events) {
   );
 }
 
-export function getCalendarEventCount(events) {
+export function getCalendarEventCount(events: CalendarEvent[]): number {
   return uniqueSortedEvents(events).length;
 }
 
-function compactDate(isoDate) {
+function compactDate(isoDate: string): string {
   return String(isoDate).replaceAll("-", "");
 }
 
-function compactTime(time) {
+function compactTime(time: string): string {
   return `${String(time).replace(":", "")}00`;
 }
 
-function formatUtcTimestamp(date) {
+function formatUtcTimestamp(date: Date): string {
   return date
     .toISOString()
     .replaceAll("-", "")
@@ -60,7 +61,7 @@ function formatUtcTimestamp(date) {
     .replace(/\.\d{3}Z$/, "Z");
 }
 
-function escapeICalendarText(value) {
+function escapeICalendarText(value: unknown): string {
   return String(value ?? "")
     .replaceAll("\\", "\\\\")
     .replaceAll("\r\n", "\\n")
@@ -70,9 +71,9 @@ function escapeICalendarText(value) {
     .replaceAll(",", "\\,");
 }
 
-function foldICalendarLine(line) {
+function foldICalendarLine(line: string): string {
   const encoder = new TextEncoder();
-  const parts = [];
+  const parts: string[] = [];
   let part = "";
   let limit = 75;
 
@@ -89,14 +90,14 @@ function foldICalendarLine(line) {
   return parts.join("\r\n ");
 }
 
-function buildEventUid(event) {
+function buildEventUid(event: CalendarEvent): string {
   const hash = fnv1a(getEventIdentity(event), { size: 32 })
     .toString(16)
     .padStart(8, "0");
   return `${hash}@elte-schedule-builder`;
 }
 
-function getEventDate(event) {
+function getEventDate(event: CalendarEvent): string {
   return getNextWeekDateForDay(event.dayOfWeek);
 }
 
@@ -104,7 +105,10 @@ function getEventDate(event) {
  * Build one RFC 5545-compatible calendar containing every visible class.
  * Each class repeats weekly and keeps ELTE's Budapest timezone.
  */
-export function buildICalendar(events, { now = new Date() } = {}) {
+export function buildICalendar(
+  events: CalendarEvent[],
+  { now = new Date() }: { now?: Date } = {},
+): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -125,7 +129,7 @@ export function buildICalendar(events, { now = new Date() } = {}) {
       `DTEND;TZID=${TIMEZONE}:${date}T${compactTime(event.endTime)}`,
       "RRULE:FREQ=WEEKLY",
       `SUMMARY:${escapeICalendarText(event.title)}`,
-      `DESCRIPTION:${escapeICalendarText(event.description)}`,
+      `DESCRIPTION:${escapeICalendarText((event as Record<string, unknown>).description ?? event.extendedProps?.description)}`,
       `LOCATION:${escapeICalendarText(event.extendedProps?.location)}`,
       "STATUS:CONFIRMED",
       "TRANSP:OPAQUE",
@@ -137,12 +141,12 @@ export function buildICalendar(events, { now = new Date() } = {}) {
   return `${lines.map(foldICalendarLine).join("\r\n")}\r\n`;
 }
 
-function formatCsvDate(isoDate) {
+function formatCsvDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-");
   return `${month}/${day}/${year}`;
 }
 
-function formatCsvTime(time) {
+function formatCsvTime(time: string): string {
   const [hourValue, minute] = time.split(":").map(Number);
   const suffix = hourValue >= 12 ? "PM" : "AM";
   const hour = hourValue % 12 || 12;
@@ -150,8 +154,8 @@ function formatCsvTime(time) {
 }
 
 /** Build one Google Calendar-compatible CSV containing every visible class. */
-export function buildGoogleCalendarCsv(events) {
-  const rows = [CSV_HEADERS];
+export function buildGoogleCalendarCsv(events: CalendarEvent[]): string {
+  const rows: (string | undefined)[][] = [CSV_HEADERS];
   for (const event of uniqueSortedEvents(events)) {
     const date = formatCsvDate(getEventDate(event));
     rows.push([
@@ -161,7 +165,8 @@ export function buildGoogleCalendarCsv(events) {
       date,
       formatCsvTime(event.endTime),
       "False",
-      event.description,
+      ((event as Record<string, unknown>).description as string | undefined) ??
+        (event.extendedProps?.description as string | undefined),
       event.extendedProps?.location ?? "",
       "False",
     ]);

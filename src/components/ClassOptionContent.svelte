@@ -1,7 +1,19 @@
-<script>
+<script lang="ts">
   import Icon from "./Icon.svelte";
+  import type { CalendarEvent } from "../types/schedule.js";
   import { getEventDisplayTitle } from "../utils/schedule.js";
   import { language, t } from "../utils/i18n.js";
+
+  interface Props {
+    selected?: boolean;
+    day?: string;
+    startTime?: string;
+    endTime?: string;
+    instructor?: string;
+    location?: string;
+    code?: string;
+    conflicts?: CalendarEvent[];
+  }
 
   let {
     selected = false,
@@ -12,7 +24,7 @@
     location = "",
     code = "",
     conflicts = [],
-  } = $props();
+  }: Props = $props();
 
   const conflictLabels = $derived([
     ...new Set(
@@ -126,49 +138,20 @@
     display: none;
   }
 
-  .class-option-status-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: var(--text-xs);
-    font-weight: var(--weight-bold);
-  }
-
   .class-option-status small {
     max-width: 220px;
-    line-height: 1.25;
+    line-height: 1.3;
   }
 
-  .selected-status {
-    color: var(--color-success);
-  }
-
-  .conflict-status,
-  .class-option-status:has(.conflict-status) small {
-    color: var(--color-danger);
-  }
-
-  @media (max-width: 720px) {
+  @media (max-width: 768px) {
     .class-option-status {
-      grid-column: 2 / -1;
+      grid-column: 1 / -1;
       justify-items: start;
       text-align: left;
     }
 
     .class-option-status small {
       max-width: none;
-    }
-  }
-
-  @media (max-width: 520px) {
-    .class-option-time,
-    .class-option-details,
-    .class-option-status {
-      grid-column: 2;
-    }
-
-    .class-option-status {
-      justify-items: start;
     }
   }
 </style>

@@ -1,9 +1,14 @@
-<script>
+<script lang="ts">
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
   import { language, t } from "../utils/i18n.js";
 
-  let { isOpen = false, onClose } = $props();
+  interface Props {
+    isOpen?: boolean;
+    onClose?: () => void;
+  }
+
+  let { isOpen = false, onClose }: Props = $props();
 </script>
 
 <Modal open={isOpen} wide label={t($language, "helpTitle")} {onClose}>

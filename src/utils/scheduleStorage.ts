@@ -4,31 +4,36 @@ import {
   getEventSlotIdentity,
   getEventType,
 } from "./scheduleState.js";
+import type { Schedule, ScheduleStore, Subject } from "../types/schedule.js";
 
 export const SCHEDULES_STORAGE_KEY = STORAGE_KEYS.schedules;
 const DEFAULT_SCHEDULE_NAME = "Default schedule";
 
-function createScheduleId() {
+export interface VersionedScheduleStore extends ScheduleStore {
+  version: number;
+}
+
+function createScheduleId(): string {
   if (globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID();
   }
   return `schedule-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function readJson(storage, key, fallback) {
+function readJson<T>(storage: Storage, key: string, fallback: T): T {
   try {
     const value = storage.getItem(key);
-    return value === null ? fallback : JSON.parse(value);
+    return value === null ? fallback : (JSON.parse(value) as T);
   } catch {
     return fallback;
   }
 }
 
-function repairDuplicateSelections(subjects) {
+function repairDuplicateSelections(subjects: Subject[]): Subject[] {
   return subjects.map((subject) => {
     if (!Array.isArray(subject?.events)) return subject;
 
-    const enabledSlots = new Set();
+    const enabledSlots = new Set<string>();
     let repaired = false;
     const events = subject.events.map((event) => {
       if (
@@ -60,7 +65,11 @@ function repairDuplicateSelections(subjects) {
   });
 }
 
-function normalizeSchedule(schedule, fallbackName, makeId) {
+function normalizeSchedule(
+  schedule: Partial<Schedule> | undefined,
+  fallbackName: string,
+  makeId: () => string,
+): Schedule {
   return {
     id:
       typeof schedule?.id === "string" && schedule.id ? schedule.id : makeId(),
@@ -75,13 +84,23 @@ function normalizeSchedule(schedule, fallbackName, makeId) {
   };
 }
 
-export function saveScheduleStore(storage, store) {
+export function saveScheduleStore<T extends ScheduleStore>(
+  storage: Storage,
+  store: T,
+): T {
   storage.setItem(SCHEDULES_STORAGE_KEY, JSON.stringify(store));
   return store;
 }
 
-export function readScheduleStore(storage, makeId = createScheduleId) {
-  const stored = readJson(storage, SCHEDULES_STORAGE_KEY, null);
+export function readScheduleStore(
+  storage: Storage,
+  makeId: () => string = createScheduleId,
+): VersionedScheduleStore {
+  const stored = readJson<VersionedScheduleStore | null>(
+    storage,
+    SCHEDULES_STORAGE_KEY,
+    null,
+  );
   if (
     stored &&
     Array.isArray(stored.schedules) &&
@@ -98,12 +117,12 @@ export function readScheduleStore(storage, makeId = createScheduleId) {
     return { version: 1, activeScheduleId, schedules };
   }
 
-  const legacySubjects = readJson(
+  const legacySubjects = readJson<Subject[]>(
     storage,
     STORAGE_KEYS.legacySavedSubjects,
     [],
   );
-  const legacyExemption = readJson(
+  const legacyExemption = readJson<boolean>(
     storage,
     STORAGE_KEYS.legacyLectureExemption,
     false,
@@ -124,8 +143,15 @@ export function readScheduleStore(storage, makeId = createScheduleId) {
   };
 }
 
-export function loadScheduleStore(storage, makeId = createScheduleId) {
-  const stored = readJson(storage, SCHEDULES_STORAGE_KEY, null);
+export function loadScheduleStore(
+  storage: Storage,
+  makeId: () => string = createScheduleId,
+): VersionedScheduleStore {
+  const stored = readJson<VersionedScheduleStore | null>(
+    storage,
+    SCHEDULES_STORAGE_KEY,
+    null,
+  );
   const store = readScheduleStore(storage, makeId);
   if (!stored || JSON.stringify(store) !== JSON.stringify(stored)) {
     return saveScheduleStore(storage, store);
@@ -133,7 +159,7 @@ export function loadScheduleStore(storage, makeId = createScheduleId) {
   return store;
 }
 
-export function getActiveSchedule(store) {
+export function getActiveSchedule(store: ScheduleStore): Schedule {
   return (
     store.schedules.find(
       (schedule) => schedule.id === store.activeScheduleId,
@@ -141,7 +167,10 @@ export function getActiveSchedule(store) {
   );
 }
 
-export function updateActiveSchedule(store, updates) {
+export function updateActiveSchedule<T extends ScheduleStore>(
+  store: T,
+  updates: Partial<Schedule>,
+): T {
   return {
     ...store,
     schedules: store.schedules.map((schedule) =>
@@ -152,12 +181,15 @@ export function updateActiveSchedule(store, updates) {
   };
 }
 
-/**
- * @param {object} store
- * @param {{ name?: string, subjects?: object[], lectureExemption?: boolean }} [options]
- * @param {() => string} [makeId]
- */
-export function addSchedule(store, options = {}, makeId = createScheduleId) {
+export function addSchedule<T extends ScheduleStore>(
+  store: T,
+  options: {
+    name?: string;
+    subjects?: Subject[];
+    lectureExemption?: boolean;
+  } = {},
+  makeId: () => string = createScheduleId,
+): T {
   const { name, subjects = [], lectureExemption = false } = options;
   const schedule = normalizeSchedule(
     { name, subjects, lectureExemption },
@@ -171,7 +203,11 @@ export function addSchedule(store, options = {}, makeId = createScheduleId) {
   };
 }
 
-export function renameSchedule(store, scheduleId, name) {
+export function renameSchedule<T extends ScheduleStore>(
+  store: T,
+  scheduleId: string,
+  name: string,
+): T {
   const trimmedName = name.trim();
   if (!trimmedName) return store;
   return {
@@ -184,7 +220,10 @@ export function renameSchedule(store, scheduleId, name) {
   };
 }
 
-export function removeSchedule(store, scheduleId) {
+export function removeSchedule<T extends ScheduleStore>(
+  store: T,
+  scheduleId: string,
+): T {
   if (store.schedules.length === 1) return store;
   const removedIndex = store.schedules.findIndex(
     (schedule) => schedule.id === scheduleId,
@@ -201,14 +240,20 @@ export function removeSchedule(store, scheduleId) {
   return { ...store, activeScheduleId, schedules };
 }
 
-export function activateSchedule(store, scheduleId) {
+export function activateSchedule<T extends ScheduleStore>(
+  store: T,
+  scheduleId: string,
+): T {
   if (!store.schedules.some((schedule) => schedule.id === scheduleId)) {
     return store;
   }
   return { ...store, activeScheduleId: scheduleId };
 }
 
-export function getUniqueScheduleName(store, preferredName) {
+export function getUniqueScheduleName(
+  store: ScheduleStore,
+  preferredName: string,
+): string {
   const baseName = preferredName.trim() || "Schedule";
   const existingNames = new Set(
     store.schedules.map((schedule) => schedule.name),

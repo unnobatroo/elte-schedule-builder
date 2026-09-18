@@ -1,4 +1,6 @@
-export function normalizeSubjectTitle(title) {
+import type { CalendarEvent, Subject } from "../types/schedule.js";
+
+export function normalizeSubjectTitle(title: string): string {
   return title
     .split("(")[0]
     .trim()
@@ -7,15 +9,20 @@ export function normalizeSubjectTitle(title) {
     .trim();
 }
 
-export function getEventCode(event) {
-  return (event.code ?? event.description?.split("\n")[0] ?? "").trim();
+export function getEventCode(event: unknown): string {
+  const e = event as { code?: string; description?: string } | null;
+  return (e?.code ?? e?.description?.split("\n")[0] ?? "").trim();
 }
 
-export function getEventType(event) {
-  return (event.extendedProps?.type ?? event.type ?? "").trim().toLowerCase();
+export function getEventType(event: unknown): string {
+  const e = event as {
+    extendedProps?: { type?: string };
+    type?: string;
+  } | null;
+  return (e?.extendedProps?.type ?? e?.type ?? "").trim().toLowerCase();
 }
 
-function normalizeIdentityValue(value) {
+function normalizeIdentityValue(value: unknown): string {
   return String(value ?? "")
     .normalize("NFKC")
     .replace(/\s+/g, " ")
@@ -23,19 +30,28 @@ function normalizeIdentityValue(value) {
     .toLocaleLowerCase();
 }
 
-export function getEventInstructor(event) {
-  const explicit = event.extendedProps?.instructor ?? event.instructor;
+export function getEventInstructor(event: unknown): string {
+  const e = event as {
+    extendedProps?: { instructor?: string };
+    instructor?: string;
+    description?: string;
+  } | null;
+  const explicit = e?.extendedProps?.instructor ?? e?.instructor;
   if (String(explicit ?? "").trim()) return String(explicit).trim();
 
-  const description = String(event.description ?? "");
+  const description = String(e?.description ?? "");
   return description.match(/(?:^|\n)Instructor:\s*(.*)$/im)?.[1]?.trim() ?? "";
 }
 
-function getEventLocation(event) {
-  return String(event.extendedProps?.location ?? event.location ?? "").trim();
+function getEventLocation(event: unknown): string {
+  const e = event as {
+    extendedProps?: { location?: string };
+    location?: string;
+  } | null;
+  return String(e?.extendedProps?.location ?? e?.location ?? "").trim();
 }
 
-function getEventVariantIdentity(event) {
+function getEventVariantIdentity(event: unknown): string {
   return [
     normalizeIdentityValue(getEventCode(event)),
     normalizeIdentityValue(getEventType(event)),
@@ -43,17 +59,18 @@ function getEventVariantIdentity(event) {
   ].join("\u0000");
 }
 
-export function getEventSlotIdentity(event) {
+export function getEventSlotIdentity(event: unknown): string {
+  const e = event as CalendarEvent;
   return [
-    normalizeIdentityValue(getEventCode(event)),
-    normalizeIdentityValue(event.dayOfWeek),
-    normalizeIdentityValue(event.startTime),
-    normalizeIdentityValue(event.endTime),
-    normalizeIdentityValue(getEventType(event)),
+    normalizeIdentityValue(getEventCode(e)),
+    normalizeIdentityValue(e.dayOfWeek),
+    normalizeIdentityValue(e.startTime),
+    normalizeIdentityValue(e.endTime),
+    normalizeIdentityValue(getEventType(e)),
   ].join("\u0000");
 }
 
-export function getEventIdentity(event) {
+export function getEventIdentity(event: unknown): string {
   return [
     getEventSlotIdentity(event),
     normalizeIdentityValue(getEventLocation(event)),
@@ -61,8 +78,8 @@ export function getEventIdentity(event) {
   ].join("\u0000");
 }
 
-function getClassTypeGroup(type) {
-  return (type ?? "").toLowerCase().includes("lecture")
+function getClassTypeGroup(type: unknown): "lecture" | "practice" {
+  return typeof type === "string" && type.toLowerCase().includes("lecture")
     ? "lecture"
     : "practice";
 }
@@ -73,17 +90,20 @@ function getClassTypeGroup(type) {
  * meetings that belong to the same code/instructor group stay enabled, while
  * exact duplicate Tanrend rows do not.
  */
-export function selectInitialScheduleGroups(events, existingEvents = []) {
+export function selectInitialScheduleGroups(
+  events: CalendarEvent[],
+  existingEvents: CalendarEvent[] = [],
+): CalendarEvent[] {
   if (!Array.isArray(events)) return [];
 
-  const selectedVariants = new Map();
-  const enabledMeetings = new Set();
+  const selectedVariants = new Map<string, string>();
+  const enabledMeetings = new Set<string>();
 
-  const availableVariants = new Map();
+  const availableVariants = new Map<string, Set<string>>();
   for (const event of events) {
     const subjectTitle = normalizeSubjectTitle(String(event.title ?? ""));
     const sectionKey = `${subjectTitle}\u0000${getClassTypeGroup(getEventType(event))}`;
-    const variants = availableVariants.get(sectionKey) ?? new Set();
+    const variants = availableVariants.get(sectionKey) ?? new Set<string>();
     variants.add(getEventVariantIdentity(event));
     availableVariants.set(sectionKey, variants);
   }
@@ -117,11 +137,17 @@ export function selectInitialScheduleGroups(events, existingEvents = []) {
   });
 }
 
-function matchesExistingEvent(existingEvent, newEvent) {
+function matchesExistingEvent(
+  existingEvent: CalendarEvent,
+  newEvent: CalendarEvent,
+): boolean {
   return getEventIdentity(existingEvent) === getEventIdentity(newEvent);
 }
 
-function matchesSameScheduleSlot(existingEvent, newEvent) {
+function matchesSameScheduleSlot(
+  existingEvent: CalendarEvent,
+  newEvent: CalendarEvent,
+): boolean {
   return (
     existingEvent.dayOfWeek === newEvent.dayOfWeek &&
     existingEvent.startTime === newEvent.startTime &&
@@ -130,7 +156,11 @@ function matchesSameScheduleSlot(existingEvent, newEvent) {
   );
 }
 
-function findExistingEventIndex(events, newEvent, allowSlotFallback = false) {
+function findExistingEventIndex(
+  events: CalendarEvent[],
+  newEvent: CalendarEvent,
+  allowSlotFallback = false,
+): number {
   const exactIndex = events.findIndex((event) =>
     matchesExistingEvent(event, newEvent),
   );
@@ -142,11 +172,11 @@ function findExistingEventIndex(events, newEvent, allowSlotFallback = false) {
   return slotMatches.length === 1 ? slotMatches[0].index : -1;
 }
 
-function isSameClassType(firstType, secondType) {
+function isSameClassType(firstType: unknown, secondType: unknown): boolean {
   return getClassTypeGroup(firstType) === getClassTypeGroup(secondType);
 }
 
-function eventMatchesClass(event, selectedClass) {
+function eventMatchesClass(event: CalendarEvent, selectedClass: any): boolean {
   const selectedInstructor = getEventInstructor(selectedClass);
   const selectedLocation = getEventLocation(selectedClass);
   return (
@@ -169,7 +199,11 @@ function eventMatchesClass(event, selectedClass) {
  * Existing groups of the same type are disabled, matching a normal timetable
  * choice without removing lectures when a practice is selected (or vice versa).
  */
-export function selectScheduleClass(subjects, eventData, selectedClass) {
+export function selectScheduleClass(
+  subjects: Subject[],
+  eventData: CalendarEvent[],
+  selectedClass: any,
+): Subject[] {
   if (eventData.length === 0) return subjects;
 
   const title = normalizeSubjectTitle(eventData[0].title);
@@ -224,8 +258,11 @@ export function selectScheduleClass(subjects, eventData, selectedClass) {
   return updatedSubjects;
 }
 
-export function mergeScheduleEvents(subjects, eventData) {
-  const eventsByTitle = new Map();
+export function mergeScheduleEvents(
+  subjects: Subject[],
+  eventData: CalendarEvent[],
+): Subject[] {
+  const eventsByTitle = new Map<string, CalendarEvent[]>();
 
   for (const event of eventData) {
     const title = normalizeSubjectTitle(event.title);
@@ -243,7 +280,9 @@ export function mergeScheduleEvents(subjects, eventData) {
     if (existingIndex === -1) {
       updatedSubjects.push({
         title,
-        code: [...new Set(events.map((event) => event.code))].join(", "),
+        code: [...new Set(events.map((event) => getEventCode(event)))].join(
+          ", ",
+        ),
         events,
         enabled: events.some((event) => event.enabled),
       });
@@ -269,8 +308,8 @@ export function mergeScheduleEvents(subjects, eventData) {
       events: updatedEvents,
       code: [
         ...new Set([
-          ...existingSubject.code.split(", ").filter(Boolean),
-          ...events.map((event) => event.code),
+          ...(existingSubject.code?.split(", ").filter(Boolean) ?? []),
+          ...events.map((event) => getEventCode(event)),
         ]),
       ].join(", "),
       enabled:
@@ -281,13 +320,17 @@ export function mergeScheduleEvents(subjects, eventData) {
   return updatedSubjects;
 }
 
-export function getEnabledEvents(subjects) {
+export function getEnabledEvents(subjects: Subject[]): CalendarEvent[] {
   return subjects
     .filter((subject) => subject.enabled)
     .flatMap((subject) => subject.events.filter((event) => event.enabled));
 }
 
-export function setSubjectEnabled(subjects, title, enabled = null) {
+export function setSubjectEnabled(
+  subjects: Subject[],
+  title: string,
+  enabled: boolean | null = null,
+): Subject[] {
   return subjects.map((subject) => {
     if (subject.title !== title) return subject;
     const nextEnabled = enabled ?? !subject.enabled;
@@ -298,7 +341,11 @@ export function setSubjectEnabled(subjects, title, enabled = null) {
   });
 }
 
-export function toggleScheduleEvent(subjects, subjectTitle, eventIndex) {
+export function toggleScheduleEvent(
+  subjects: Subject[],
+  subjectTitle: string,
+  eventIndex: number,
+): Subject[] {
   return subjects.map((subject) => {
     if (subject.title !== subjectTitle) return subject;
     const selectedEvent = subject.events[eventIndex];
@@ -323,6 +370,6 @@ export function toggleScheduleEvent(subjects, subjectTitle, eventIndex) {
   });
 }
 
-export function getEnabledEventCodes(subjects) {
+export function getEnabledEventCodes(subjects: Subject[]): string[] {
   return getEnabledEvents(subjects).map(getEventCode);
 }

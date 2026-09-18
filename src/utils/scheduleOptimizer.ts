@@ -4,23 +4,60 @@ import {
   getEventIdentity,
   getEventInstructor,
 } from "./scheduleState.js";
+import type { CalendarEvent, Subject } from "../types/schedule.js";
+
+export interface OptimizerGroup {
+  key: string;
+  subjectTitle: string;
+  code: string;
+  typeClass: "lecture" | "practice";
+  events: CalendarEvent[];
+}
+
+export interface OptimizerVariable {
+  subjectTitle: string;
+  typeClass: "lecture" | "practice";
+  groups: OptimizerGroup[];
+  currentGroupKeys: string[];
+}
+
+export interface OptimizerChange {
+  key: string;
+  subjectTitle: string;
+  typeClass: "lecture" | "practice";
+  from: OptimizerGroup;
+  to: OptimizerGroup;
+}
+
+export interface OptimizerSolution {
+  conflicts: number;
+  changedGroups: number;
+  changes: OptimizerChange[];
+  groups: OptimizerGroup[];
+}
 
 /**
  * Match the two sections used by the class picker: lectures and practices.
  * Tanrend uses several labels for non-lecture classes, but they are all
  * interchangeable choices within the practice section.
  */
-export function getEventTypeClass(type) {
+export function getEventTypeClass(type: unknown): "lecture" | "practice" {
   return isLectureType(type) ? "lecture" : "practice";
 }
 
-function getGroupKey(subjectTitle, code, typeClass, instructor = "") {
+function getGroupKey(
+  subjectTitle: string,
+  code: string,
+  typeClass: string,
+  instructor = "",
+): string {
   return `${subjectTitle}\u0000${code}\u0000${typeClass}\u0000${instructor.trim().toLocaleLowerCase()}`;
 }
 
-function getEventGroupKey(subjectTitle, event) {
+function getEventGroupKey(subjectTitle: string, event: CalendarEvent): string {
   const code = getEventCode(event);
-  const type = event.extendedProps?.type ?? event.type;
+  const type =
+    event.extendedProps?.type ?? (event as Record<string, unknown>).type;
   return getGroupKey(
     subjectTitle,
     code,
@@ -29,11 +66,17 @@ function getEventGroupKey(subjectTitle, event) {
   );
 }
 
-function isLectureEvent(event) {
-  return isLectureType(event.extendedProps?.type ?? event.type);
+function isLectureEvent(event: CalendarEvent): boolean {
+  return isLectureType(
+    event.extendedProps?.type ?? (event as Record<string, unknown>).type,
+  );
 }
 
-function eventsConflict(first, second, lectureExemption) {
+function eventsConflict(
+  first: CalendarEvent,
+  second: CalendarEvent,
+  lectureExemption: boolean,
+): boolean {
   if (!checkTimeOverlap(first, second)) return false;
   if (lectureExemption && (isLectureEvent(first) || isLectureEvent(second))) {
     return false;
@@ -41,7 +84,11 @@ function eventsConflict(first, second, lectureExemption) {
   return true;
 }
 
-function countConflictsBetween(events, chosenEvents, lectureExemption) {
+function countConflictsBetween(
+  events: CalendarEvent[],
+  chosenEvents: CalendarEvent[],
+  lectureExemption: boolean,
+): number {
   let conflicts = 0;
   for (const event of events) {
     for (const chosenEvent of chosenEvents) {
@@ -53,7 +100,10 @@ function countConflictsBetween(events, chosenEvents, lectureExemption) {
   return conflicts;
 }
 
-function countConflictsWithin(events, lectureExemption) {
+function countConflictsWithin(
+  events: CalendarEvent[],
+  lectureExemption: boolean,
+): number {
   let conflicts = 0;
   for (let first = 0; first < events.length; first += 1) {
     for (let second = first + 1; second < events.length; second += 1) {
@@ -65,16 +115,17 @@ function countConflictsWithin(events, lectureExemption) {
   return conflicts;
 }
 
-function buildVariables(subjects) {
-  const variables = [];
+function buildVariables(subjects: Subject[]): OptimizerVariable[] {
+  const variables: OptimizerVariable[] = [];
 
   for (const subject of subjects) {
     if (!subject.enabled || !Array.isArray(subject.events)) continue;
 
-    const groups = new Map();
+    const groups = new Map<string, OptimizerGroup>();
     for (const event of subject.events) {
       const code = getEventCode(event);
-      const type = event.extendedProps?.type ?? event.type;
+      const type =
+        event.extendedProps?.type ?? (event as Record<string, unknown>).type;
       const typeClass = getEventTypeClass(type);
       const key = getGroupKey(
         subject.title,
@@ -106,7 +157,7 @@ function buildVariables(subjects) {
       groups.set(key, group);
     }
 
-    const groupsByType = new Map();
+    const groupsByType = new Map<"lecture" | "practice", OptimizerGroup[]>();
     for (const group of groups.values()) {
       const list = groupsByType.get(group.typeClass) ?? [];
       list.push(group);
@@ -136,11 +187,14 @@ function buildVariables(subjects) {
   return variables.sort((a, b) => a.groups.length - b.groups.length);
 }
 
-function compareSolutions(a, b) {
+function compareSolutions(a: OptimizerSolution, b: OptimizerSolution): number {
   return a.conflicts - b.conflicts || a.changedGroups - b.changedGroups;
 }
 
-function countGroupReplacements(variable, selectedGroup) {
+function countGroupReplacements(
+  variable: OptimizerVariable,
+  selectedGroup: OptimizerGroup,
+): number {
   return variable.currentGroupKeys.reduce(
     (count, currentGroupKey) =>
       count + Number(currentGroupKey !== selectedGroup.key),
@@ -155,26 +209,24 @@ function countGroupReplacements(variable, selectedGroup) {
  * matching how groups are swapped in the Tanrend search flow. Solutions are
  * ranked by conflict count first, then by how few groups they swap away from
  * the currently enabled ones.
- *
- * @param {object[]} subjects
- * @param {{ lectureExemption?: boolean, maxSuggestions?: number, maxNodes?: number }} [options]
- * @returns {{ conflicts: number, changedGroups: number, changes: object[], groups: object[] }[]}
  */
 export function findScheduleSuggestions(
-  subjects,
+  subjects: Subject[],
   { lectureExemption = false, maxSuggestions = 5, maxNodes = 200000 } = {},
-) {
+): OptimizerSolution[] {
   const variables = buildVariables(
-    Array.isArray(subjects) ? subjects.filter((subject) => subject) : [],
+    Array.isArray(subjects)
+      ? subjects.filter((subject) => Boolean(subject))
+      : [],
   );
   if (variables.length === 0) return [];
 
-  const solutions = [];
+  const solutions: OptimizerSolution[] = [];
   let nodes = 0;
   let stopped = false;
 
-  function buildChanges(selection) {
-    const changes = [];
+  function buildChanges(selection: OptimizerGroup[]): OptimizerChange[] {
+    const changes: OptimizerChange[] = [];
     for (let index = 0; index < variables.length; index += 1) {
       for (const currentGroupKey of variables[index].currentGroupKeys) {
         if (selection[index].key === currentGroupKey) continue;
@@ -195,9 +247,12 @@ export function findScheduleSuggestions(
     return changes;
   }
 
-  function insertSolution(selection, conflicts) {
+  function insertSolution(
+    selection: OptimizerGroup[],
+    conflicts: number,
+  ): void {
     const changes = buildChanges(selection);
-    const solution = {
+    const solution: OptimizerSolution = {
       conflicts,
       changedGroups: changes.length,
       changes,
@@ -214,7 +269,13 @@ export function findScheduleSuggestions(
     }
   }
 
-  function dfs(index, chosenEvents, conflicts, changedGroups, selection) {
+  function dfs(
+    index: number,
+    chosenEvents: CalendarEvent[],
+    conflicts: number,
+    changedGroups: number,
+    selection: OptimizerGroup[],
+  ): void {
     if (stopped) return;
     if (nodes >= maxNodes) {
       stopped = true;
@@ -264,12 +325,11 @@ export function findScheduleSuggestions(
 /**
  * Apply a suggestion by enabling exactly the events of its selected groups.
  * Subjects without a selected group are left untouched.
- *
- * @param {object[]} subjects
- * @param {{ groups: object[] }} suggestion
- * @returns {object[]}
  */
-export function applyScheduleSuggestion(subjects, suggestion) {
+export function applyScheduleSuggestion(
+  subjects: Subject[],
+  suggestion: { groups: OptimizerGroup[] },
+): Subject[] {
   const selectedGroups = new Map(
     (suggestion?.groups ?? []).map((group) => [
       group.key,
@@ -284,7 +344,7 @@ export function applyScheduleSuggestion(subjects, suggestion) {
 
   return subjects.map((subject) => {
     if (!suggestedSubjects.has(subject.title)) return subject;
-    const enabledMeetings = new Set();
+    const enabledMeetings = new Set<string>();
     const events = subject.events.map((event) => {
       const groupKey = getEventGroupKey(subject.title, event);
       const selectedGroup = selectedGroups.get(groupKey);

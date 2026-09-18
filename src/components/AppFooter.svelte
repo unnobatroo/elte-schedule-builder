@@ -1,9 +1,13 @@
-<script>
+<script lang="ts">
   import GitHubStarLink from "./GitHubStarLink.svelte";
   import Icon from "./Icon.svelte";
   import { language, t } from "../utils/i18n.js";
 
-  let { githubRepositoryUrl = "" } = $props();
+  interface Props {
+    githubRepositoryUrl?: string;
+  }
+
+  let { githubRepositoryUrl = "" }: Props = $props();
 </script>
 
 <footer class="footer" aria-label={t($language, "projectInformation")}>
@@ -48,100 +52,114 @@
 
   .footer-main {
     display: grid;
-    grid-template-columns: minmax(240px, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: var(--space-5);
-    padding: var(--space-4) var(--space-5);
+    gap: var(--space-4);
+    padding: var(--space-4);
   }
 
   .project-note {
-    display: grid;
-    gap: 3px;
     min-width: 0;
-    color: var(--color-text);
   }
 
   .project-note strong {
     display: block;
-    font-size: var(--text-sm);
+    color: var(--color-text);
+    font-size: 0.95rem;
+    font-weight: 700;
   }
 
   .project-note p {
-    margin: 0;
-    color: var(--color-text-muted);
-    font-size: 0.8rem;
-    line-height: 1.5;
+    margin-top: 4px;
+    color: var(--color-muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
   }
 
   .project-note a {
-    color: var(--color-accent);
-    font-weight: var(--weight-semibold);
+    color: var(--color-primary);
+    font-weight: 600;
     text-decoration: none;
   }
 
   .project-note a:hover {
-    color: var(--color-accent-strong);
     text-decoration: underline;
   }
 
   .footer-actions {
     display: flex;
-    align-items: stretch;
-    gap: var(--space-2);
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
   }
 
   .contact-action {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    min-height: var(--control-md);
-    padding: 6px 11px;
+    padding: 8px 12px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     background: var(--color-surface-2);
     color: var(--color-text);
-    font-size: var(--text-xs);
-    font-weight: var(--weight-semibold);
+    font-size: 0.85rem;
     text-decoration: none;
     transition:
-      background-color 0.15s,
-      border-color 0.15s;
-  }
-
-  .contact-action span {
-    display: grid;
-    line-height: 1.25;
-  }
-
-  .contact-action small {
-    color: var(--color-text-muted);
-    font-size: 0.66rem;
-    font-weight: 600;
+      border-color 0.2s,
+      background-color 0.2s;
   }
 
   .contact-action:hover {
-    border-color: var(--color-border-strong);
-    background: var(--color-surface-3);
-    color: var(--color-text);
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+  }
+
+  .contact-action span {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .contact-action small {
+    color: var(--color-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   @media (max-width: 768px) {
     .footer-main {
       grid-template-columns: 1fr;
-      align-items: stretch;
-      gap: var(--space-4);
+      align-items: flex-start;
+      gap: var(--space-3);
     }
 
     .footer-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-2);
+      width: 100%;
+      justify-content: flex-start;
     }
-  }
 
-  @media (max-width: 480px) {
-    .footer-actions {
-      grid-template-columns: 1fr;
+    .github-action,
+    .contact-action {
+      flex: 1 1 160px;
+    }
+
+    .contact-action {
+      justify-content: center;
     }
   }
 </style>

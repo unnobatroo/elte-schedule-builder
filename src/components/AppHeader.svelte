@@ -1,11 +1,20 @@
-<script>
+<script lang="ts">
   import Icon from "./Icon.svelte";
   import { cycleThemePreference, themePreference } from "../utils/theme.js";
   import { language, setLanguage, t } from "../utils/i18n.js";
 
-  let { faqRead = false, onOpenFAQ } = $props();
+  interface Props {
+    faqRead?: boolean;
+    onOpenFAQ?: () => void;
+  }
 
-  const THEME_ICONS = { system: "monitor", light: "sun", dark: "moon" };
+  let { faqRead = false, onOpenFAQ }: Props = $props();
+
+  const THEME_ICONS: Record<string, string> = {
+    system: "monitor",
+    light: "sun",
+    dark: "moon",
+  };
 
   const themeIcon = $derived(THEME_ICONS[$themePreference] ?? "monitor");
   const themeLabel = $derived(
@@ -47,7 +56,8 @@
       <select
         aria-label={t($language, "language")}
         value={$language}
-        onchange={(event) => setLanguage(event.currentTarget.value)}
+        onchange={(event) =>
+          setLanguage((event.currentTarget as HTMLSelectElement).value)}
       >
         <option value="en">EN</option>
         <option value="hu">HU</option>

@@ -1,4 +1,6 @@
-<script>
+<script lang="ts">
+  import type { Snippet } from "svelte";
+
   /**
    * Accessible modal dialog wrapper.
    *
@@ -6,6 +8,16 @@
    * focus restoration, and body scroll locking. Content is fully supplied
    * by the caller through the children snippet.
    */
+  interface Props {
+    open?: boolean;
+    label?: string;
+    role?: "dialog" | "alertdialog";
+    wide?: boolean;
+    extraWide?: boolean;
+    onClose?: () => void;
+    children?: Snippet;
+  }
+
   let {
     open = false,
     label = "",
@@ -14,25 +26,26 @@
     extraWide = false,
     onClose,
     children,
-  } = $props();
+  }: Props = $props();
 
-  let dialogElement = $state(null);
-  let previouslyFocused = null;
+  let dialogElement = $state<HTMLDivElement | null>(null);
+  let previouslyFocused: HTMLElement | null = null;
 
   const FOCUSABLE_SELECTOR =
     'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
   $effect(() => {
     if (!open) return;
-    previouslyFocused = document.activeElement;
+    previouslyFocused = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
     dialogElement?.focus();
 
-    const handleDocumentKeydown = (event) => {
+    const handleDocumentKeydown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose?.();
     };
-    const handleDocumentMousedown = (event) => {
-      if (dialogElement && !dialogElement.contains(event.target)) onClose?.();
+    const handleDocumentMousedown = (event: MouseEvent) => {
+      if (dialogElement && !dialogElement.contains(event.target as Node | null))
+        onClose?.();
     };
     document.addEventListener("keydown", handleDocumentKeydown);
     document.addEventListener("mousedown", handleDocumentMousedown);
@@ -45,11 +58,11 @@
     };
   });
 
-  function handleKeydown(event) {
+  function handleKeydown(event: KeyboardEvent) {
     if (event.key !== "Tab" || !dialogElement) return;
 
     const focusableElements = [
-      ...dialogElement.querySelectorAll(FOCUSABLE_SELECTOR),
+      ...dialogElement.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
     ];
     if (focusableElements.length === 0) return;
 
@@ -88,45 +101,68 @@
     position: fixed;
     inset: 0;
     background: var(--color-overlay);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 3000;
-    padding: var(--space-5);
-    overflow-y: auto;
+    justify-content: center;
+    padding: var(--space-4);
+    animation: fadeIn 0.15s ease-out;
   }
 
   .modal {
     background: var(--color-surface);
-    color: var(--color-text);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-2);
+    box-shadow: var(--shadow-3);
+    max-height: calc(100vh - var(--space-4) * 2);
     width: 100%;
-    max-width: 560px;
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
-    margin: auto;
-    padding: var(--space-5);
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: scaleIn 0.15s ease-out;
     outline: none;
   }
 
   .modal.wide {
-    max-width: 860px;
+    max-width: 680px;
   }
 
   .modal.extra-wide {
-    max-width: 1320px;
+    max-width: 900px;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
   @media (max-width: 640px) {
     .modal-backdrop {
-      padding: var(--space-3);
+      padding: var(--space-2);
+      align-items: flex-end;
     }
 
     .modal {
-      max-height: calc(100vh - 24px);
-      padding: var(--space-4);
+      max-height: 90vh;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
     }
   }
 </style>

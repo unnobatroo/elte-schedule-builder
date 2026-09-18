@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onMount } from "svelte";
   import App from "./App.svelte";
   import { language, t } from "./utils/i18n.js";

@@ -1,7 +1,12 @@
-<script>
+<script lang="ts">
   import { language, t } from "../utils/i18n.js";
 
-  let { href, label = "" } = $props();
+  interface Props {
+    href: string;
+    label?: string;
+  }
+
+  let { href, label = "" }: Props = $props();
   const displayLabel = $derived(label || t($language, "starOnGithub"));
 </script>
 
@@ -52,8 +57,8 @@
   }
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     fill: var(--color-warning);
   }
 </style>

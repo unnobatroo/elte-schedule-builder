@@ -1,6 +1,18 @@
-<script>
+<script lang="ts">
   import Icon from "./Icon.svelte";
+  import type { Schedule } from "../types/schedule.js";
   import { language, t } from "../utils/i18n.js";
+
+  interface Props {
+    schedules?: Schedule[];
+    activeScheduleId?: string;
+    onCreate?: () => void;
+    onSwitch?: (id: string) => void;
+    onRename?: (id: string, name: string) => void;
+    onDelete?: (id: string) => void;
+    hasSubjects?: boolean;
+    onReset?: () => void;
+  }
 
   let {
     schedules = [],
@@ -11,13 +23,14 @@
     onDelete,
     hasSubjects = false,
     onReset,
-  } = $props();
+  }: Props = $props();
 
   let editingId = $state("");
   let editingName = $state("");
-  let editingInput = $state(null);
+  let editingInput = $state<HTMLInputElement | null>(null);
 
-  function beginRename(schedule) {
+  function beginRename(schedule?: Schedule) {
+    if (!schedule) return;
     editingId = schedule.id;
     editingName = schedule.name;
     requestAnimationFrame(() => editingInput?.select());
@@ -80,7 +93,8 @@
       <select
         id="active-schedule"
         value={activeScheduleId}
-        onchange={(event) => onSwitch?.(event.currentTarget.value)}
+        onchange={(event) =>
+          onSwitch?.((event.currentTarget as HTMLSelectElement).value)}
       >
         {#each schedules as schedule (schedule.id)}
           <option value={schedule.id}>{schedule.name}</option>

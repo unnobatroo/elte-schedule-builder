@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import {
     getEventDisplayTitle,
     getEventGroupNumber,
@@ -6,10 +6,20 @@
   } from "../utils/schedule.js";
   import { language, t } from "../utils/i18n.js";
   import Icon from "./Icon.svelte";
+  import type { CalendarEvent } from "../types/schedule.js";
 
-  let { calendarEvent } = $props();
+  interface Props {
+    calendarEvent?: {
+      title?: string;
+      hasConflict?: boolean;
+      originalEvent?: CalendarEvent;
+      [key: string]: unknown;
+    };
+  }
 
-  const event = $derived(calendarEvent?.originalEvent ?? {});
+  let { calendarEvent }: Props = $props();
+
+  const event = $derived((calendarEvent?.originalEvent ?? {}) as CalendarEvent);
   const title = $derived(
     getEventDisplayTitle(event) ||
       calendarEvent?.title ||

@@ -1,4 +1,11 @@
-<script>
+<script lang="ts">
+  import type {
+    CalendarEvent,
+    OptimizationSuggestion,
+    Schedule,
+    ScheduleStore,
+    Subject,
+  } from "./types/schedule.js";
   import { onMount } from "svelte";
   import Calendar from "./components/Calendar.svelte";
   import FAQ from "./components/FAQ.svelte";
@@ -33,22 +40,33 @@
   import { STORAGE_KEYS } from "./utils/storageKeys.js";
   import { language, t } from "./utils/i18n.js";
 
-  let events = $state([]);
-  let allSubjects = $state([]);
+  let events = $state<CalendarEvent[]>([]);
+  let allSubjects = $state<Subject[]>([]);
   let showFAQ = $state(false);
   let showWarning = $state(false);
   let faqRead = $state(false);
-  let importedCodes = $state({
+  interface ImportedCodes {
+    baseCodes: string;
+    fullCodes: string[];
+    eventIdentities: string[];
+  }
+  let importedCodes = $state<ImportedCodes>({
     baseCodes: "",
     fullCodes: [],
     eventIdentities: [],
   });
   let lectureExemption = $state(false);
-  let scheduleStore = $state(null);
-  let schedules = $state([]);
+  let scheduleStore = $state<ScheduleStore | null>(null);
+  let schedules = $state<Schedule[]>([]);
   let activeScheduleId = $state("");
   let activeCodes = $derived(getEnabledEventCodes(allSubjects));
-  let confirmDialog = $state({
+  let confirmDialog = $state<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    action: (() => void) | null;
+  }>({
     open: false,
     title: "",
     message: "",
@@ -103,13 +121,16 @@
     localStorage.setItem(STORAGE_KEYS.warningShown, "true");
   }
 
-  function handleScheduleUpdate(eventData) {
+  function handleScheduleUpdate(eventData: CalendarEvent[]) {
     allSubjects = mergeScheduleEvents(allSubjects, eventData);
     computeConflicts();
     saveAndUpdate();
   }
 
-  function handleClassSelection(eventData, selectedClass) {
+  function handleClassSelection(
+    eventData: CalendarEvent[],
+    selectedClass: CalendarEvent,
+  ) {
     allSubjects = selectScheduleClass(allSubjects, eventData, selectedClass);
     computeConflicts();
     saveAndUpdate();
@@ -126,7 +147,7 @@
     updateEvents();
   }
 
-  function applyScheduleStore(store) {
+  function applyScheduleStore(store: ScheduleStore) {
     scheduleStore = store;
     schedules = store.schedules;
     activeScheduleId = store.activeScheduleId;
@@ -136,7 +157,7 @@
     computeConflicts();
   }
 
-  function persistAndApply(store) {
+  function persistAndApply(store: ScheduleStore) {
     saveScheduleStore(localStorage, store);
     applyScheduleStore(store);
   }
@@ -152,18 +173,29 @@
     );
   }
 
-  function switchSchedule(scheduleId) {
-    if (scheduleId === activeScheduleId) return;
+  function switchSchedule(scheduleId: string) {
+    if (scheduleId === activeScheduleId || !scheduleStore) return;
     persistAndApply(activateSchedule(scheduleStore, scheduleId));
   }
 
-  function handleRenameSchedule(scheduleId, name) {
+  function handleRenameSchedule(scheduleId: string, name: string) {
+    if (!scheduleStore) return;
     scheduleStore = renameSchedule(scheduleStore, scheduleId, name);
     saveScheduleStore(localStorage, scheduleStore);
     schedules = scheduleStore.schedules;
   }
 
-  function requestConfirm({ title, message, confirmLabel, action }) {
+  function requestConfirm({
+    title,
+    message,
+    confirmLabel,
+    action,
+  }: {
+    title: string;
+    message: string;
+    confirmLabel: string;
+    action: (() => void) | null;
+  }) {
     confirmDialog = { open: true, title, message, confirmLabel, action };
   }
 
@@ -177,14 +209,16 @@
     action?.();
   }
 
-  function deleteSchedule(scheduleId) {
+  function deleteSchedule(scheduleId: string) {
     const schedule = schedules.find((item) => item.id === scheduleId);
-    if (!schedule || schedules.length === 1) return;
+    if (!schedule || schedules.length === 1 || !scheduleStore) return;
     requestConfirm({
       title: t($language, "deleteSchedule"),
       message: t($language, "deleteScheduleMessage", { name: schedule.name }),
       confirmLabel: t($language, "delete"),
-      action: () => persistAndApply(removeSchedule(scheduleStore, scheduleId)),
+      action: () =>
+        scheduleStore &&
+        persistAndApply(removeSchedule(scheduleStore, scheduleId)),
     });
   }
 
@@ -192,25 +226,25 @@
     events = getEnabledEvents(allSubjects);
   }
 
-  function toggleSubject(title, allEnabled = null) {
+  function toggleSubject(title: string, allEnabled: boolean | null = null) {
     allSubjects = setSubjectEnabled(allSubjects, title, allEnabled);
     computeConflicts();
     saveAndUpdate();
   }
 
-  function toggleEvent(subjectTitle, eventIndex) {
+  function toggleEvent(subjectTitle: string, eventIndex: number) {
     allSubjects = toggleScheduleEvent(allSubjects, subjectTitle, eventIndex);
     computeConflicts();
     saveAndUpdate();
   }
 
-  function applySuggestion(suggestion) {
+  function applySuggestion(suggestion: OptimizationSuggestion) {
     allSubjects = applyScheduleSuggestion(allSubjects, suggestion);
     computeConflicts();
     saveAndUpdate();
   }
 
-  function deleteSubject(title) {
+  function deleteSubject(title: string) {
     allSubjects = allSubjects.filter((subject) => subject.title !== title);
     computeConflicts();
     saveAndUpdate();
@@ -234,7 +268,7 @@
     updateEvents();
   }
 
-  function toggleLectureExemption(value) {
+  function toggleLectureExemption(value: boolean) {
     lectureExemption = value;
     computeConflicts();
     saveAndUpdate();

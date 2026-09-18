@@ -1,6 +1,19 @@
 import { distance } from "fastest-levenshtein";
+import type { CalendarEvent, ParsedTime, Subject } from "../types/schedule.js";
 
-export async function fetchSubjectClasses(searchTerm, searchMode = "code") {
+export interface ParsedClassRow {
+  time: string;
+  title: string;
+  type: string;
+  location: string;
+  instructor: string;
+  code: string;
+}
+
+export async function fetchSubjectClasses(
+  searchTerm: string,
+  searchMode = "code",
+): Promise<ParsedClassRow[]> {
   if (!new Set(["code", "name", "instructor"]).has(searchMode)) {
     throw new TypeError("Unsupported subject search mode");
   }
@@ -16,20 +29,22 @@ export async function fetchSubjectClasses(searchTerm, searchMode = "code") {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
   const rows = doc.querySelectorAll("#resulttable tbody tr");
-  return Array.from(rows).map(parseTableRow).filter(Boolean);
+  return Array.from(rows)
+    .map(parseTableRow)
+    .filter((row): row is ParsedClassRow => Boolean(row));
 }
 
-export function parseTableRow(row) {
+export function parseTableRow(row: Element | null): ParsedClassRow | null {
   if (!row) return null;
 
   const cells = row.querySelectorAll("td");
   if (cells.length < 6) return null;
 
-  const time = cells[0].textContent.trim();
-  const codeAndType = cells[1].textContent.trim();
-  const title = cells[2].textContent.trim();
-  const location = cells[3].textContent.trim();
-  const instructor = cells[5].textContent.trim();
+  const time = cells[0].textContent?.trim() ?? "";
+  const codeAndType = cells[1].textContent?.trim() ?? "";
+  const title = cells[2].textContent?.trim() ?? "";
+  const location = cells[3].textContent?.trim() ?? "";
+  const instructor = cells[5].textContent?.trim() ?? "";
 
   // Extract type from code (e.g., "IP-18fWPEG-90 (lecture)" -> "lecture")
   const typeMatch = codeAndType.match(/\((.*?)\)$/);
@@ -45,7 +60,7 @@ export function parseTableRow(row) {
   };
 }
 
-export function parseTimeString(timeStr) {
+export function parseTimeString(timeStr?: string | null): ParsedTime | null {
   if (!timeStr || timeStr === "Weeks: ") return null;
 
   const dayTimeRegex =
@@ -63,14 +78,14 @@ export function parseTimeString(timeStr) {
   };
 }
 
-export function parseSubjectCodes(input) {
+export function parseSubjectCodes(input: string): string[] {
   return input
     .split(/[\s,]+/)
     .map((code) => code.trim())
     .filter(Boolean);
 }
 
-export function processSubjectCode(code) {
+export function processSubjectCode(code: string): string {
   const parts = code.split("-");
   if (parts.length > 1) parts.pop();
   return parts.join("-");
@@ -78,13 +93,13 @@ export function processSubjectCode(code) {
 
 // Tanrend codes such as DEMO-1 are already base codes. Only strip a group
 // suffix when the code contains at least three dash-separated segments.
-export function getTanrendSubjectCode(code) {
+export function getTanrendSubjectCode(code: string): string {
   const parts = code.split("-");
   if (parts.length > 2) parts.pop();
   return parts.join("-");
 }
 
-function normalizeSearchValue(value) {
+function normalizeSearchValue(value: unknown): string {
   return String(value ?? "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -92,14 +107,14 @@ function normalizeSearchValue(value) {
     .trim();
 }
 
-function normalizeNameSearchValue(value) {
+function normalizeNameSearchValue(value: unknown): string {
   return normalizeSearchValue(value)
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-export function getNameMatchDistance(candidate, query) {
+export function getNameMatchDistance(candidate: string, query: string): number {
   const normalizedCandidate = normalizeNameSearchValue(candidate);
   const normalizedQuery = normalizeNameSearchValue(query);
   if (!normalizedCandidate || !normalizedQuery) return Number.POSITIVE_INFINITY;
@@ -127,7 +142,10 @@ export function getNameMatchDistance(candidate, query) {
   return bestDistance;
 }
 
-export function isTypoTolerantNameMatch(candidate, query) {
+export function isTypoTolerantNameMatch(
+  candidate: string,
+  query: string,
+): boolean {
   const normalizedQuery = normalizeNameSearchValue(query);
   if (normalizedQuery.length < 4) {
     return getNameMatchDistance(candidate, query) === 0;
@@ -137,11 +155,18 @@ export function isTypoTolerantNameMatch(candidate, query) {
   return getNameMatchDistance(candidate, query) <= allowedDistance;
 }
 
-export function rankSubjectMatches(groups, query, limit = 3) {
+export function rankSubjectMatches<
+  T extends {
+    title?: string;
+    apiCode?: string;
+    rows?: { instructor?: string }[];
+    classes?: { instructor?: string }[];
+  },
+>(groups: T[], query: string, limit = 3): T[] {
   const normalizedQuery = normalizeSearchValue(query);
   if (!normalizedQuery || !Array.isArray(groups) || limit <= 0) return [];
 
-  const matchRank = (group) => {
+  const matchRank = (group: T): number => {
     const codes = String(group?.apiCode ?? "")
       .split(",")
       .map(normalizeSearchValue)
@@ -172,11 +197,11 @@ export function rankSubjectMatches(groups, query, limit = 3) {
     if (title.includes(normalizedQuery)) return 9;
     if (instructors.some((name) => name.includes(normalizedQuery))) return 10;
 
-    const titleDistance = getNameMatchDistance(group?.title, query);
+    const titleDistance = getNameMatchDistance(group?.title ?? "", query);
     const instructorDistance = Math.min(
       ...instructors.map((name) => getNameMatchDistance(name, query)),
     );
-    if (isTypoTolerantNameMatch(group?.title, query)) {
+    if (isTypoTolerantNameMatch(group?.title ?? "", query)) {
       return 20 + titleDistance;
     }
     if (instructors.some((name) => isTypoTolerantNameMatch(name, query))) {
@@ -190,29 +215,35 @@ export function rankSubjectMatches(groups, query, limit = 3) {
     .sort(
       (first, second) =>
         first.rank - second.rank ||
-        first.group.title.length - second.group.title.length ||
-        first.group.title.localeCompare(second.group.title) ||
+        (first.group.title?.length ?? 0) - (second.group.title?.length ?? 0) ||
+        (first.group.title ?? "").localeCompare(second.group.title ?? "") ||
         first.index - second.index,
     )
     .slice(0, limit)
     .map(({ group }) => group);
 }
 
-export function getEventGroupNumber(event) {
+export function getEventGroupNumber(event: unknown): string {
+  const e = event as { code?: string; description?: string } | null;
   const eventCode =
-    typeof event?.code === "string" && event.code.trim()
-      ? event.code.trim()
-      : typeof event?.description === "string"
-        ? event.description.split("\n")[0].trim()
+    typeof e?.code === "string" && e.code.trim()
+      ? e.code.trim()
+      : typeof e?.description === "string"
+        ? e.description.split("\n")[0].trim()
         : "";
   const parts = eventCode.split("-");
 
-  return parts.length >= 3 ? parts.at(-1).trim() : "";
+  return parts.length >= 3 ? (parts.at(-1)?.trim() ?? "") : "";
 }
 
-export function getEventDisplayTitle(event) {
-  const title = String(event?.title ?? "").trim();
-  const type = String(event?.extendedProps?.type ?? event?.type ?? "").trim();
+export function getEventDisplayTitle(event: unknown): string {
+  const e = event as {
+    title?: string;
+    extendedProps?: { type?: string };
+    type?: string;
+  } | null;
+  const title = String(e?.title ?? "").trim();
+  const type = String(e?.extendedProps?.type ?? e?.type ?? "").trim();
 
   if (!title || !type) return title;
 
@@ -222,11 +253,12 @@ export function getEventDisplayTitle(event) {
     : title;
 }
 
-export function createCalendarEvents(classes) {
+export function createCalendarEvents(classes: unknown[]): CalendarEvent[] {
   if (!Array.isArray(classes)) return [];
 
-  return classes.flatMap((subjectClass) => {
-    if (!subjectClass) return [];
+  return classes.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const subjectClass = item as Record<string, string>;
     const time = parseTimeString(subjectClass.time);
     if (!time) return [];
 
@@ -249,12 +281,15 @@ export function createCalendarEvents(classes) {
   });
 }
 
-function timeToMinutes(time) {
+function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
-export function checkTimeOverlap(first, second) {
+export function checkTimeOverlap(
+  first: CalendarEvent,
+  second: CalendarEvent,
+): boolean {
   return (
     first.dayOfWeek === second.dayOfWeek &&
     timeToMinutes(first.startTime) < timeToMinutes(second.endTime) &&
@@ -262,16 +297,21 @@ export function checkTimeOverlap(first, second) {
   );
 }
 
-export function isLectureType(type) {
-  return (type ?? "").toLowerCase().includes("lecture");
+export function isLectureType(type?: unknown): boolean {
+  return typeof type === "string" && type.toLowerCase().includes("lecture");
 }
 
-function isLecture(event) {
-  return isLectureType(event.extendedProps?.type ?? event.type);
+function isLecture(event: CalendarEvent): boolean {
+  return isLectureType(
+    event.extendedProps?.type ?? (event as Record<string, unknown>).type,
+  );
 }
 
-export function getConflictPairs(events, lectureExemption = false) {
-  const conflicts = [];
+export function getConflictPairs(
+  events: CalendarEvent[],
+  lectureExemption = false,
+): Array<{ event1: number; event2: number }> {
+  const conflicts: Array<{ event1: number; event2: number }> = [];
   for (let first = 0; first < events.length; first += 1) {
     for (let second = first + 1; second < events.length; second += 1) {
       if (!checkTimeOverlap(events[first], events[second])) continue;
@@ -292,10 +332,10 @@ export function getConflictPairs(events, lectureExemption = false) {
  * result describes the timetable after that choice is replaced.
  */
 export function getConflictingEvents(
-  candidate,
-  otherEvents,
+  candidate: CalendarEvent | null | undefined,
+  otherEvents: CalendarEvent[],
   lectureExemption = false,
-) {
+): CalendarEvent[] {
   if (!candidate || !Array.isArray(otherEvents)) return [];
 
   const candidateIndex = otherEvents.length;
@@ -309,7 +349,10 @@ export function getConflictingEvents(
   );
 }
 
-export function markConflicts(subjects, lectureExemption = false) {
+export function markConflicts(
+  subjects: Subject[],
+  lectureExemption = false,
+): Subject[] {
   const enabledEvents = subjects
     .filter((subject) => subject.enabled)
     .flatMap((subject) => subject.events.filter((event) => event.enabled));
@@ -328,17 +371,26 @@ export function markConflicts(subjects, lectureExemption = false) {
   }));
 }
 
-export function decodeSchedule(encodedSchedule) {
+export function decodeSchedule(encodedSchedule: string): {
+  baseCodes: string;
+  fullCodes: string[];
+  eventIdentities: string[];
+  lectureExemption: boolean;
+} {
   try {
     const decoded = atob(encodedSchedule);
     if (decoded.startsWith("V2|")) {
       const payload = JSON.parse(decodeURIComponent(decoded.slice(3)));
-      const fullCodes = Array.isArray(payload.codes)
-        ? payload.codes.filter((code) => typeof code === "string" && code)
+      const fullCodes: string[] = Array.isArray(payload.codes)
+        ? payload.codes.filter(
+            (code: unknown): code is string =>
+              typeof code === "string" && Boolean(code),
+          )
         : [];
-      const eventIdentities = Array.isArray(payload.eventIdentities)
+      const eventIdentities: string[] = Array.isArray(payload.eventIdentities)
         ? payload.eventIdentities.filter(
-            (identity) => typeof identity === "string" && identity,
+            (identity: unknown): identity is string =>
+              typeof identity === "string" && Boolean(identity),
           )
         : [];
       return {
@@ -377,10 +429,10 @@ export function decodeSchedule(encodedSchedule) {
 }
 
 export function encodeSchedule(
-  codes,
+  codes: string[],
   lectureExemption = false,
-  eventIdentities = [],
-) {
+  eventIdentities: string[] = [],
+): string {
   const uniqueCodes = [...new Set(codes)];
   const uniqueEventIdentities = [...new Set(eventIdentities.filter(Boolean))];
   if (uniqueEventIdentities.length > 0) {
@@ -394,10 +446,10 @@ export function encodeSchedule(
     return btoa(`V2|${payload}`);
   }
 
-  const groups = new Map();
+  const groups = new Map<string, string[]>();
   for (const code of uniqueCodes) {
     const parts = code.split("-");
-    const prefix = parts.length > 2 ? parts.shift() : "OTHER";
+    const prefix = parts.length > 2 ? parts.shift()! : "OTHER";
     const value = prefix === "OTHER" ? code : parts.join("-");
     groups.set(prefix, [...(groups.get(prefix) ?? []), value]);
   }
@@ -408,7 +460,7 @@ export function encodeSchedule(
   return btoa(`${sections.join("|")}|${lectureExemption ? "1" : "0"}`);
 }
 
-const DAY_OF_WEEK_INDEX = {
+const DAY_OF_WEEK_INDEX: Record<string, number> = {
   Monday: 1,
   Tuesday: 2,
   Wednesday: 3,
@@ -416,20 +468,12 @@ const DAY_OF_WEEK_INDEX = {
   Friday: 5,
 };
 
-/**
- * Get the date for a specific weekday in a timezone-safe manner.
- * Avoids using toISOString() which can cause date shifts near midnight in non-UTC timezones.\n *
- * @param {string} dayOfWeek - Day name: "Monday", "Tuesday", etc.
- * @param {number} weekOffset - 0 for the current week, 1 for the next week
- * @returns {string} ISO date string in YYYY-MM-DD format
- */
-function getWeekdayDate(dayOfWeek, weekOffset) {
+function getWeekdayDate(dayOfWeek: string, weekOffset: number): string {
   const today = new Date();
   const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
   const daysToMonday = currentDay === 0 ? 6 : currentDay - 1;
-  const daysToAdd = DAY_OF_WEEK_INDEX[dayOfWeek] - 1;
+  const daysToAdd = (DAY_OF_WEEK_INDEX[dayOfWeek] ?? 1) - 1;
 
-  // Create date object to handle month/year overflow correctly
   const eventDateObj = new Date(
     today.getFullYear(),
     today.getMonth(),
@@ -439,47 +483,22 @@ function getWeekdayDate(dayOfWeek, weekOffset) {
   return formatDateToISO(eventDateObj);
 }
 
-/**
- * Get the date for a specific day of the current week in a timezone-safe manner.
- *
- * @param {string} dayOfWeek - Day name: "Monday", "Tuesday", etc.
- * @returns {string} ISO date string in YYYY-MM-DD format
- */
-export function getWeekDateForDay(dayOfWeek) {
+export function getWeekDateForDay(dayOfWeek: string): string {
   return getWeekdayDate(dayOfWeek, 0);
 }
 
-/**
- * Get the date for a specific day of next week in a timezone-safe manner.
- *
- * @param {string} dayOfWeek - Day name: "Monday", "Tuesday", etc.
- * @returns {string} ISO date string in YYYY-MM-DD format
- */
-export function getNextWeekDateForDay(dayOfWeek) {
+export function getNextWeekDateForDay(dayOfWeek: string): string {
   return getWeekdayDate(dayOfWeek, 1);
 }
 
-/**
- * Format a Date object to ISO string (YYYY-MM-DD) without timezone conversion.
- * This prevents the bug where toISOString() converts to UTC and shifts dates.
- *
- * @param {Date} date - Date object to format
- * @returns {string} ISO date string in YYYY-MM-DD format
- */
-export function formatDateToISO(date) {
+export function formatDateToISO(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
-/**
- * Format a Date object to compact format (YYYYMMDD) for Google Calendar URLs.
- *
- * @param {Date} date - Date object to format
- * @returns {string} Compact date string in YYYYMMDD format
- */
-export function formatDateToCompact(date) {
+export function formatDateToCompact(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");

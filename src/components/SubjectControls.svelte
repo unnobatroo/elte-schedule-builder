@@ -1,6 +1,7 @@
-<script>
+<script lang="ts">
   import Icon from "./Icon.svelte";
   import ClassOptionContent from "./ClassOptionContent.svelte";
+  import type { CalendarEvent, Subject } from "../types/schedule.js";
   import {
     getConflictingEvents,
     getEventDisplayTitle,
@@ -14,15 +15,23 @@
   } from "../utils/scheduleState.js";
   import { language, t } from "../utils/i18n.js";
 
+  interface Props {
+    subjects?: Subject[];
+    lectureExemption?: boolean;
+    onToggleSubject?: (title: string) => void;
+    onToggleEvent?: (title: string, eventIndex: number) => void;
+    onDeleteSubject?: (title: string) => void;
+  }
+
   let {
     subjects = [],
     lectureExemption = false,
     onToggleSubject,
     onToggleEvent,
     onDeleteSubject,
-  } = $props();
+  }: Props = $props();
 
-  let openSubject = $state(null);
+  let openSubject = $state<string | null>(null);
 
   const sortedSubjectEntries = $derived(
     subjects
@@ -62,7 +71,7 @@
       openSubject = null;
   });
 
-  const dayOrder = {
+  const dayOrder: Record<string, number> = {
     Monday: 0,
     Tuesday: 1,
     Wednesday: 2,
@@ -72,11 +81,11 @@
     Sunday: 6,
   };
 
-  function toggleEvents(title) {
+  function toggleEvents(title: string) {
     openSubject = openSubject === title ? null : title;
   }
 
-  function formatEventLabel(event) {
+  function formatEventLabel(event: CalendarEvent): string {
     const type = isLectureType(event.extendedProps?.type)
       ? t($language, "lecture")
       : t($language, "practice");
@@ -87,7 +96,10 @@
     return `${type}${groupLabel}, ${t($language, event.dayOfWeek.toLocaleLowerCase("en-US"))} ${event.startTime}–${event.endTime}`;
   }
 
-  function getEventConflicts(subject, event) {
+  function getEventConflicts(
+    subject: Subject,
+    event: CalendarEvent,
+  ): CalendarEvent[] {
     if (!subject.enabled) return [];
 
     const candidateIsLecture = isLectureType(event.extendedProps?.type);
@@ -105,7 +117,7 @@
     return getConflictingEvents(event, retainedEvents, lectureExemption);
   }
 
-  function formatConflictAria(conflicts) {
+  function formatConflictAria(conflicts: CalendarEvent[]): string {
     return conflicts
       .map(
         (event) =>
@@ -114,7 +126,7 @@
       .join("; ");
   }
 
-  function getSubjectCodes(subject) {
+  function getSubjectCodes(subject: Subject): string {
     const codes = [
       ...new Set(
         (subject.events ?? [])
@@ -125,7 +137,10 @@
     return codes.slice(0, 2).join(" · ");
   }
 
-  function compareEvents(first, second) {
+  function compareEvents(
+    first: { event: CalendarEvent; eventIndex: number },
+    second: { event: CalendarEvent; eventIndex: number },
+  ): number {
     return (
       (dayOrder[first.event.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) -
         (dayOrder[second.event.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) ||
@@ -136,7 +151,7 @@
     );
   }
 
-  function getEventGroups(subject) {
+  function getEventGroups(subject: Subject) {
     const indexedEvents = subject.events.map((event, eventIndex) => ({
       event,
       eventIndex,
@@ -288,9 +303,11 @@
                             startTime={event.startTime}
                             endTime={event.endTime}
                             instructor={getEventInstructor(event)}
-                            location={event.extendedProps?.location ??
-                              event.location ??
-                              ""}
+                            location={String(
+                              event.extendedProps?.location ??
+                                event.location ??
+                                "",
+                            )}
                             code={getEventCode(event)}
                             {conflicts}
                           />

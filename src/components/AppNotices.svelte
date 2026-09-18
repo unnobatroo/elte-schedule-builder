@@ -1,8 +1,13 @@
-<script>
+<script lang="ts">
   import Icon from "./Icon.svelte";
   import { language, t } from "../utils/i18n.js";
 
-  let { showWarning = false, onCloseWarning } = $props();
+  interface Props {
+    showWarning?: boolean;
+    onCloseWarning?: () => void;
+  }
+
+  let { showWarning = false, onCloseWarning }: Props = $props();
 </script>
 
 {#if showWarning}
@@ -38,21 +43,20 @@
     background: color-mix(
       in srgb,
       var(--color-warning) 9%,
-      var(--color-surface)
+      var(--color-surface-2)
     );
-    color: var(--color-text);
   }
 
-  h2 {
-    margin: 0;
+  .notice-copy h2 {
     font-size: 1rem;
+    font-weight: 700;
   }
 
-  p {
-    max-width: 76ch;
-    margin: 4px 0 0;
-    color: var(--color-text-muted);
-    font-size: 0.9rem;
+  .notice-copy p {
+    margin-top: 4px;
+    color: var(--color-muted);
+    font-size: 0.92rem;
+    line-height: 1.45;
   }
 
   @media (max-width: 640px) {
@@ -60,9 +64,9 @@
       grid-template-columns: auto minmax(0, 1fr);
     }
 
-    button {
-      grid-column: 2;
-      justify-self: start;
+    .notice button {
+      grid-column: 1 / -1;
+      width: 100%;
     }
   }
 </style>

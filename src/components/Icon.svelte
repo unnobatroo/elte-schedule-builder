@@ -1,4 +1,36 @@
-<script>
+<script module lang="ts">
+  export type IconName =
+    | "alert-triangle"
+    | "calendar"
+    | "check"
+    | "chevron-down"
+    | "chevron-left"
+    | "chevron-right"
+    | "chevron-up"
+    | "clock"
+    | "download"
+    | "external-link"
+    | "info"
+    | "mail"
+    | "map-pin"
+    | "monitor"
+    | "moon"
+    | "pencil"
+    | "plus"
+    | "book-open"
+    | "rotate-ccw"
+    | "search"
+    | "send"
+    | "smartphone"
+    | "sparkles"
+    | "sun"
+    | "trash"
+    | "upload"
+    | "user"
+    | "x";
+</script>
+
+<script lang="ts">
   import AlertTriangle from "@lucide/svelte/icons/triangle-alert";
   import Calendar from "@lucide/svelte/icons/calendar";
   import Check from "@lucide/svelte/icons/check";
@@ -59,9 +91,16 @@
     x: X,
   };
 
-  let { name, size = 18, strokeWidth = 2, label = "" } = $props();
+  interface Props {
+    name: IconName | string;
+    size?: number | string;
+    strokeWidth?: number | string;
+    label?: string;
+  }
 
-  const IconComponent = $derived(ICONS[name]);
+  let { name, size = 18, strokeWidth = 2, label = "" }: Props = $props();
+
+  const IconComponent = $derived(ICONS[name as IconName]);
 </script>
 
 {#if IconComponent}

@@ -7,8 +7,11 @@ import { initTheme } from "./utils/theme.js";
 initLanguage();
 initTheme();
 
-const app = mount(Root, {
-  target: document.getElementById("app"),
-});
+const target = document.getElementById("app");
+if (!target) {
+  throw new Error("Failed to find app root element");
+}
+
+const app = mount(Root, { target });
 
 export default app;

@@ -1,6 +1,7 @@
-<script>
+<script lang="ts">
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
+  import type { CalendarEvent } from "../types/schedule.js";
   import {
     buildGoogleCalendarCsv,
     buildICalendar,
@@ -8,12 +9,18 @@
   } from "../utils/calendarExport.js";
   import { language, t } from "../utils/i18n.js";
 
-  let { isOpen = false, onClose, events = [] } = $props();
+  interface Props {
+    isOpen?: boolean;
+    onClose?: () => void;
+    events?: CalendarEvent[];
+  }
+
+  let { isOpen = false, onClose, events = [] }: Props = $props();
   let exportError = $state("");
   let exportStatus = $state("");
   let eventCount = $derived(getCalendarEventCount(events));
 
-  function downloadFile(content, filename, type) {
+  function downloadFile(content: string, filename: string, type: string) {
     const url = URL.createObjectURL(new Blob([content], { type }));
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -24,7 +31,7 @@
     URL.revokeObjectURL(url);
   }
 
-  function handleExport(format) {
+  function handleExport(format: "ics" | "csv") {
     exportError = "";
     exportStatus = "";
 

@@ -1,7 +1,17 @@
-<script>
+<script lang="ts">
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
   import { language, t } from "../utils/i18n.js";
+
+  interface Props {
+    isOpen?: boolean;
+    title?: string;
+    message?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  }
 
   let {
     isOpen = false,
@@ -11,7 +21,7 @@
     cancelLabel = "",
     onConfirm,
     onCancel,
-  } = $props();
+  }: Props = $props();
 </script>
 
 <Modal open={isOpen} role="alertdialog" label={title} onClose={onCancel}>
@@ -42,28 +52,28 @@
 
 <style>
   .confirm-modal {
-    color: var(--color-text);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
   }
 
   h2 {
-    margin: 0 0 12px;
-    font-size: var(--text-xl);
-    color: var(--color-warning);
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
   }
 
   p {
-    margin: 0 0 20px;
-    color: var(--color-text);
+    color: var(--color-muted);
+    font-size: 0.95rem;
     line-height: 1.5;
-    overflow-wrap: anywhere;
   }
 
   .confirm-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
+    gap: var(--space-2);
   }
 </style>

@@ -1,8 +1,9 @@
 import { writable } from "svelte/store";
 import { STORAGE_KEYS } from "./storageKeys.js";
 
-const SUPPORTED_LANGUAGES = Object.freeze(["en", "hu"]);
-export const language = writable("en");
+const SUPPORTED_LANGUAGES = ["en", "hu"] as const;
+export type Language = (typeof SUPPORTED_LANGUAGES)[number];
+export const language = writable<Language>("en");
 
 const MESSAGES = {
   en: {
@@ -402,11 +403,15 @@ const MESSAGES = {
   },
 };
 
-function isSupported(value) {
-  return SUPPORTED_LANGUAGES.includes(value);
+function isSupported(value: unknown): value is Language {
+  return (
+    typeof value === "string" && SUPPORTED_LANGUAGES.includes(value as Language)
+  );
 }
 
-export function detectDeviceLanguage(deviceLanguages) {
+export function detectDeviceLanguage(
+  deviceLanguages?: string | readonly string[] | string[],
+): Language {
   const primaryLanguage =
     typeof deviceLanguages === "string"
       ? deviceLanguages
@@ -414,23 +419,26 @@ export function detectDeviceLanguage(deviceLanguages) {
   return /^hu(?:-|$)/i.test(primaryLanguage || "") ? "hu" : "en";
 }
 
-function applyDocumentLanguage(value) {
+function applyDocumentLanguage(value: Language): void {
   if (typeof document !== "undefined") {
     document.documentElement.lang = value === "hu" ? "hu" : "en";
   }
 }
 
 export function initLanguage(
-  storage = typeof localStorage === "undefined" ? null : localStorage,
-  deviceLanguages = typeof navigator === "undefined"
+  storage: Storage | null = typeof localStorage === "undefined"
+    ? null
+    : localStorage,
+  deviceLanguages: readonly string[] | string[] = typeof navigator ===
+  "undefined"
     ? []
     : navigator.languages?.length
       ? navigator.languages
       : [navigator.language],
-) {
-  let storedLanguage = null;
+): Language {
+  let storedLanguage: string | null = null;
   try {
-    storedLanguage = storage?.getItem(STORAGE_KEYS.language);
+    storedLanguage = storage?.getItem(STORAGE_KEYS.language) ?? null;
   } catch {
     // Storage can be unavailable; device language still provides a default.
   }
@@ -443,9 +451,11 @@ export function initLanguage(
 }
 
 export function setLanguage(
-  value,
-  storage = typeof localStorage === "undefined" ? null : localStorage,
-) {
+  value: string,
+  storage: Storage | null = typeof localStorage === "undefined"
+    ? null
+    : localStorage,
+): boolean {
   if (!isSupported(value)) return false;
   language.set(value);
   try {
@@ -457,9 +467,18 @@ export function setLanguage(
   return true;
 }
 
-export function t(activeLanguage, key, variables = {}) {
+export function t(
+  activeLanguage: string,
+  key: string,
+  variables: Record<string, unknown> = {},
+): string {
+  const langMessages =
+    (MESSAGES as Record<string, Record<string, string>>)[activeLanguage] ??
+    MESSAGES.en;
   const template =
-    MESSAGES[activeLanguage]?.[key] ?? MESSAGES.en[key] ?? String(key);
+    langMessages[key] ??
+    (MESSAGES.en as Record<string, string>)[key] ??
+    String(key);
   return Object.entries(variables).reduce(
     (result, [name, value]) =>
       result.replaceAll(`{${name}}`, String(value ?? "")),

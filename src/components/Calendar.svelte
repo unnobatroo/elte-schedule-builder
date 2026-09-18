@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onDestroy } from "svelte";
   import { get } from "svelte/store";
   import "temporal-polyfill/global";
@@ -8,6 +8,11 @@
 
   import { createEventModalPlugin } from "@schedule-x/event-modal";
   import "@schedule-x/theme-default/dist/index.css";
+  import type {
+    CalendarEvent,
+    OptimizationSuggestion,
+    Subject,
+  } from "../types/schedule.js";
   import {
     getConflictPairs,
     getEventDisplayTitle,
@@ -23,6 +28,15 @@
   import TimeGridEvent from "./TimeGridEvent.svelte";
   import TimetableActions from "./TimetableActions.svelte";
 
+  interface Props {
+    events?: CalendarEvent[];
+    activeCodes?: string[];
+    subjects?: Subject[];
+    lectureExemption?: boolean;
+    onToggleLectureExemption?: (value: boolean) => void;
+    onApplySuggestion?: (suggestion: OptimizationSuggestion) => void;
+  }
+
   let {
     events = [],
     activeCodes = [],
@@ -30,7 +44,7 @@
     lectureExemption = false,
     onToggleLectureExemption,
     onApplySuggestion,
-  } = $props();
+  }: Props = $props();
 
   const CALENDAR_TIME_ZONE = "Europe/Budapest";
   const SCHEDULE_X_TRANSLATIONS = {
@@ -64,11 +78,11 @@
   const eventModal = createEventModalPlugin();
   const eventsServicePlugin = createEventsServicePlugin();
 
-  function formatTime(hour, minute) {
+  function formatTime(hour: number, minute: number): string {
     return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
   }
 
-  function formatEvents(rawEvents) {
+  function formatEvents(rawEvents: CalendarEvent[]) {
     const overlappingEvents = new Set(
       getConflictPairs(rawEvents, lectureExemption).flatMap(
         ({ event1, event2 }) => [event1, event2],
@@ -193,7 +207,13 @@
     ),
   );
 
-  function describeEvent({ event, index }) {
+  function describeEvent({
+    event,
+    index,
+  }: {
+    event: CalendarEvent;
+    index: number;
+  }): string {
     const type = isLectureType(event.extendedProps?.type)
       ? t($language, "lecture")
       : t($language, "practice");

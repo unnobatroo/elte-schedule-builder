@@ -1,4 +1,3 @@
-import axios from "axios";
 import { readPositiveInteger } from "../config/runtime.js";
 
 export const MAX_SUBJECT_CODE_LENGTH = 64;
@@ -14,7 +13,6 @@ const UPSTREAM_TIMEOUT = readPositiveInteger(
   process.env.UPSTREAM_TIMEOUT_MS,
   10000,
 );
-const MAX_UPSTREAM_RESPONSE_SIZE = 2 * 1024 * 1024;
 
 export function isValidSubjectCode(subjectCode) {
   return (
@@ -31,6 +29,7 @@ export function isValidSubjectName(subjectName) {
       return characterCode <= 31 || characterCode === 127;
     },
   );
+
   return (
     typeof subjectName === "string" &&
     subjectName.trim().length > 0 &&
@@ -48,7 +47,7 @@ export function validateSubjectCode(req, res, next) {
 }
 
 export function validateSubjectSearch(req, res, next) {
-  const searchMode = req.query.by ?? "code";
+  const searchMode = req.query?.by ?? "code";
   const searchTerm = req.params.query;
   if (!Object.hasOwn(TANREND_SEARCH_MODES, searchMode)) {
     return res.status(400).json({ error: "Invalid subject search mode" });
@@ -83,10 +82,8 @@ export function buildTanrendUrl(searchTerm, term, searchMode = "code") {
 export async function fetchSubjectData(searchTerm, term, searchMode = "code") {
   const targetUrl = buildTanrendUrl(searchTerm, term, searchMode);
 
-  const response = await axios.get(targetUrl, {
-    timeout: UPSTREAM_TIMEOUT,
-    maxContentLength: MAX_UPSTREAM_RESPONSE_SIZE,
-    maxBodyLength: MAX_UPSTREAM_RESPONSE_SIZE,
+  const response = await fetch(targetUrl, {
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT),
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
@@ -96,7 +93,7 @@ export async function fetchSubjectData(searchTerm, term, searchMode = "code") {
     },
   });
 
-  return response.data;
+  return await response.text();
 }
 
 /**

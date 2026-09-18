@@ -1,21 +1,34 @@
-<script>
+<script lang="ts">
   import { onDestroy } from "svelte";
+  import type { CalendarEvent } from "../types/schedule.js";
   import { encodeSchedule } from "../utils/schedule.js";
   import { getEventIdentity } from "../utils/scheduleState.js";
   import ExportModal from "./ExportModal.svelte";
   import Icon from "./Icon.svelte";
   import { language, t } from "../utils/i18n.js";
 
-  let { events = [], activeCodes = [], lectureExemption = false } = $props();
+  interface Props {
+    events?: CalendarEvent[];
+    activeCodes?: string[];
+    lectureExemption?: boolean;
+  }
+
+  let {
+    events = [],
+    activeCodes = [],
+    lectureExemption = false,
+  }: Props = $props();
 
   let showExportModal = $state(false);
   let shareStatus = $state("");
   let shareFailed = $state(false);
-  let shareStatusTimeout;
+  let shareStatusTimeout: ReturnType<typeof setTimeout> | undefined;
 
-  onDestroy(() => clearTimeout(shareStatusTimeout));
+  onDestroy(() => {
+    if (shareStatusTimeout) clearTimeout(shareStatusTimeout);
+  });
 
-  function copyWithTextarea(value) {
+  function copyWithTextarea(value: string): boolean {
     const textarea = document.createElement("textarea");
     textarea.value = value;
     textarea.style.position = "fixed";
@@ -45,7 +58,7 @@
         throw new Error("Clipboard copy failed");
       }
 
-      clearTimeout(shareStatusTimeout);
+      if (shareStatusTimeout) clearTimeout(shareStatusTimeout);
       shareFailed = false;
       shareStatus = t($language, "shareCopied");
       shareStatusTimeout = setTimeout(() => {

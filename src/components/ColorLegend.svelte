@@ -1,6 +1,12 @@
-<script>
+<script lang="ts">
   import { language, t } from "../utils/i18n.js";
-  let { lectureExemption = false, onToggleLectureExemption } = $props();
+
+  interface Props {
+    lectureExemption?: boolean;
+    onToggleLectureExemption?: (value: boolean) => void;
+  }
+
+  let { lectureExemption = false, onToggleLectureExemption }: Props = $props();
 </script>
 
 <section class="calendar-options" aria-label={t($language, "timetableOptions")}>
@@ -38,98 +44,68 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: var(--space-3);
-    color: var(--color-text);
+    gap: var(--space-4);
+    padding: 0 var(--space-1);
+    color: var(--color-muted);
+    font-size: 0.88rem;
   }
 
-  .legend {
+  .legend ul {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-  }
-
-  ul {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 10px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  li,
-  .exemption-item {
-    display: flex;
+  .legend li {
+    display: inline-flex;
     align-items: center;
     gap: 6px;
   }
 
-  li {
-    color: var(--color-text-muted);
-    font-size: var(--text-xs);
-  }
-
   .color-box {
-    width: 12px;
-    height: 12px;
-    border-radius: 3px;
-    flex-shrink: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-sm);
+    display: inline-block;
   }
 
-  .lecture {
-    background: var(--color-event-lecture);
+  .color-box.lecture {
+    background: var(--event-lecture);
   }
 
-  .practice {
-    background: var(--color-event-practice);
+  .color-box.practice {
+    background: var(--event-practice);
   }
 
-  .conflict {
-    background: var(--color-event-conflict);
+  .color-box.conflict {
+    background: var(--event-conflict);
   }
 
   .exemption-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
+    user-select: none;
   }
 
   .exemption-item input {
-    width: 16px;
-    height: 16px;
     accent-color: var(--color-primary);
   }
 
-  .exemption-item span {
-    display: grid;
-  }
-
   .exemption-item strong {
-    font-size: var(--text-sm);
-    font-weight: var(--weight-semibold);
-    white-space: nowrap;
+    color: var(--color-text);
+    font-weight: 500;
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 640px) {
     .calendar-options {
+      flex-direction: column;
       align-items: flex-start;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-      gap: var(--space-3);
-    }
-
-    .legend {
-      width: 100%;
-    }
-
-    ul {
-      flex-wrap: wrap;
-    }
-
-    .exemption-item strong {
-      white-space: normal;
-    }
-
-    .exemption-item {
-      width: 100%;
+      gap: var(--space-2);
     }
   }
 </style>

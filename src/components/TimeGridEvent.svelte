@@ -1,11 +1,21 @@
-<script>
+<script lang="ts">
   import { getEventDisplayTitle } from "../utils/schedule.js";
   import { language, t } from "../utils/i18n.js";
   import Icon from "./Icon.svelte";
+  import type { CalendarEvent } from "../types/schedule.js";
 
-  let { calendarEvent } = $props();
+  interface Props {
+    calendarEvent: {
+      title?: string;
+      hasConflict?: boolean;
+      originalEvent?: CalendarEvent;
+      [key: string]: unknown;
+    };
+  }
 
-  const event = $derived(calendarEvent.originalEvent ?? {});
+  let { calendarEvent }: Props = $props();
+
+  const event = $derived((calendarEvent.originalEvent ?? {}) as CalendarEvent);
   const title = $derived(
     getEventDisplayTitle(event) ||
       calendarEvent.title ||
@@ -46,31 +56,32 @@
 
   .conflict-icon {
     position: absolute;
-    top: 7px;
-    right: 7px;
+    top: 5px;
+    right: 5px;
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.22);
+    color: inherit;
   }
 
   .event-title {
-    display: -webkit-box;
-    overflow: hidden;
-    font-size: var(--text-sm);
     font-weight: var(--weight-bold);
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-
-  .event-place {
-    overflow: hidden;
-    opacity: 0.84;
-    font-size: 0.6875rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
   }
 
   .event-time {
-    opacity: 0.92;
     font-weight: var(--weight-semibold);
+    opacity: 0.95;
+  }
+
+  .event-place {
+    opacity: 0.85;
+    white-space: normal;
+    word-break: break-word;
   }
 </style>
