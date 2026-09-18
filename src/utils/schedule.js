@@ -1,3 +1,5 @@
+import { distance } from "fastest-levenshtein";
+
 export async function fetchSubjectClasses(searchTerm, searchMode = "code") {
   if (!new Set(["code", "name", "instructor"]).has(searchMode)) {
     throw new TypeError("Unsupported subject search mode");
@@ -97,28 +99,6 @@ function normalizeNameSearchValue(value) {
     .trim();
 }
 
-function editDistance(first, second) {
-  const previous = Array.from(
-    { length: second.length + 1 },
-    (_, index) => index,
-  );
-
-  for (let firstIndex = 1; firstIndex <= first.length; firstIndex += 1) {
-    const current = [firstIndex];
-    for (let secondIndex = 1; secondIndex <= second.length; secondIndex += 1) {
-      current[secondIndex] = Math.min(
-        current[secondIndex - 1] + 1,
-        previous[secondIndex] + 1,
-        previous[secondIndex - 1] +
-          (first[firstIndex - 1] === second[secondIndex - 1] ? 0 : 1),
-      );
-    }
-    previous.splice(0, previous.length, ...current);
-  }
-
-  return previous[second.length];
-}
-
 export function getNameMatchDistance(candidate, query) {
   const normalizedCandidate = normalizeNameSearchValue(candidate);
   const normalizedQuery = normalizeNameSearchValue(query);
@@ -128,7 +108,7 @@ export function getNameMatchDistance(candidate, query) {
   const candidateWords = normalizedCandidate.split(" ");
   const queryWords = normalizedQuery.split(" ");
   const windowLength = queryWords.length;
-  let bestDistance = editDistance(normalizedCandidate, normalizedQuery);
+  let bestDistance = distance(normalizedCandidate, normalizedQuery);
 
   for (
     let index = 0;
@@ -137,7 +117,7 @@ export function getNameMatchDistance(candidate, query) {
   ) {
     bestDistance = Math.min(
       bestDistance,
-      editDistance(
+      distance(
         candidateWords.slice(index, index + windowLength).join(" "),
         normalizedQuery,
       ),
@@ -306,6 +286,29 @@ export function getConflictPairs(events, lectureExemption = false) {
   return conflicts;
 }
 
+/**
+ * Return the enabled meetings that would overlap a candidate class.
+ * Callers remove the candidate's current lecture/practice choice first so the
+ * result describes the timetable after that choice is replaced.
+ */
+export function getConflictingEvents(
+  candidate,
+  otherEvents,
+  lectureExemption = false,
+) {
+  if (!candidate || !Array.isArray(otherEvents)) return [];
+
+  const candidateIndex = otherEvents.length;
+  const events = [...otherEvents, candidate];
+  return getConflictPairs(events, lectureExemption).flatMap(
+    ({ event1, event2 }) => {
+      if (event1 === candidateIndex) return [events[event2]];
+      if (event2 === candidateIndex) return [events[event1]];
+      return [];
+    },
+  );
+}
+
 export function markConflicts(subjects, lectureExemption = false) {
   const enabledEvents = subjects
     .filter((subject) => subject.enabled)
@@ -415,8 +418,7 @@ const DAY_OF_WEEK_INDEX = {
 
 /**
  * Get the date for a specific weekday in a timezone-safe manner.
- * Avoids using toISOString() which can cause date shifts near midnight in non-UTC timezones.
- *
+ * Avoids using toISOString() which can cause date shifts near midnight in non-UTC timezones.\n *
  * @param {string} dayOfWeek - Day name: "Monday", "Tuesday", etc.
  * @param {number} weekOffset - 0 for the current week, 1 for the next week
  * @returns {string} ISO date string in YYYY-MM-DD format

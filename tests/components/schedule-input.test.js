@@ -114,7 +114,7 @@ describe("ScheduleInput", () => {
       "instructor",
     );
     expect(
-      screen.getAllByRole("button", { name: /Select class: Algorithms/ }),
+      screen.getAllByRole("radio", { name: /Select class: Algorithms/ }),
     ).toHaveLength(2);
     expect(
       screen.getAllByRole("button", { name: "Add all groups" }),
@@ -134,7 +134,7 @@ describe("ScheduleInput", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Find courses" }));
 
     expect(
-      await screen.findAllByRole("button", {
+      await screen.findAllByRole("radio", {
         name: /Select class: Introduction to Web Development/,
       }),
     ).toHaveLength(1);
@@ -307,14 +307,24 @@ describe("ScheduleInput", () => {
     expect(screen.queryByText("2 options")).toBeNull();
     expect(screen.queryByText("3 options")).toBeNull();
     expect(
-      lectureSection.textContent.indexOf("Monday 14:00–16:00"),
-    ).toBeLessThan(lectureSection.textContent.indexOf("Wednesday 17:45–19:15"));
+      [...lectureSection.querySelectorAll(".class-option")].map((row) => ({
+        time: row.querySelector(".class-option-time strong").textContent,
+        day: row.querySelector(".class-option-time > span").textContent,
+      })),
+    ).toEqual([
+      { time: "14:00–16:00", day: "Monday" },
+      { time: "17:45–19:15", day: "Wednesday" },
+    ]);
     expect(
-      practiceSection.textContent.indexOf("Tuesday 08:00–10:00"),
-    ).toBeLessThan(practiceSection.textContent.indexOf("Tuesday 12:00–14:00"));
-    expect(
-      practiceSection.textContent.indexOf("Tuesday 12:00–14:00"),
-    ).toBeLessThan(practiceSection.textContent.indexOf("Friday 15:00–18:00"));
+      [...practiceSection.querySelectorAll(".class-option")].map((row) => ({
+        time: row.querySelector(".class-option-time strong").textContent,
+        day: row.querySelector(".class-option-time > span").textContent,
+      })),
+    ).toEqual([
+      { time: "08:00–10:00", day: "Tuesday" },
+      { time: "12:00–14:00", day: "Tuesday" },
+      { time: "15:00–18:00", day: "Friday" },
+    ]);
   });
 
   it("shows only the three best code and name suggestions", async () => {
@@ -552,7 +562,7 @@ describe("ScheduleInput", () => {
       },
     );
     await fireEvent.click(screen.getByRole("button", { name: "Find courses" }));
-    const chooseButtons = await screen.findAllByRole("button", {
+    const chooseButtons = await screen.findAllByRole("radio", {
       name: /Select class: Introduction/,
     });
     await fireEvent.click(chooseButtons[0]);
@@ -610,19 +620,28 @@ describe("ScheduleInput", () => {
     );
     await fireEvent.click(screen.getByRole("button", { name: "Find courses" }));
 
-    const selectedRow = await screen.findByRole("button", {
+    const selectedRow = await screen.findByRole("radio", {
       name: /Selected class: Introduction.*Monday 10:00/,
     });
-    const conflictRow = screen.getByRole("button", {
-      name: /Select class: Introduction.*conflicts with your timetable/,
+    const conflictRow = screen.getByRole("radio", {
+      name: /Select class: Introduction.*Conflicts with Introduction to Web Development, Monday 10:00/,
     });
 
-    expect(selectedRow.getAttribute("aria-pressed")).toBe("true");
-    expect(selectedRow.classList.contains("is-selected")).toBe(true);
-    expect(conflictRow.getAttribute("aria-pressed")).toBe("false");
-    expect(conflictRow.classList.contains("has-conflict")).toBe(true);
+    expect(selectedRow.checked).toBe(true);
+    expect(selectedRow.closest(".class-option").classList).toContain(
+      "is-selected",
+    );
+    expect(conflictRow.checked).toBe(false);
+    expect(conflictRow.closest(".class-option").classList).toContain(
+      "has-conflict",
+    );
     expect(screen.getByText("Selected")).toBeTruthy();
     expect(screen.getByText("Conflicts")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Conflicts with Introduction to Web Development · Monday 10:00–11:30",
+      ),
+    ).toBeTruthy();
     expect(screen.queryByText("Choose class")).toBeNull();
   });
 
@@ -660,18 +679,16 @@ describe("ScheduleInput", () => {
 
     expect(
       (
-        await screen.findByRole("button", {
+        await screen.findByRole("radio", {
           name: /Select class: Introduction.*lecture/i,
         })
-      ).getAttribute("aria-pressed"),
-    ).toBe("false");
+      ).checked,
+    ).toBe(false);
     expect(
-      screen
-        .getByRole("button", {
-          name: /Selected class: Introduction.*practice/i,
-        })
-        .getAttribute("aria-pressed"),
-    ).toBe("true");
+      screen.getByRole("radio", {
+        name: /Selected class: Introduction.*practice/i,
+      }).checked,
+    ).toBe(true);
   });
 
   it("marks only the selected instructor when duplicate rows share a code and time", async () => {
@@ -714,10 +731,10 @@ describe("ScheduleInput", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Find courses" }));
 
     expect(
-      await screen.findAllByRole("button", { name: /Selected class:/ }),
+      await screen.findAllByRole("radio", { name: /Selected class:/ }),
     ).toHaveLength(1);
     expect(
-      screen.getAllByRole("button", { name: /Select class:/ }),
+      screen.getAllByRole("radio", { name: /Select class:/ }),
     ).toHaveLength(1);
   });
 
@@ -754,7 +771,7 @@ describe("ScheduleInput", () => {
       { target: { value: "ESST116" } },
     );
     await fireEvent.click(screen.getByRole("button", { name: "Find courses" }));
-    const selectedRows = await screen.findAllByRole("button", {
+    const selectedRows = await screen.findAllByRole("radio", {
       name: /Selected class:/,
     });
     await fireEvent.click(selectedRows[0]);

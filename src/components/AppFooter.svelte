@@ -16,15 +16,6 @@
           >Jaloliddin Ismailov<span class="sr-only">
             ({t($language, "opensNewTab")})</span
           ></a
-        >
-        {t($language, "and")}
-        <a
-          href="https://blog.w04m1.dev/"
-          target="_blank"
-          rel="noopener noreferrer"
-          >Daniil Sherstennikov<span class="sr-only">
-            ({t($language, "opensNewTab")})</span
-          ></a
         >.
       </p>
     </div>
@@ -35,23 +26,11 @@
           <GitHubStarLink href={githubRepositoryUrl} />
         </div>
       {/if}
-      <a href="mailto:w04m1@proton.me" class="contact-action">
+      <a href="mailto:me@jismailov.com" class="contact-action">
         <Icon name="mail" size={17} />
         <span>
           <small>{t($language, "email")}</small>
-          w04m1@proton.me
-        </span>
-      </a>
-      <a
-        href="https://s.w04m1.dev/s/tg"
-        class="contact-action"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Icon name="send" size={17} />
-        <span>
-          <small>{t($language, "community")}</small>
-          Telegram<span class="sr-only"> ({t($language, "opensNewTab")})</span>
+          me@jismailov.com
         </span>
       </a>
     </nav>
@@ -158,24 +137,11 @@
       grid-template-columns: 1fr 1fr;
       gap: var(--space-2);
     }
-
-    .github-action {
-      grid-column: 1 / -1;
-    }
-
-    .github-action :global(.github-star-link),
-    .contact-action {
-      width: 100%;
-    }
   }
 
-  @media (max-width: 460px) {
+  @media (max-width: 480px) {
     .footer-actions {
       grid-template-columns: 1fr;
-    }
-
-    .github-action {
-      grid-column: auto;
     }
   }
 </style>

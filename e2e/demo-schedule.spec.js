@@ -55,25 +55,31 @@ test("adds a DEMO class and keeps it after reload", async ({ page }) => {
     "Lectures",
     "Practices",
   ]);
-  await expect(classSections.nth(0).locator(".class-time strong")).toHaveText([
-    "Monday 10:00–11:30",
-    "Friday 10:00–11:30",
-  ]);
-  await expect(classSections.nth(1).locator(".class-time strong")).toHaveText([
-    "Wednesday 14:00–15:30",
-    "Thursday 16:00–17:30",
-  ]);
+  await expect(
+    classSections.nth(0).locator(".class-option-time strong"),
+  ).toHaveText(["10:00–11:30", "10:00–11:30"]);
+  await expect(
+    classSections.nth(0).locator(".class-option-time > span"),
+  ).toHaveText(["Monday", "Friday"]);
+  await expect(
+    classSections.nth(1).locator(".class-option-time strong"),
+  ).toHaveText(["14:00–15:30", "16:00–17:30"]);
+  await expect(
+    classSections.nth(1).locator(".class-option-time > span"),
+  ).toHaveText(["Wednesday", "Thursday"]);
 
   const selectedRow = page
     .locator(".class-row")
-    .filter({ hasText: "Monday 10:00–11:30" })
+    .filter({ hasText: "Monday" })
+    .filter({ hasText: "10:00–11:30" })
     .filter({ hasText: "DEMO-1-1" });
   await expect(
     page.getByRole("heading", { name: "Introduction to Web Development" }),
   ).toBeVisible();
-  await selectedRow.focus();
-  await selectedRow.press("Enter");
-  await expect(selectedRow).toHaveAttribute("aria-pressed", "true");
+  const selectedRadio = selectedRow.getByRole("radio");
+  await selectedRadio.focus();
+  await selectedRadio.press("Space");
+  await expect(selectedRadio).toBeChecked();
   await expect(selectedRow).toContainText("Selected");
   await expect(
     page.getByText(/Monday 10:00–11:30 selected.*Select another class/),
@@ -85,9 +91,10 @@ test("adds a DEMO class and keeps it after reload", async ({ page }) => {
   const selectedPractice = classSections
     .nth(1)
     .locator(".class-row")
-    .filter({ hasText: "Wednesday 14:00–15:30" });
+    .filter({ hasText: "Wednesday" })
+    .filter({ hasText: "14:00–15:30" });
   await selectedPractice.click();
-  await expect(selectedPractice).toHaveAttribute("aria-pressed", "true");
+  await expect(selectedPractice.getByRole("radio")).toBeChecked();
   await expect(
     page.getByText(/Wednesday 14:00–15:30 selected.*Select another class/),
   ).toBeVisible();
@@ -183,12 +190,12 @@ test("downloads every enabled class in complete calendar packs", async ({
     .fill("DEMO-1");
   await page.getByRole("button", { name: "Find courses" }).click();
   await page
-    .getByRole("button", {
+    .getByRole("radio", {
       name: /Select class: Introduction to Web Development, Lecture, Monday/,
     })
     .click();
   await page
-    .getByRole("button", {
+    .getByRole("radio", {
       name: /Select class: Introduction to Web Development, Practice, Wednesday/,
     })
     .click();
@@ -279,10 +286,12 @@ test("keeps same-time lecture and practice selections independent", async ({
   await thursdayPractice.click();
   await wednesdayLecture.click();
 
-  await expect(wednesdayLecture).toHaveAttribute("aria-pressed", "true");
-  await expect(thursdayPractice).toHaveAttribute("aria-pressed", "true");
-  await expect(wednesdayPractice).toHaveAttribute("aria-pressed", "false");
-  await expect(page.locator('.class-row[aria-pressed="true"]')).toHaveCount(2);
+  await expect(wednesdayLecture.getByRole("radio")).toBeChecked();
+  await expect(thursdayPractice.getByRole("radio")).toBeChecked();
+  await expect(wednesdayPractice.getByRole("radio")).not.toBeChecked();
+  await expect(
+    page.locator(".class-row .class-option-input:checked"),
+  ).toHaveCount(2);
 });
 
 test("finds and adds a course by subject name", async ({ page }) => {
@@ -331,7 +340,7 @@ test("finds and adds a course by subject name", async ({ page }) => {
     page.getByRole("heading", { name: "Algorithms and Data Structures" }),
   ).toBeVisible();
   await page
-    .getByRole("button", {
+    .getByRole("radio", {
       name: /Select class: Algorithms and Data Structures/,
     })
     .click();

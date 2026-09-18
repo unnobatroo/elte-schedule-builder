@@ -1,10 +1,12 @@
 <script>
   import Icon from "./Icon.svelte";
+  import ClassOptionContent from "./ClassOptionContent.svelte";
   import { language, t } from "../utils/i18n.js";
   import {
     createCalendarEvents,
     fetchSubjectClasses,
-    getConflictPairs,
+    getConflictingEvents,
+    getEventDisplayTitle,
     getTanrendSubjectCode,
     isTypoTolerantNameMatch,
     isLectureType,
@@ -576,7 +578,7 @@
 
   function getClassRowState(row) {
     const [candidate] = createCalendarEvents([row]);
-    if (!candidate) return { selected: false, conflict: false };
+    if (!candidate) return { selected: false, conflicts: [] };
 
     const exactSelection = selectedEvents.some(
       (event) => getEventIdentity(event) === getEventIdentity(row),
@@ -592,8 +594,6 @@
       );
     const selected =
       exactSelection || (slotSelection && matchingResultRows.length === 1);
-    if (selected) return { selected: true, conflict: false };
-
     const candidateTitle = normalizeSubjectTitle(candidate.title);
     const candidateIsLecture = isLectureType(row.type);
     const retainedEvents = selectedEvents.filter(
@@ -603,16 +603,22 @@
           isLectureType(event.extendedProps?.type) === candidateIsLecture
         ),
     );
-    const candidateIndex = retainedEvents.length;
-    const conflict = getConflictPairs(
-      [...retainedEvents, candidate],
+    const conflicts = getConflictingEvents(
+      candidate,
+      retainedEvents,
       lectureExemption,
-    ).some(
-      ({ event1, event2 }) =>
-        event1 === candidateIndex || event2 === candidateIndex,
     );
 
-    return { selected: false, conflict };
+    return { selected, conflicts };
+  }
+
+  function formatConflictAria(conflicts) {
+    return conflicts
+      .map(
+        (event) =>
+          `${getEventDisplayTitle(event)}, ${localizeWhen(`${event.dayOfWeek} ${event.startTime}–${event.endTime}`)}`,
+      )
+      .join("; ");
   }
 
   function finishAdding() {
@@ -886,42 +892,40 @@
                 <div class="class-section-rows">
                   {#each section.rows as row (row.resultKey)}
                     {@const rowState = getClassRowState(row)}
-                    <button
-                      type="button"
-                      class="class-row"
+                    <label
+                      class="class-option class-row"
                       class:is-selected={rowState.selected}
-                      class:has-conflict={rowState.conflict}
-                      aria-pressed={rowState.selected}
-                      aria-label={`${t($language, rowState.selected ? "selectedClass" : "selectClass")}: ${row.title}, ${localizeType(row.type)}, ${localizeWhen(row.when)}, ${row.code}${rowState.conflict ? `, ${t($language, "conflictsWithTimetable")}` : ""}`}
-                      onclick={() => addSelectedClass(group, row)}
+                      class:has-conflict={rowState.conflicts.length > 0}
                     >
-                      <div class="class-time">
-                        <strong>{localizeWhen(row.when)}</strong>
-                        <span>{localizeType(row.type)}</span>
-                      </div>
-                      <div class="class-details">
-                        <span class="class-code">{row.code}</span>
-                        <span
-                          >{row.location ||
-                            t($language, "locationMissing")}</span
-                        >
-                        <span
-                          >{row.instructor ||
-                            t($language, "instructorMissing")}</span
-                        >
-                      </div>
-                      {#if rowState.selected}
-                        <span class="class-status selected-status">
-                          <Icon name="check" size={16} />
-                          {t($language, "selected")}
-                        </span>
-                      {:else if rowState.conflict}
-                        <span class="class-status conflict-status">
-                          <Icon name="alert-triangle" size={16} />
-                          {t($language, "conflicts")}
-                        </span>
-                      {/if}
-                    </button>
+                      <input
+                        class="class-option-input"
+                        type="radio"
+                        name={`${group.id}-${section.id}`}
+                        checked={rowState.selected}
+                        aria-label={`${t($language, rowState.selected ? "selectedClass" : "selectClass")}: ${row.title}, ${localizeType(row.type)}, ${localizeWhen(row.when)}, ${row.code}${rowState.conflicts.length > 0 ? `, ${t($language, "conflictsWithCourses", { courses: formatConflictAria(rowState.conflicts) })}` : ""}`}
+                        onclick={(event) => {
+                          if (!rowState.selected) return;
+                          event.preventDefault();
+                          addSelectedClass(group, row);
+                        }}
+                        onchange={() => {
+                          if (!rowState.selected) addSelectedClass(group, row);
+                        }}
+                      />
+                      <ClassOptionContent
+                        selected={rowState.selected}
+                        day={t(
+                          $language,
+                          row.dayOfWeek.toLocaleLowerCase("en-US"),
+                        )}
+                        startTime={row.startTime}
+                        endTime={row.endTime}
+                        instructor={row.instructor}
+                        location={row.location}
+                        code={row.code}
+                        conflicts={rowState.conflicts}
+                      />
+                    </label>
                   {/each}
                 </div>
               </section>
@@ -1163,8 +1167,7 @@
     background: var(--color-surface);
   }
 
-  .result-group-heading,
-  .class-row {
+  .result-group-heading {
     display: flex;
     align-items: center;
     gap: var(--space-3);
@@ -1214,15 +1217,21 @@
     letter-spacing: -0.01em;
   }
 
-  .result-group-heading span,
-  .class-details span,
-  .class-time span {
+  .result-group-heading span {
     color: var(--color-text-muted);
     font-size: var(--text-sm);
   }
 
   .class-section + .class-section {
     margin-top: 4px;
+  }
+
+  .class-section-lectures {
+    --class-option-accent: var(--color-event-lecture);
+  }
+
+  .class-section-practices {
+    --class-option-accent: var(--color-event-practice);
   }
 
   .class-section-heading,
@@ -1265,107 +1274,10 @@
     color: var(--color-info);
   }
 
-  .class-row {
+  .class-section-rows {
     display: grid;
-    grid-template-columns:
-      minmax(200px, 0.75fr) minmax(420px, 1.7fr)
-      minmax(110px, auto);
-    column-gap: var(--space-5);
-    width: 100%;
-    min-height: 58px;
-    padding: 10px 14px;
-    border: 1px solid transparent;
-    border-top-color: transparent;
-    border-radius: 0;
-    background: transparent;
-    color: var(--color-text);
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .class-row:focus-visible {
-    position: relative;
-    z-index: 1;
-    outline: 3px solid var(--color-focus-ring);
-    outline-offset: -3px;
-    border-color: var(--color-focus);
-  }
-
-  .class-row:hover {
-    background: var(--color-surface-2);
-  }
-
-  .class-section-lectures
-    .class-row:hover:not(.is-selected):not(.has-conflict) {
-    border-color: var(--color-event-lecture);
-  }
-
-  .class-section-practices
-    .class-row:hover:not(.is-selected):not(.has-conflict) {
-    border-color: var(--color-event-practice);
-  }
-
-  .class-row.is-selected {
-    border-color: var(--color-success);
-    background: color-mix(in srgb, var(--color-success) 10%, transparent);
-  }
-
-  .class-row.has-conflict {
-    border-color: var(--color-danger);
-    background: color-mix(in srgb, var(--color-danger) 8%, transparent);
-  }
-
-  .class-status {
-    display: inline-flex;
-    align-items: center;
-    align-self: center;
-    gap: 5px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    justify-self: end;
-    white-space: nowrap;
-  }
-
-  .selected-status {
-    color: var(--color-success);
-  }
-
-  .conflict-status {
-    color: var(--color-danger);
-  }
-
-  .class-time,
-  .class-details {
-    display: grid;
-    gap: var(--space-1);
-    min-width: 0;
-  }
-
-  .class-time strong {
-    font-size: var(--text-base);
-    line-height: 1.3;
-  }
-
-  .class-details {
-    grid-template-columns: minmax(130px, 0.8fr) minmax(150px, 1fr) minmax(
-        180px,
-        1.15fr
-      );
-    align-items: center;
-    column-gap: var(--space-5);
-  }
-
-  .class-details span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .class-code {
-    color: var(--color-accent-strong) !important;
-    font-family: var(--font-mono);
-    font-weight: var(--weight-bold);
+    gap: var(--space-2);
+    padding: 0 var(--space-2) var(--space-2);
   }
 
   .file-input {
@@ -1388,16 +1300,6 @@
     .suggestions {
       position: static;
       margin-top: 6px;
-    }
-
-    .class-row {
-      grid-template-columns: 1fr auto;
-    }
-
-    .class-details {
-      grid-column: 1 / -1;
-      grid-row: 2;
-      grid-template-columns: 1fr;
     }
 
     .results {
@@ -1441,21 +1343,6 @@
 
     .result-group-actions .button {
       flex: 1;
-    }
-
-    .class-row {
-      grid-template-columns: minmax(0, 1fr) auto;
-    }
-
-    .class-details {
-      grid-column: 1 / -1;
-      grid-row: 2;
-    }
-
-    .class-status {
-      grid-row: 1;
-      grid-column: 2;
-      justify-self: end;
     }
   }
 </style>

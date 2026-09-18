@@ -1,11 +1,46 @@
 import { describe, it, expect } from "vitest";
 import {
   checkTimeOverlap,
+  getConflictingEvents,
   getConflictPairs as computeConflicts,
   markConflicts,
 } from "../../src/utils/schedule.js";
 
 describe("Conflict Detection", () => {
+  it("returns the exact meetings that conflict with a proposed class", () => {
+    const candidate = {
+      dayOfWeek: "Monday",
+      startTime: "10:00",
+      endTime: "12:00",
+      type: "practice",
+    };
+    const overlappingLecture = {
+      title: "Databases",
+      dayOfWeek: "Monday",
+      startTime: "11:00",
+      endTime: "13:00",
+      type: "lecture",
+    };
+    const separatePractice = {
+      title: "Algorithms",
+      dayOfWeek: "Tuesday",
+      startTime: "10:00",
+      endTime: "12:00",
+      type: "practice",
+    };
+
+    expect(
+      getConflictingEvents(candidate, [overlappingLecture, separatePractice]),
+    ).toEqual([overlappingLecture]);
+    expect(
+      getConflictingEvents(
+        candidate,
+        [overlappingLecture, separatePractice],
+        true,
+      ),
+    ).toEqual([]);
+  });
+
   it("does not mark selected groups from hidden subjects as conflicts", () => {
     const overlappingEvent = {
       dayOfWeek: "Monday",

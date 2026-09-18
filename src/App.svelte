@@ -297,6 +297,7 @@
       <div class="builder-pane selected-pane">
         <SubjectControls
           subjects={allSubjects}
+          {lectureExemption}
           onToggleSubject={toggleSubject}
           onToggleEvent={toggleEvent}
           onDeleteSubject={deleteSubject}

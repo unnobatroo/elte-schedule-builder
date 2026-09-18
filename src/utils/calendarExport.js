@@ -1,3 +1,5 @@
+import Papa from "papaparse";
+import fnv1a from "@sindresorhus/fnv1a";
 import { getNextWeekDateForDay } from "./schedule.js";
 import { getEventIdentity } from "./scheduleState.js";
 
@@ -87,17 +89,11 @@ function foldICalendarLine(line) {
   return parts.join("\r\n ");
 }
 
-function hashIdentity(value) {
-  let hash = 0x811c9dc5;
-  for (const character of value) {
-    hash ^= character.codePointAt(0);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16).padStart(8, "0");
-}
-
 function buildEventUid(event) {
-  return `${hashIdentity(getEventIdentity(event))}@elte-schedule-builder`;
+  const hash = fnv1a(getEventIdentity(event), { size: 32 })
+    .toString(16)
+    .padStart(8, "0");
+  return `${hash}@elte-schedule-builder`;
 }
 
 function getEventDate(event) {
@@ -153,11 +149,6 @@ function formatCsvTime(time) {
   return `${hour}:${String(minute).padStart(2, "0")} ${suffix}`;
 }
 
-function escapeCsvCell(value) {
-  const text = String(value ?? "");
-  return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-}
-
 /** Build one Google Calendar-compatible CSV containing every visible class. */
 export function buildGoogleCalendarCsv(events) {
   const rows = [CSV_HEADERS];
@@ -175,7 +166,5 @@ export function buildGoogleCalendarCsv(events) {
       "False",
     ]);
   }
-  return `\uFEFF${rows
-    .map((row) => row.map(escapeCsvCell).join(","))
-    .join("\r\n")}\r\n`;
+  return `\uFEFF${Papa.unparse(rows, { newline: "\r\n" })}\r\n`;
 }

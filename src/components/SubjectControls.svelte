@@ -1,11 +1,22 @@
 <script>
   import Icon from "./Icon.svelte";
-  import { getEventGroupNumber, isLectureType } from "../utils/schedule.js";
-  import { getEventInstructor } from "../utils/scheduleState.js";
+  import ClassOptionContent from "./ClassOptionContent.svelte";
+  import {
+    getConflictingEvents,
+    getEventDisplayTitle,
+    getEventGroupNumber,
+    isLectureType,
+  } from "../utils/schedule.js";
+  import {
+    getEventCode,
+    getEventInstructor,
+    normalizeSubjectTitle,
+  } from "../utils/scheduleState.js";
   import { language, t } from "../utils/i18n.js";
 
   let {
     subjects = [],
+    lectureExemption = false,
     onToggleSubject,
     onToggleEvent,
     onDeleteSubject,
@@ -24,13 +35,16 @@
       ),
   );
 
-  const enabledEvents = $derived(
+  const enabledEventEntries = $derived(
     subjects.flatMap((subject) =>
       subject.enabled
-        ? (subject.events ?? []).filter((event) => event.enabled)
+        ? (subject.events ?? [])
+            .filter((event) => event.enabled)
+            .map((event) => ({ event, subjectTitle: subject.title }))
         : [],
     ),
   );
+  const enabledEvents = $derived(enabledEventEntries.map(({ event }) => event));
   const lectureCount = $derived(
     enabledEvents.filter((event) => isLectureType(event.extendedProps?.type))
       .length,
@@ -73,8 +87,31 @@
     return `${type}${groupLabel}, ${t($language, event.dayOfWeek.toLocaleLowerCase("en-US"))} ${event.startTime}–${event.endTime}`;
   }
 
-  function formatEventWhen(event) {
-    return `${t($language, event.dayOfWeek.toLocaleLowerCase("en-US"))} ${event.startTime}–${event.endTime}`;
+  function getEventConflicts(subject, event) {
+    if (!subject.enabled) return [];
+
+    const candidateIsLecture = isLectureType(event.extendedProps?.type);
+    const retainedEvents = enabledEventEntries
+      .filter(
+        ({ event: selectedEvent, subjectTitle }) =>
+          !(
+            normalizeSubjectTitle(subjectTitle) ===
+              normalizeSubjectTitle(subject.title) &&
+            isLectureType(selectedEvent.extendedProps?.type) ===
+              candidateIsLecture
+          ),
+      )
+      .map(({ event: selectedEvent }) => selectedEvent);
+    return getConflictingEvents(event, retainedEvents, lectureExemption);
+  }
+
+  function formatConflictAria(conflicts) {
+    return conflicts
+      .map(
+        (event) =>
+          `${getEventDisplayTitle(event)}, ${t($language, event.dayOfWeek.toLocaleLowerCase("en-US"))} ${event.startTime}–${event.endTime}`,
+      )
+      .join("; ");
   }
 
   function getSubjectCodes(subject) {
@@ -227,33 +264,36 @@
                     </h3>
                     <div class="event-group-options">
                       {#each group.events as { event, eventIndex } (eventIndex)}
+                        {@const conflicts = getEventConflicts(subject, event)}
                         <label
-                          class:conflict={event.hasConflict}
-                          class="event-toggle"
+                          class="class-option event-toggle"
+                          class:is-selected={event.enabled}
+                          class:has-conflict={conflicts.length > 0}
                         >
                           <input
+                            class="class-option-input"
                             type="radio"
                             name={`subject-${subjectIndex}-${group.key}`}
                             checked={event.enabled}
-                            aria-label={formatEventLabel(event)}
+                            aria-label={`${formatEventLabel(event)}${conflicts.length > 0 ? `, ${t($language, "conflictsWithCourses", { courses: formatConflictAria(conflicts) })}` : ""}`}
                             onchange={() =>
                               onToggleEvent?.(subject.title, eventIndex)}
                           />
-                          <span class="event-when">
-                            <strong>{formatEventWhen(event)}</strong>
-                          </span>
-                          <span class="event-instructor">
-                            {getEventInstructor(event) ||
-                              t($language, "instructorMissing")}
-                          </span>
-                          <span class="event-status">
-                            {#if event.hasConflict}
-                              <span class="conflict-label">
-                                <Icon name="alert-triangle" size={14} />
-                                {t($language, "conflict")}
-                              </span>
-                            {/if}
-                          </span>
+                          <ClassOptionContent
+                            selected={event.enabled}
+                            day={t(
+                              $language,
+                              event.dayOfWeek.toLocaleLowerCase("en-US"),
+                            )}
+                            startTime={event.startTime}
+                            endTime={event.endTime}
+                            instructor={getEventInstructor(event)}
+                            location={event.extendedProps?.location ??
+                              event.location ??
+                              ""}
+                            code={getEventCode(event)}
+                            {conflicts}
+                          />
                         </label>
                       {/each}
                     </div>
@@ -398,8 +438,7 @@
     padding: 3px;
   }
 
-  .subject-checkbox,
-  .event-toggle input {
+  .subject-checkbox {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
@@ -531,6 +570,14 @@
     min-width: 0;
   }
 
+  .event-group-lecture {
+    --class-option-accent: var(--color-event-lecture);
+  }
+
+  .event-group-practice {
+    --class-option-accent: var(--color-event-practice);
+  }
+
   .event-group h3 {
     display: flex;
     align-items: center;
@@ -558,73 +605,6 @@
     gap: var(--space-2);
   }
 
-  .event-toggle {
-    display: grid;
-    grid-template-columns:
-      auto minmax(210px, 0.9fr) minmax(220px, 1.1fr)
-      minmax(88px, auto);
-    align-items: center;
-    gap: var(--space-4);
-    min-height: 54px;
-    padding: 10px 12px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-2);
-    cursor: pointer;
-  }
-
-  .event-toggle:hover {
-    border-color: var(--color-focus);
-    background: var(--color-surface);
-  }
-
-  .event-toggle:has(input:checked) {
-    border-color: var(--color-success);
-    background: color-mix(
-      in srgb,
-      var(--color-success) 8%,
-      var(--color-surface)
-    );
-    box-shadow: inset 3px 0 0 var(--color-success);
-  }
-
-  .event-when {
-    display: grid;
-    min-width: 0;
-  }
-
-  .event-when strong {
-    font-size: var(--text-base);
-    line-height: 1.3;
-  }
-
-  .event-instructor {
-    min-width: 0;
-    overflow: hidden;
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .event-toggle.conflict {
-    border-color: var(--color-danger);
-  }
-
-  .event-status {
-    display: flex;
-    justify-content: flex-end;
-    min-width: 0;
-  }
-
-  .conflict-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--color-danger);
-    font-weight: 700;
-  }
-
   @media (max-width: 640px) {
     .subjects-heading {
       align-items: flex-start;
@@ -644,19 +624,6 @@
 
     .subject-card {
       width: 100%;
-    }
-
-    .event-toggle {
-      grid-template-columns: auto minmax(0, 1fr) auto;
-    }
-
-    .event-instructor {
-      grid-column: 2;
-    }
-
-    .event-status {
-      grid-column: 3;
-      grid-row: 1 / span 2;
     }
   }
 </style>

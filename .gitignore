@@ -8,12 +8,14 @@
 /playwright-report/
 /test-results/
 *.tsbuildinfo
+/design-qa-*.png
 
 # Local runtime data and caches
 /data/
 /.cache/
 /.npm/
 /.vite/
+/.vercel/
 *.db
 *.db-shm
 *.db-wal
@@ -48,4 +50,3 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
-.vercel

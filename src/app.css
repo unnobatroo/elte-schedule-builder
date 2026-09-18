@@ -344,6 +344,71 @@ h4 {
   box-shadow: none;
 }
 
+/* Shared class-choice anatomy for search results and selected subjects. */
+.class-option {
+  display: grid;
+  grid-template-columns:
+    auto minmax(108px, 0.65fr) minmax(240px, 1.35fr)
+    minmax(150px, 0.8fr);
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.class-option:hover:not(.is-selected):not(.has-conflict) {
+  border-color: var(--class-option-accent, var(--color-focus));
+  background: var(--color-surface);
+}
+
+.class-option.is-selected {
+  border-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 8%, var(--color-surface));
+  box-shadow: inset 3px 0 0 var(--color-success);
+}
+
+.class-option.has-conflict {
+  border-color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface));
+  box-shadow: inset 3px 0 0 var(--color-danger);
+}
+
+.class-option:has(.class-option-input:focus-visible) {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 1px;
+  border-color: var(--color-focus);
+}
+
+.class-option-input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .class-option {
+    grid-template-columns: auto minmax(100px, 0.65fr) minmax(0, 1.35fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .class-option {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;

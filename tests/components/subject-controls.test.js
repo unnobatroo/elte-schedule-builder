@@ -14,7 +14,11 @@ const subjects = [
         endTime: "11:30",
         enabled: true,
         hasConflict: true,
-        extendedProps: { type: "practice", instructor: "Dr. Jane Smith" },
+        extendedProps: {
+          type: "practice",
+          instructor: "Dr. Jane Smith",
+          location: "Room P-101",
+        },
       },
       {
         description: "IK-ALG-02\nInstructor",
@@ -23,7 +27,11 @@ const subjects = [
         endTime: "13:30",
         enabled: false,
         hasConflict: false,
-        extendedProps: { type: "lecture", instructor: "Dr. Alan Turing" },
+        extendedProps: {
+          type: "lecture",
+          instructor: "Dr. Alan Turing",
+          location: "Room L-202",
+        },
       },
       {
         code: "IK-ALG-03",
@@ -32,7 +40,11 @@ const subjects = [
         endTime: "09:30",
         enabled: false,
         hasConflict: false,
-        extendedProps: { type: "lecture", instructor: "Dr. Ada Lovelace" },
+        extendedProps: {
+          type: "lecture",
+          instructor: "Dr. Ada Lovelace",
+          location: "Room L-101",
+        },
       },
     ],
   },
@@ -84,22 +96,60 @@ describe("SubjectControls", () => {
       screen.getAllByRole("heading", { level: 3 })[1].textContent.trim(),
     ).toBe("Practices");
     expect(
-      [...menu.querySelectorAll(".event-when strong")].map(
+      [...menu.querySelectorAll(".class-option-time strong")].map(
         (element) => element.textContent,
       ),
-    ).toEqual([
-      "Monday 08:00–09:30",
-      "Wednesday 12:00–13:30",
-      "Monday 10:00–11:30",
-    ]);
+    ).toEqual(["08:00–09:30", "12:00–13:30", "10:00–11:30"]);
     expect(
-      [...menu.querySelectorAll(".event-instructor")].map((element) =>
-        element.textContent.trim(),
+      [...menu.querySelectorAll(".class-option-time > span")].map(
+        (element) => element.textContent,
+      ),
+    ).toEqual(["Monday", "Wednesday", "Monday"]);
+    expect(
+      [...menu.querySelectorAll(".class-option-details > strong")].map(
+        (element) => element.textContent.trim(),
       ),
     ).toEqual(["Dr. Ada Lovelace", "Dr. Alan Turing", "Dr. Jane Smith"]);
-    expect(menu.textContent).not.toContain("IK-ALG-03");
-    expect(menu.querySelector(".event-when span")).toBeNull();
+    expect(menu.textContent).toContain("Room L-101");
+    expect(menu.textContent).toContain("IK-ALG-03");
     expect(onToggleEvent).toHaveBeenCalledWith("Algorithms", 2);
+  });
+
+  it("names the class that each option would conflict with", async () => {
+    const conflictingSubject = {
+      title: "Databases",
+      enabled: true,
+      events: [
+        {
+          title: "Databases (lecture)",
+          code: "IK-DB-01",
+          dayOfWeek: "Monday",
+          startTime: "10:30",
+          endTime: "12:00",
+          enabled: true,
+          extendedProps: {
+            type: "lecture",
+            instructor: "Dr. Edgar Codd",
+            location: "Room D-101",
+          },
+        },
+      ],
+    };
+    render(SubjectControls, { subjects: [...subjects, conflictingSubject] });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Edit classes for Algorithms" }),
+    );
+
+    const conflictingOption = screen.getByRole("radio", {
+      name: /Practice, group 01, Monday 10:00–11:30, Conflicts with Databases, Monday 10:30–12:00/,
+    });
+    expect(conflictingOption.closest(".class-option").classList).toContain(
+      "has-conflict",
+    );
+    expect(
+      screen.getByText("Conflicts with Databases · Monday 10:30–12:00"),
+    ).toBeTruthy();
   });
 
   it("reveals event controls on click for touch and keyboard users", async () => {
