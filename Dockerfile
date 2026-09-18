@@ -12,7 +12,6 @@ FROM base AS build
 WORKDIR /app
 
 COPY package*.json .npmrc ./
-COPY scripts/prepare.js ./scripts/prepare.js
 RUN npm ci
 
 COPY . .
@@ -24,7 +23,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package*.json .npmrc ./
-COPY scripts/prepare.js ./scripts/prepare.js
 RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
