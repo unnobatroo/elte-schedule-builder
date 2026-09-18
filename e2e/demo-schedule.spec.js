@@ -350,6 +350,12 @@ test("finds and adds a course by subject name", async ({ page }) => {
 });
 
 test("keeps autocomplete suggestions above the timetable", async ({ page }) => {
+  await page.route("**/api/subject/prog?by=code", async (route) => {
+    await route.fulfill({
+      contentType: "text/html",
+      body: '<table id="resulttable"><tbody></tbody></table>',
+    });
+  });
   await page.route("**/api/subject/prog?by=name", async (route) => {
     await route.fulfill({
       contentType: "text/html",

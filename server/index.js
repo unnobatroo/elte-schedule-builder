@@ -38,8 +38,7 @@ function createSubjectHandler({
       const searchTerm = req.params.query.trim();
       const searchMode = req.subjectSearchMode;
       const cacheKey = `${term}-${searchMode}-${searchTerm}`;
-      const demoData =
-        searchMode === "code" ? generateDemoData(searchTerm) : null;
+      const demoData = generateDemoData(searchTerm, searchMode);
 
       if (demoData) {
         logger.log(`Returning demo data for ${searchTerm}`);

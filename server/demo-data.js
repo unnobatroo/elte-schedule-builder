@@ -48,33 +48,33 @@ const DEMO_SUBJECTS = {
             <td>Tuesday 08:00-09:30</td>
             <td>DEMO-2-1 (lecture)</td>
             <td>Advanced Database Systems</td>
-            <td>North Building 4.56</td>
+            <td>North Building 1.15</td>
             <td></td>
-            <td>Prof. Robert Johnson</td>
+            <td>Prof. Alan Turing</td>
           </tr>
           <tr>
-            <td>Tuesday 12:00-13:30</td>
+            <td>Thursday 12:00-13:30</td>
             <td>DEMO-2-1 (practice)</td>
             <td>Advanced Database Systems</td>
-            <td>South Building 3.21</td>
+            <td>South Building 2.05</td>
             <td></td>
-            <td>Michael Brown</td>
+            <td>Alice Johnson</td>
           </tr>
           <tr>
-            <td>Thursday 08:00-09:30</td>
+            <td>Wednesday 08:00-09:30</td>
             <td>DEMO-2-2 (lecture)</td>
             <td>Advanced Database Systems</td>
-            <td>North Building 4.56</td>
+            <td>North Building 1.15</td>
             <td></td>
-            <td>Prof. Robert Johnson</td>
+            <td>Prof. Alan Turing</td>
           </tr>
           <tr>
-            <td>Friday 14:00-15:30</td>
+            <td>Thursday 14:00-15:30</td>
             <td>DEMO-2-2 (practice)</td>
             <td>Advanced Database Systems</td>
-            <td>Lágymányos Campus D.1.28</td>
+            <td>South Building 2.05</td>
             <td></td>
-            <td>Sarah Wilson</td>
+            <td>Bob Williams</td>
           </tr>
         </tbody>
       </table>
@@ -85,50 +85,50 @@ const DEMO_SUBJECTS = {
           <tr>
             <td>Monday 12:00-13:30</td>
             <td>DEMO-3-1 (lecture)</td>
-            <td>Algorithms and Data Structures</td>
-            <td>North Building 3.14</td>
+            <td>Software Architecture</td>
+            <td>South Building 0.05</td>
             <td></td>
-            <td>Dr. Alice Chen</td>
+            <td>Dr. Grace Hopper</td>
           </tr>
           <tr>
-            <td>Monday 14:00-15:30</td>
+            <td>Tuesday 16:00-17:30</td>
             <td>DEMO-3-1 (practice)</td>
-            <td>Algorithms and Data Structures</td>
-            <td>South Building 2.08</td>
+            <td>Software Architecture</td>
+            <td>North Building 3.10</td>
             <td></td>
-            <td>Tom Anderson</td>
+            <td>Charlie Brown</td>
           </tr>
           <tr>
-            <td>Wednesday 08:00-09:30</td>
+            <td>Thursday 10:00-11:30</td>
             <td>DEMO-3-2 (lecture)</td>
-            <td>Algorithms and Data Structures</td>
-            <td>North Building 3.14</td>
+            <td>Software Architecture</td>
+            <td>South Building 0.05</td>
             <td></td>
-            <td>Dr. Alice Chen</td>
+            <td>Dr. Grace Hopper</td>
           </tr>
           <tr>
-            <td>Wednesday 16:00-17:30</td>
+            <td>Friday 14:00-15:30</td>
             <td>DEMO-3-2 (practice)</td>
-            <td>Algorithms and Data Structures</td>
-            <td>Lágymányos Campus D.2.12</td>
+            <td>Software Architecture</td>
+            <td>North Building 3.10</td>
             <td></td>
-            <td>Emma Davis</td>
+            <td>Diana Prince</td>
           </tr>
           <tr>
-            <td>Thursday 12:00-13:30</td>
+            <td>Wednesday 12:00-13:30</td>
             <td>DEMO-3-3 (lecture)</td>
-            <td>Algorithms and Data Structures</td>
-            <td>North Building 3.14</td>
+            <td>Software Architecture</td>
+            <td>South Building 0.05</td>
             <td></td>
-            <td>Dr. Alice Chen</td>
+            <td>Dr. Grace Hopper</td>
           </tr>
           <tr>
-            <td>Friday 18:00-19:30</td>
+            <td>Thursday 16:00-17:30</td>
             <td>DEMO-3-3 (practice)</td>
-            <td>Algorithms and Data Structures</td>
-            <td>South Building 1.05</td>
+            <td>Software Architecture</td>
+            <td>North Building 3.10</td>
             <td></td>
-            <td>Oliver White</td>
+            <td>Edward Norton</td>
           </tr>
         </tbody>
       </table>
@@ -137,52 +137,52 @@ const DEMO_SUBJECTS = {
       <table id="resulttable">
         <tbody>
           <tr>
-            <td>Monday 10:00-11:30</td>
-            <td>DEMO-4-1 (lecture)</td>
-            <td>Machine Learning Fundamentals</td>
-            <td>North Building 5.10</td>
-            <td></td>
-            <td>Prof. David Martinez</td>
-          </tr>
-          <tr>
             <td>Tuesday 10:00-11:30</td>
+            <td>DEMO-4-1 (lecture)</td>
+            <td>Algorithms and Data Structures</td>
+            <td>North Building 0.83</td>
+            <td></td>
+            <td>Prof. Donald Knuth</td>
+          </tr>
+          <tr>
+            <td>Wednesday 16:00-17:30</td>
             <td>DEMO-4-1 (practice)</td>
-            <td>Machine Learning Fundamentals</td>
-            <td>Computer Lab A</td>
+            <td>Algorithms and Data Structures</td>
+            <td>South Building 1.20</td>
             <td></td>
-            <td>Lisa Thompson</td>
+            <td>Fiona Gallagher</td>
           </tr>
           <tr>
-            <td>Wednesday 12:00-13:30</td>
+            <td>Wednesday 10:00-11:30</td>
             <td>DEMO-4-2 (lecture)</td>
-            <td>Machine Learning Fundamentals</td>
-            <td>North Building 5.10</td>
+            <td>Algorithms and Data Structures</td>
+            <td>North Building 0.83</td>
             <td></td>
-            <td>Prof. David Martinez</td>
-          </tr>
-          <tr>
-            <td>Thursday 14:00-15:30</td>
-            <td>DEMO-4-2 (practice)</td>
-            <td>Machine Learning Fundamentals</td>
-            <td>Computer Lab B</td>
-            <td></td>
-            <td>Kevin Lee</td>
+            <td>Prof. Donald Knuth</td>
           </tr>
           <tr>
             <td>Friday 12:00-13:30</td>
-            <td>DEMO-4-3 (lecture)</td>
-            <td>Machine Learning Fundamentals</td>
-            <td>North Building 5.10</td>
+            <td>DEMO-4-2 (practice)</td>
+            <td>Algorithms and Data Structures</td>
+            <td>South Building 1.20</td>
             <td></td>
-            <td>Prof. David Martinez</td>
+            <td>George Clark</td>
           </tr>
           <tr>
-            <td>Friday 18:00-19:30</td>
-            <td>DEMO-4-3 (practice)</td>
-            <td>Machine Learning Fundamentals</td>
-            <td>Computer Lab C</td>
+            <td>Thursday 12:00-13:30</td>
+            <td>DEMO-4-3 (lecture)</td>
+            <td>Algorithms and Data Structures</td>
+            <td>North Building 0.83</td>
             <td></td>
-            <td>Maria Garcia</td>
+            <td>Prof. Donald Knuth</td>
+          </tr>
+          <tr>
+            <td>Friday 14:00-15:30</td>
+            <td>DEMO-4-3 (practice)</td>
+            <td>Algorithms and Data Structures</td>
+            <td>South Building 1.20</td>
+            <td></td>
+            <td>Hannah Abbott</td>
           </tr>
         </tbody>
       </table>
@@ -191,7 +191,7 @@ const DEMO_SUBJECTS = {
       <table id="resulttable">
         <tbody>
           <tr>
-            <td>Tuesday 08:00-09:30</td>
+            <td>Wednesday 08:00-09:30</td>
             <td>DEMO-5-1 (lecture)</td>
             <td>Operating Systems</td>
             <td>North Building 1.22</td>
@@ -199,15 +199,15 @@ const DEMO_SUBJECTS = {
             <td>Dr. Helen Brown</td>
           </tr>
           <tr>
-            <td>Tuesday 18:00-19:30</td>
+            <td>Wednesday 14:00-15:30</td>
             <td>DEMO-5-1 (practice)</td>
             <td>Operating Systems</td>
-            <td>South Building 4.15</td>
+            <td>South Building 3.07</td>
             <td></td>
-            <td>Paul Miller</td>
+            <td>Ian Malcolm</td>
           </tr>
           <tr>
-            <td>Thursday 08:00-09:30</td>
+            <td>Thursday 14:00-15:30</td>
             <td>DEMO-5-2 (lecture)</td>
             <td>Operating Systems</td>
             <td>North Building 1.22</td>
@@ -297,6 +297,18 @@ const DEMO_SUBJECTS = {
     `,
 };
 
-export function generateDemoData(subjectCode) {
-  return DEMO_SUBJECTS[subjectCode] ?? null;
+export function generateDemoData(searchTerm, searchMode = "code") {
+  const upper = typeof searchTerm === "string" ? searchTerm.toUpperCase() : "";
+  if (searchMode === "code") {
+    return (
+      DEMO_SUBJECTS[upper] ??
+      (upper.startsWith("DEMO-")
+        ? '<table id="resulttable"><tbody></tbody></table>'
+        : null)
+    );
+  }
+  if (upper.startsWith("DEMO-") || upper === "DEMO") {
+    return '<table id="resulttable"><tbody></tbody></table>';
+  }
+  return null;
 }
