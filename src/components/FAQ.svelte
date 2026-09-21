@@ -177,8 +177,8 @@
         <div>
           <h2>Help and guide</h2>
           <p>
-            Search ELTE subjects, choose class groups, compare alternatives, and
-            keep several timetable plans in this browser.
+            Search ELTE subjects, pick class groups, compare options, and keep
+            timetable plans in this browser.
           </p>
         </div>
         <button
@@ -193,131 +193,103 @@
 
       <aside class="guide-note">
         <strong
-          >Always verify the final timetable in an official ELTE system.</strong
+          >Always double-check the final timetable in an official ELTE system.</strong
         >
-        This independent tool reads Tanrend data, which may be incomplete or outdated.
+        This tool reads Tanrend data, which can be incomplete or out of date.
       </aside>
 
       <section>
-        <h3>1. Quick start</h3>
+        <h3>Quick start</h3>
         <ol>
           <li>
-            Enter a subject code, course name, or professor under
+            Type a subject code, course name, or professor under
             <strong>Add courses from Tanrend</strong>.
           </li>
           <li>
-            Open a suggested subject or select <strong>Find courses</strong> to review
-            all matches.
+            Open a suggestion, or hit <strong>Find courses</strong> for every match.
           </li>
           <li>
-            Review lectures first, followed by practices. Each section is
-            ordered Monday to Friday, then by start time. Select a class by
-            clicking or pressing its row, or use
-            <strong>Add all groups</strong> when you want to compare its available
-            groups in the planner. Results stay open after choosing a class so lectures
-            and practices can be selected in one pass.
+            Click a class row to pick it — green border means selected, red
+            means it clashes with your timetable. <strong>Add all groups</strong
+            >
+            compares everything at once.
           </li>
           <li>
-            Refine the selected groups, check conflicts, then export or copy a
-            share link from <strong>Your timetable</strong>.
+            Export or copy a share link from <strong>Your timetable</strong>.
           </li>
         </ol>
       </section>
 
       <section>
-        <h3>2. Search or import subjects</h3>
+        <h3>Search and import</h3>
         <p>
           Search checks subject codes, course names, and professor names
-          together. Small typing errors are tolerated in names, while subject
-          codes stay exact. Searching for a professor shows the courses they
-          teach. After two characters, up to three ranked suggestions appear.
-          The first is selected automatically; use <kbd>↑</kbd> and <kbd>↓</kbd>
-          to move,
-          <kbd>Enter</kbd> to open the selected subject, and <kbd>Escape</kbd> to
-          close the suggestions. Opening a suggestion does not add it to the timetable.
+          together. Names forgive small typos; codes must be exact. Suggestions
+          appear after two characters — arrows move, <kbd>Enter</kbd> opens,
+          <kbd>Escape</kbd> closes. Opening a suggestion doesn't add it to the timetable
+          yet.
         </p>
         <p>
-          <strong>Import Neptun</strong> accepts the <code>.xlsx</code> file
-          from Neptun's Registered subjects page. That workbook contains subject
-          codes, not the exact registered class groups, so the planner keeps
-          every Tanrend alternative but selects only one initial group in each
-          lecture/practice section. Review those groups or use Suggest
-          schedules. Use <code>DEMO-1</code> through
-          <code>DEMO-6</code> to try the planner without live Tanrend data.
+          <strong>Import Neptun</strong> takes the <code>.xlsx</code> from
+          Neptun's Registered subjects page. It picks one starting group per
+          section — review them or run Suggest schedules.
+          <code>DEMO-1</code> through <code>DEMO-6</code> work without live data.
         </p>
       </section>
 
       <section>
-        <h3>3. Refine selected subjects</h3>
+        <h3>Picking classes</h3>
         <p>
-          A selected class row has a green border; a row that would overlap the
-          timetable has a red border and a conflict label. These states also
-          have text and screen-reader labels, so color is not the only cue. A
-          subject's checkbox shows or hides all of its enabled meetings.
-          Subjects are listed alphabetically. Select a subject's name to open
-          its classes; the checkbox changes only when selected directly.
-          Lectures appear first and practices second, each ordered by weekday
-          and time. Choosing another class in one section replaces its current
-          selection without changing the other section. Use the remove button to
-          delete the subject from this schedule.
+          Click a subject's name to edit its classes; the checkbox only shows or
+          hides it. Picking another class in a section swaps just that section's
+          choice. Use the remove button to drop a subject.
         </p>
         <p>
-          <strong>Suggest schedules</strong> compares valid group combinations.
-          It ranks options by the fewest conflicts first, then prefers the one
-          that replaces fewer currently selected groups. On wider screens,
-          options appear side by side. Each option shows only the groups it
-          would replace, organized by the weekday of the proposed class, with
-          the current and suggested group shown together. On smaller screens,
-          options stack into one column. <strong>Apply</strong> changes the timetable.
+          <strong>Suggest schedules</strong> ranks valid combinations by fewest
+          conflicts, then fewest swaps. Each option shows only what would
+          change. <strong>Apply</strong> updates the timetable.
         </p>
       </section>
 
       <section>
-        <h3>4. Read the timetable</h3>
+        <h3>The timetable</h3>
         <p>
-          Lectures are green, practices are blue, and conflicts are red. On
-          narrow screens, the visual week grid becomes a day-by-day schedule
-          list with the same class details.
+          Lectures are green, practices are blue, conflicts are red. On narrow
+          screens the week grid becomes a day-by-day list.
         </p>
         <p>
-          Enable <strong>Ignore lecture conflicts</strong> only when lecture attendance
-          is not required. This changes conflict detection; it does not remove lectures
-          from the timetable.
+          Turn on <strong>Ignore lecture conflicts</strong> only if lecture attendance
+          isn't required. It changes conflict detection — lectures stay on the timetable.
         </p>
       </section>
 
       <section>
-        <h3>5. Manage timetable plans</h3>
+        <h3>Plans, sharing, and export</h3>
         <p>
-          Use the selector at the top to switch plans. The adjacent buttons
-          rename or delete the current plan. <strong>New schedule</strong>
-          creates a separate plan, while <strong>Clear schedule</strong> removes every
-          subject from only the current plan.
+          Switch, rename, or delete plans at the top. <strong
+            >New schedule</strong
+          >
+          starts a separate plan; <strong>Clear schedule</strong> empties only the
+          current plan.
         </p>
-      </section>
-
-      <section>
-        <h3>6. Share or export</h3>
         <p>
-          <strong>Copy link</strong> puts the enabled class codes and lecture conflict
-          setting into a URL. Anyone with that URL can read those codes. Opening it
-          creates a new local plan and preserves existing plans.
+          <strong>Copy link</strong> packs your enabled class codes into a URL — anyone
+          with it can read them. Opening it adds a new local plan.
         </p>
         <p>
           <strong>Export calendar</strong> downloads every enabled class in one pack.
-          The iCalendar (.ics) pack contains weekly recurring events and works with
-          several calendar apps. The Google CSV pack contains the next occurrence
-          of every class without weekly recurrence.
+          iCalendar (.ics) keeps weekly recurrence and works in most calendar apps;
+          Google CSV has only the next occurrence of each class.
         </p>
       </section>
 
       <section>
         <h3>Storage and privacy</h3>
         <p>
-          Schedules stay in this browser's local storage. Clearing site data,
-          using private browsing, or changing browsers can remove or hide them.
+          Schedules stay in this browser's local storage — clearing site data or
+          switching browsers can hide them. This site doesn't include analytics
+          or session recording.
         </p>
-        <p>This site does not include analytics or session recording.</p>
       </section>
     </article>
   {/if}

@@ -1,371 +1,320 @@
 # Architecture decisions
 
-This document records the reasons behind the project's compatibility-sensitive
-choices. Change these decisions only with explicit migration and regression
-coverage.
+Why the compatibility-sensitive choices are what they are. Change them only
+with an explicit migration and regression coverage.
 
 ## Local calendar dates
 
-**Decision:** Treat schedule dates and calendar export dates as local
-calendar dates. Construct them from local year, month, and day values and do not
-round-trip them through `Date.prototype.toISOString()`.
+**Decision:** Treat schedule and export dates as local calendar dates, built
+from local year, month, and day — never round-tripped through
+`Date.prototype.toISOString()`.
 
-**Why:** A class belongs to a Budapest calendar day and wall-clock time, not a
-UTC instant. UTC conversion can shift the displayed day for contributors and
-users in different time zones.
+**Why:** A class belongs to a Budapest day and wall-clock time, not a UTC
+instant. UTC conversion can shift the displayed day in other time zones.
 
-**Alternative considered:** Normalize dates to UTC. This is useful for absolute
-timestamps but does not match the schedule's calendar-date semantics.
+**Alternative considered:** Normalize to UTC. Fine for absolute timestamps,
+wrong for calendar-date semantics.
 
-**Consequence:** Date utilities and export behavior need tests around week and
-year boundaries in the local timezone.
+**Consequence:** Date utilities and export need tests around local week and
+year boundaries.
 
 ## Full-calendar export packs
 
-**Decision:** Export every enabled meeting in one file. Use recurring iCalendar
-as the primary cross-platform format and offer Google's documented CSV format
-as a complete, non-recurring alternative.
+**Decision:** Export every enabled meeting in one file — recurring iCalendar
+as the primary format, Google's CSV as a complete non-recurring alternative.
 
-**Why:** A timetable is imported as a unit. Per-event browser pop-ups made users
-repeat the same operation and could leave a calendar partially imported.
+**Why:** A timetable is imported as a unit. Per-event pop-ups made users repeat
+the same step and could leave a calendar half imported.
 
-**Consequence:** iCalendar is the recommended format because it preserves weekly
-recurrence. The export dialog must explain that CSV contains only each meeting's
-next occurrence.
+**Consequence:** iCalendar is recommended because it keeps weekly recurrence.
+The export dialog must say that CSV holds only each meeting's next occurrence.
 
 ## Stable shared-schedule URLs
 
-**Decision:** Preserve the `/import/<base64>` format and continue decoding links
-created by older versions.
+**Decision:** Keep the `/import/<base64>` format and keep decoding links from
+older versions.
 
-**Why:** Shared links may remain in messages or bookmarks after the application
-changes. Breaking the decoder silently loses the value of those links.
+**Why:** Shared links sit in messages and bookmarks long after the app changes.
+Breaking the decoder silently breaks them.
 
-**Alternative considered:** Replace the payload whenever the schedule model
-changes. A new format may be introduced only with versioning or a compatibility
-decoder.
+**Alternative considered:** Replace the payload when the schedule model
+changes — allowed only with versioning or a compatibility decoder.
 
-**Consequence:** The payload contains enabled class codes and the lecture-
-exemption setting, not the complete internal schedule. Base64 is transport
-encoding, not encryption; anyone with the URL can read it.
+**Consequence:** The payload holds enabled class codes and the
+lecture-exemption setting, not the whole schedule. Base64 is encoding, not
+encryption — anyone with the URL can read it.
 
 ## Browser storage migration
 
-**Decision:** Store named schedules under the current schedule-store key while
-retaining the legacy `savedSubjects` and `lectureExemption` migration path.
+**Decision:** Store named schedules under the current key while keeping the
+legacy `savedSubjects` and `lectureExemption` migration path.
 
-**Why:** Existing users can return after an update with older `localStorage`.
-Discarding or misreading it would erase their saved schedule without warning.
+**Why:** Users can return after an update with old `localStorage` data;
+misreading it would wipe their saved schedule without warning.
 
-**Alternative considered:** Clear or replace incompatible browser state. That
-would simplify loading but is unacceptable without an explicit user-facing
-migration policy.
+**Alternative considered:** Clear incompatible state. Simpler, but
+unacceptable without a user-facing migration policy.
 
-**Consequence:** New fields must have safe defaults, storage keys remain stable,
-and migrations require tests using old saved objects.
+**Consequence:** New fields need safe defaults, storage keys stay stable, and
+migrations need tests built on old saved objects.
 
 ## Tanrend proxy, throttling, and cache
 
 **Decision:** Send subject requests through the Express backend, serialize
-upstream work with a delay, coalesce matching requests, and cache responses in
-SQLite with bounded resource use.
+upstream work with a delay, merge matching requests, and cache in SQLite with
+bounded resource use.
 
-**Why:** The browser should not depend directly on Tanrend's cross-origin
-behavior. Caching and throttling reduce repeated upstream traffic, while request
-and cache limits protect this service from unbounded work.
+**Why:** The browser shouldn't depend on Tanrend's cross-origin behavior.
+Caching and throttling cut repeat traffic; request and cache limits keep the
+service from doing unbounded work.
 
-**Alternative considered:** Fetch Tanrend directly or issue upstream requests in
-parallel. Both are simpler locally but make the application less reliable and
-can place unnecessary load on the upstream service.
+**Alternative considered:** Fetch Tanrend directly or fire parallel upstream
+requests — simpler, but less reliable and harder on the upstream service.
 
-**Consequence:** Refactors must preserve queueing and cache behavior. Integration
-tests use an injected upstream function and temporary or in-memory SQLite rather
-than the live Tanrend service. The browser and API remain same-origin in
-production, while Vite proxies `/api` during development; the backend therefore
-does not expose a permissive cross-origin API.
+**Consequence:** Refactors must preserve queueing and caching. Integration
+tests use an injected upstream and in-memory SQLite, never live Tanrend. The
+browser and API stay same-origin in production (Vite proxies `/api` in dev),
+so the backend needs no permissive CORS.
 
 ## Deployment-specific cache adapters
 
-**Decision:** Keep one Express application and inject a cache store at its
-composition boundary. Local and container deployments use the SQLite adapter;
-Vercel functions use a bounded in-memory TTL adapter.
+**Decision:** One Express app, with a cache store injected at the composition
+boundary — SQLite locally and in containers, bounded in-memory TTL on Vercel.
 
-**Why:** Vercel function filesystems are ephemeral, and the native SQLite build
-is not a portable serverless contract. The cache is an optimization rather than
-the source of schedule truth, so a warm-instance cache preserves correctness
-without adding an external database service.
+**Why:** Vercel filesystems are ephemeral and native SQLite isn't a portable
+serverless contract. The cache is an optimization, not the source of truth, so
+a warm-instance cache keeps correctness without an external database.
 
-**Alternative considered:** Proxy the fork to another deployment's API or add a
-managed cache dependency. The former makes this deployment depend on another
-owner; the latter adds credentials, cost, and operational work that current
-traffic does not justify.
+**Alternative considered:** Proxy to another deployment's API (adds an outside
+dependency) or a managed cache (adds credentials, cost, and ops work the
+traffic doesn't justify).
 
-**Consequence:** Cold starts begin with an empty cache and rate limiting remains
-per function instance. The Tanrend queue, validation, and API response contract
-are shared across environments. A managed cache can replace the in-memory
-adapter later without changing the browser or Tanrend service.
+**Consequence:** Cold starts have an empty cache; rate limiting is per
+instance. Queue, validation, and API contract are shared everywhere. A managed
+cache can replace the adapter later without touching the browser or Tanrend.
 
 ## Deterministic DEMO subjects
 
 **Decision:** Serve `DEMO-1` through `DEMO-6` locally without calling Tanrend.
 
-**Why:** Contributors and users need a reproducible way to exercise searching,
+**Why:** Contributors and users need a reproducible way to exercise search,
 selection, persistence, conflicts, and browser flows when live data is missing
-or the upstream service is unavailable.
+or Tanrend is down.
 
-**Alternative considered:** Mock every layer independently. Unit mocks remain
-useful, but they do not prove the assembled frontend and backend flow.
+**Alternative considered:** Mock each layer independently — useful, but can't
+prove the assembled flow.
 
-**Consequence:** DEMO responses are part of the development and testing contract.
-The browser happy path and backend smoke checks should remain independent of the
-network.
+**Consequence:** DEMO responses are part of the dev/test contract. Browser and
+backend smoke checks stay offline.
 
 ## Unified Tanrend search
 
-**Decision:** Use one course-search field that automatically checks Tanrend by
-both code (`m=keres_kod_azon`) and name (`m=keresnevre`), then merges distinct
-matches by normalized subject and class identity.
+**Decision:** One search field checks Tanrend by code (`m=keres_kod_azon`) and
+name (`m=keresnevre`), then merges distinct matches by normalized subject and
+class identity.
 
-**Why:** Students should not need to know whether a remembered value is a code
-or a title before searching. One query should expose either kind of match.
+**Why:** Students shouldn't have to know whether what they remember is a code
+or a title. One query surfaces both.
 
-**Alternative considered:** Keep the explicit mode selector. It reduced upstream
-requests but added a decision before the primary task and hid valid matches from
-the other mode.
+**Alternative considered:** An explicit mode selector — fewer upstream
+requests, but an extra decision up front and hidden matches from the other
+mode.
 
-**Consequence:** The proxy still validates, queues, and caches each mode as a
-distinct request. The client suppresses invalid code-shaped requests, combines
-both responses, and removes duplicate classes before display.
+**Consequence:** The proxy still validates, queues, and caches each mode
+separately. The client drops invalid code-shaped requests, combines responses,
+and deduplicates before display.
 
 ## Ranked subject autocomplete
 
-**Decision:** After two typed characters, debounce the existing combined
-Tanrend search and present at most three ranked subject suggestions. Exact code
-and title matches rank first, followed by code prefixes, title prefixes, word
-prefixes, and substring matches. The first option is active by default; arrow
-keys move the active option, Escape closes the popup, and Enter opens the active
-subject's class results.
+**Decision:** After two characters, debounce the combined search and show at
+most three ranked suggestions: exact code/title matches first, then prefixes,
+then substrings. First option is active; arrows move it, Escape closes, Enter
+opens that subject's classes.
 
-**Why:** Students can reach a likely subject without submitting a broad search
-and scanning a long result list. Opening the subject rather than adding it keeps
-class and group consequences visible before the timetable changes.
+**Why:** Students reach a likely subject without a broad search and a long
+result list. Opening the subject rather than adding it keeps the class
+consequences visible.
 
-**Consequence:** The input follows the ARIA combobox/listbox pattern and limits
-network churn with a 300 ms delay. Explicit searches and Neptun/shared imports
-retain their existing behavior.
+**Consequence:** The input follows the ARIA combobox/listbox pattern with a
+300 ms debounce. Explicit searches and imports behave as before.
 
 ## Compact planner control hierarchy
 
-**Decision:** Keep the page in three visible zones: schedule management, a
-two-pane course workspace, and the timetable. Course search and selected
-subjects share the upper workspace. The timetable heading owns its legend,
-lecture-conflict option, schedule suggestions, export, and sharing controls.
+**Decision:** Three visible zones: schedule management, a two-pane course
+workspace, and the timetable. The timetable heading owns the legend,
+lecture-conflict option, suggestions, export, and sharing controls.
 
-**Why:** Each action should sit beside the object it changes. Separate full-width
-rows for one button or one setting made the page taller and obscured the order of
-work: choose subjects, refine the timetable, then export or share it.
+**Why:** Each action sits next to what it changes. Full-width rows for single
+controls made the page taller and hid the order of work: pick subjects, refine,
+then export or share.
 
-**Consequence:** Wide screens keep search and selection visible side by side,
-then give the calendar the full page width. Narrow screens preserve the same DOM
-order, stack the workspace and actions, and replace the dense time grid with a
-day-grouped agenda.
+**Consequence:** Wide screens show search and selection side by side with the
+calendar full-width below. Narrow screens keep the same DOM order, stack
+everything, and swap the grid for the agenda.
 
 ## Semantic accessible color system
 
-**Decision:** Define light and dark palettes through shared semantic tokens.
-Green represents create/add actions, blue represents import/export/share,
-amber represents suggestions and caution, red represents destructive actions,
-and neutral controls cover editing, cancellation, help, and dismissal.
+**Decision:** Light and dark palettes via shared semantic tokens — green for
+create/add, blue for import/export/share, amber for suggestions, red for
+destructive, neutral for editing/cancel/help.
 
-**Why:** Colors should communicate action category without replacing the text or
-icon label. Foreground status colors and solid button colors need separate
-tokens because the same red, amber, or blue cannot remain readable both as text
-on a surface and as a filled control in dark mode.
+**Why:** Color communicates the action category without replacing labels.
+Status text and filled controls need separate tokens — the same hue can't stay
+readable as both text and a filled button in dark mode.
 
-**Alternative considered:** Keep one value per hue and adjust opacity by theme.
-That produced weak dark-theme status text and inconsistent control boundaries.
+**Alternative considered:** One value per hue with theme-adjusted opacity —
+produced weak dark-mode text and inconsistent borders.
 
-**Consequence:** Normal text and filled-control combinations must retain at
-least 4.5:1 contrast in both themes, and interactive control borders must retain
-at least 3:1 against their surface. `tests/utils/theme.test.js` enforces these ratios.
+**Consequence:** Text and filled-control combos must keep ≥4.5:1 contrast in
+both themes; control borders ≥3:1. `tests/utils/theme.test.js` enforces it.
 
 ## Dependency install scripts
 
-**Decision:** Use npm's strict install-script policy and approve only the locked
-`esbuild` and `sqlite3` versions. Explicitly deny the optional `fsevents`
-installers, and pin the policy-capable npm version in local metadata, CI, and
-Docker.
+**Decision:** npm's strict install-script policy, approving only the locked
+`esbuild` and `sqlite3` versions, explicitly denying optional `fsevents`, and
+pinning the policy-capable npm version in metadata, CI, and Docker.
 
-**Why:** `esbuild` needs its postinstall script to provision and validate the
-platform-specific executable used by Vite. `sqlite3` needs its install script to
-load a prebuilt native N-API binding or compile one when no compatible binary is
-available. Allowing every transitive dependency script would grant more install-
-time execution than the application requires. The macOS-only `fsevents`
-packages are optional watcher accelerators, so the application can use its
-portable fallback without running their native installers.
+**Why:** `esbuild` needs postinstall to provision its platform binary;
+`sqlite3` needs its script for the prebuilt or compiled N-API binding.
+Allowing every transitive script grants more install-time execution than
+needed. `fsevents` is a macOS-only optional watcher — the portable fallback
+works without it.
 
-**Alternative considered:** Disable all lifecycle scripts. That prevents both
-required native tools from installing correctly. Leaving npm's policy in warning
-mode would allow newly introduced scripts without review.
+**Alternative considered:** Disable all lifecycle scripts (breaks the two
+required native tools) or warning mode (lets new scripts in unreviewed).
 
-**Consequence:** Dependency updates that change either approved version, or add
-another install script, make `npm ci` fail. Review the new script and then run
-`npm approve-scripts <package>` to record a version-pinned approval. CI and
-Docker must continue using the npm version declared in `package.json`.
+**Consequence:** Updates that change an approved version or add a script make
+`npm ci` fail. Review, then `npm approve-scripts <package>` to approve.
+CI/Docker keep using the pinned npm version.
 
 ## Professor and typo-tolerant name search
 
-**Decision:** Use Tanrend's `keres_okt` tutor-name mode alongside subject code
-and course-name searches. When both human-name modes return nothing, issue one
-bounded prefix lookup and retain only course titles or professor names within a
-small edit distance of the original query. Never apply this fallback to
-code-like input.
+**Decision:** Tanrend's `keres_okt` tutor-name mode runs alongside code and
+name searches. When both name modes return nothing, run one bounded prefix
+lookup and keep titles or professor names within a small edit distance. Never
+apply the fallback to code-like input.
 
-**Why:** Tanrend can return every course taught by a professor, but its normal
-name lookup does not recover spelling errors. A bounded fallback supplies a
-small candidate set without downloading or maintaining a parallel course
-catalog, and exact code behavior stays predictable.
+**Why:** Tanrend returns every course a professor teaches, but its name lookup
+doesn't recover typos. A bounded fallback gives a small candidate set without
+a parallel course catalog, and code behavior stays exact.
 
-**Alternative considered:** Fuzzy-match only the rows returned by the original
-misspelled query. Tanrend returns no candidates for many spelling errors, so
-there would be nothing to rank. Querying many generated spelling variants would
-also amplify traffic and queue latency.
+**Alternative considered:** Fuzzy-match only the misspelled query's rows —
+often nothing to rank. Generating many spelling variants would multiply
+traffic and queue latency.
 
-**Consequence:** Course and professor searches tolerate a small number of
-insertions, deletions, or substitutions. The fallback can only recover names
-whose selected prefix still reaches a candidate in Tanrend, and all upstream
-requests continue through the existing throttle and mode-specific cache.
+**Consequence:** Name searches tolerate small typos. The fallback only recovers
+names whose prefix still reaches a Tanrend candidate. All upstream requests
+keep the existing throttle and per-mode cache.
 
 ## Direct class-row selection
 
-**Decision:** Make each Tanrend class row a native button instead of placing a
-separate action button inside the row. Reserve the same desktop columns for
-time, code, room, professor, and status on every row. Selected rows use the
-success treatment, predicted conflicts use the danger treatment, and both
-states include text and icons as well as color.
+**Decision:** Each Tanrend class row is a native button — no nested action
+button. Desktop rows reserve the same columns for time, code, room, professor,
+and status. Selected uses the success treatment, conflicts use danger, and
+both carry text and icons.
 
-**Why:** The row itself is the target students are scanning. A second “Choose
-class” control duplicated that target and made dense result lists harder to use
-with a mouse, touch, or keyboard. Reserving the status column prevents selected
-or conflicting rows from shifting the other details horizontally.
+**Why:** The row itself is the target students scan. A second "Choose class"
+control duplicated it and crowded dense lists. A reserved status column stops
+rows shifting sideways when selected.
 
 **Consequence:** Rows activate with click, Enter, or Space and expose
-`aria-pressed`. Selecting a row keeps the results open. Course titles have the
-strongest hierarchy in each result card, while codes remain secondary.
+`aria-pressed`. Selecting keeps results open. Course titles get the strongest
+hierarchy; codes stay secondary.
 
 ## Stable class identity
 
-**Decision:** Identify a Tanrend class by code, weekday, start time, end time,
-its real stored type (`extendedProps.type`), room, and instructor. Use a
-same-slot fallback during refresh only when it matches exactly one existing
-event. New share links carry these exact event identities in a versioned
-payload; the decoder continues to accept every legacy code-only payload.
+**Decision:** A class is identified by code, weekday, start/end time, real
+stored type (`extendedProps.type`), room, and instructor. A same-slot refresh
+fallback applies only when it matches exactly one existing event. New share
+links carry exact identities in a versioned payload; the decoder still accepts
+legacy code-only payloads.
 
-**Why:** Calendar events keep their type in `extendedProps`, so comparing the
-unused top-level `type` field made a lecture and practice at the same time look
-identical. Tanrend can also return two rows with the same code, type, weekday,
-time, and room but different instructors. Code-only or time-only matching made
-both rows appear selected and also collapsed them in schedule suggestions.
+**Why:** Type lives in `extendedProps`, so the unused top-level `type` made a
+same-time lecture and practice look identical. Tanrend can also return two
+rows identical except for instructor — code-only matching made both look
+selected and collapsed them in suggestions.
 
-**Consequence:** Lecture and non-lecture choices remain independent even when
-they share a weekday and time, and duplicate-code instructor variants remain
-separate choices. Exact identities drive selection, suggestions, visible row
-state, and new share links. The guarded refresh fallback preserves older saved
-choices if Tanrend changes one unambiguous row. Loading a schedule repairs the
-old invalid state where two variants of the same exact subject slot were both
-enabled.
+**Consequence:** Lecture and non-lecture choices stay independent at the same
+time; instructor variants stay separate. Exact identities drive selection,
+suggestions, row state, and new share links. The guarded fallback preserves
+old saved choices when Tanrend changes one unambiguous row. Loading repairs
+the old state where two variants of one slot were both enabled.
 
 ## English and Hungarian interface
 
-**Decision:** Keep a dependency-free English/Hungarian message catalog in
-`src/utils/i18n.js`. On first load, choose Hungarian only when the device's
-primary language starts with `hu`; otherwise choose English. Persist an explicit
-header selection, update the document language, and recreate Schedule-X when
-the language changes so its dates and controls use the same locale.
+**Decision:** A dependency-free en/hu catalog in `src/utils/i18n.js`. First
+load picks Hungarian only when the device's primary language starts with `hu`.
+An explicit header choice persists, updates `html[lang]`, and recreates
+Schedule-X so its dates and controls match.
 
-**Why:** The planner needs only two languages, so a small explicit catalog is
-easier for student contributors to review than a localization framework. Using
-the primary device language follows the requested behavior without guessing
-from location or secondary browser languages.
+**Why:** Two languages don't justify a localization framework — a small
+catalog is easier for student contributors to review. Primary device language
+avoids guessing from location or secondary languages.
 
-**Consequence:** Application controls, feedback, dialogs, Help, calendar labels,
-agenda text, and accessible names switch together. Course titles, professor
-names, codes, rooms, and existing user-named schedules remain unchanged because
-they are source or user data. Future interface copy must add both English and
-Hungarian entries and corresponding tests.
+**Consequence:** Controls, dialogs, Help, calendar labels, agenda text, and
+accessible names switch together. Course titles, names, codes, rooms, and
+user-named schedules stay untouched — they're data. New copy needs both
+languages plus tests.
 
 ## Unified local startup
 
-**Decision:** Make `npm run dev` start the Express API and Vite frontend in one
-process, and make `npm run preview` build and serve the complete application
-through Express. Keep `dev:frontend` and `dev:api` only for contributors who
-intentionally need separate processes. When no explicit proxy URL is supplied,
-derive Vite's API target from `PORT`.
+**Decision:** `npm run dev` starts Express and Vite in one process; `npm run
+preview` builds and serves everything through Express. `dev:frontend` and
+`dev:api` exist only for deliberate separate debugging. Vite's API target
+derives from `PORT` when no proxy URL is set.
 
-**Why:** Running Vite alone leaves the interface available while every Tanrend
-request fails with a proxy 502, which looks like a broken search feature. A
-single default command makes the frontend/API dependency explicit and keeps
-custom local ports aligned automatically.
+**Why:** Vite alone leaves the UI up while every Tanrend call fails with a
+proxy 502 — looks like broken search. One command makes the dependency
+explicit and keeps custom ports aligned.
 
-**Consequence:** The normal development and preview commands always include the
-API. Docker Compose still uses separate containers, so it calls
-`dev:frontend` explicitly and waits for the backend's local demo health check
-before starting the frontend.
+**Consequence:** Dev and preview always include the API. Docker Compose uses
+separate containers, so it calls `dev:frontend` and waits for the backend's
+demo health check first.
 
 ## Fixed recurring week
 
-**Decision:** Expose one Monday-Friday week grid with no date navigation or
-alternate day view. Keep the 08:00-21:00 boundary labels visible and use the
-existing day-grouped agenda instead of the grid on phones.
+**Decision:** One Monday–Friday grid, 08:00–21:00 labels visible, no date
+navigation or day view. Phones get the day-grouped agenda instead.
 
-**Why:** ELTE classes repeat by weekday. Moving Schedule-X to another calendar
-week produces an empty grid because events are intentionally projected onto one
-representative week, while a day-view selector duplicates the mobile agenda and
-suggests unsupported date-specific behavior.
+**Why:** ELTE classes repeat by weekday. Events are projected onto one
+representative week, so another calendar week shows an empty grid. A day view
+would duplicate the mobile agenda and imply unsupported date behavior.
 
-**Consequence:** The desktop calendar is a stable weekly timetable rather than
-a date browser. Export continues to calculate real future recurring dates
-separately, and mobile users retain the complete chronological class list.
+**Consequence:** The desktop calendar is a stable weekly timetable, not a date
+browser. Export still computes real recurring dates; mobile keeps the full
+chronological list.
 
 ## Schedule suggestion ranking
 
-**Decision:** Build one choice variable for each enabled subject's lecture and
-practice section, treating every non-lecture Tanrend label as a practice. Rank
-complete combinations by conflict count first and replacement count second.
-Continue the bounded search after finding conflict-free combinations, pruning
-only when a branch cannot improve either score.
+**Decision:** One choice variable per enabled subject's lecture and practice
+section (every non-lecture label counts as practice). Rank complete
+combinations by conflict count, then replacement count. Keep searching past
+conflict-free combos, pruning only when a branch can't improve either score.
 
-**Why:** Stopping after the first five conflict-free combinations made results
-depend on Tanrend row order and could hide a later one-replacement solution
-behind several three-replacement solutions. Separate variables for labels such
-as classroom reservations also selected more than one practice. Exact duplicate
-rows inflated conflict counts, while multiple enabled groups could be silently
-removed despite being described as no replacement.
+**Why:** Stopping at the first five conflict-free combos made results depend on
+Tanrend row order and could hide a one-replacement solution behind
+three-replacement ones. Separate variables for labels like room reservations
+selected extra practices. Duplicate rows inflated conflict counts; enabled
+groups could be silently dropped while described as no replacement.
 
-**Consequence:** Suggestions now follow the same lecture/practice model as the
-class picker, collapse exact duplicate meetings for evaluation, and describe
-every enabled group that applying an option will replace. The existing node cap
-still bounds work for unusually large imported schedules. Conflict scoring also
-includes overlaps among distinct meetings inside one selected group, so the
-number shown before applying an option matches the resulting timetable. The UI
-omits the unchanged timetable and equally conflicting alternatives; if no
-available swap improves the current score, it explains that directly.
+**Consequence:** Suggestions share the class picker's lecture/practice model,
+collapse exact duplicates, and name every group an option would replace. The
+node cap still bounds huge imports. Scoring counts overlaps within a selected
+group too, so the shown count matches the result. The UI omits the unchanged
+timetable and equally conflicting swaps — if nothing improves, it says so.
 
 ## Neptun import group selection
 
-**Decision:** Treat a Neptun Registered subjects workbook as a subject list,
-not a source of exact class selections. Keep every Tanrend class returned for
-those subjects, but initially enable only the first deterministic course group
-in each normalized subject's lecture and practice sections. Preserve an existing
-selection when the same subject is imported again.
+**Decision:** A Neptun Registered subjects workbook is a subject list, not
+exact class selections. Keep every Tanrend class for those subjects but enable
+only the first deterministic group per lecture/practice section. Re-imports
+preserve an existing selection.
 
-**Why:** The workbook contains base subject codes but no registered course-group
-identities. Enabling every Tanrend result placed all alternatives on the calendar
-at once—31 meetings for a real 10-code workbook—and created dense stacks of
-false-choice conflicts. Discarding alternatives would prevent later group
-editing and schedule suggestions.
+**Why:** The workbook has base codes, no group identities. Enabling everything
+dumped all alternatives on the calendar at once — 31 meetings for a real
+10-code file — and created walls of false conflicts. Dropping alternatives
+would block later group editing and suggestions.
 
-**Consequence:** Imports produce an immediately readable draft while retaining
-all alternatives in the selected-subject editor. Exact duplicate Tanrend rows
-are enabled once, multi-meeting variants stay together, and subject visibility
-changes no longer erase or re-enable class choices.
+**Consequence:** Imports give a readable draft with all alternatives still in
+the editor. Exact duplicates enable once, multi-meeting variants stay
+together, and toggling subject visibility no longer erases class choices.

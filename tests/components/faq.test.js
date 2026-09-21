@@ -17,23 +17,23 @@ describe("FAQ", () => {
     expect(
       screen.getByRole("heading", { name: "Help and guide" }),
     ).toBeTruthy();
-    expect(screen.getByText("1. Quick start")).toBeTruthy();
-    expect(screen.getByText("6. Share or export")).toBeTruthy();
-    expect(screen.getByText(/Always verify the final timetable/)).toBeTruthy();
+    expect(screen.getByText("Quick start")).toBeTruthy();
+    expect(screen.getByText("Plans, sharing, and export")).toBeTruthy();
+    expect(screen.getByText(/double-check the final timetable/)).toBeTruthy();
     expect(
       screen.getByText(
         /Search checks subject codes, course names, and professor names together/,
       ),
     ).toBeTruthy();
-    expect(screen.getByText(/Small typing errors are tolerated/)).toBeTruthy();
+    expect(screen.getByText(/forgive small typos/)).toBeTruthy();
     expect(
-      screen.getByText(/Opening a suggestion does not add it/),
+      screen.getByText(/Opening a suggestion doesn't add it/),
     ).toBeTruthy();
     expect(
       screen.getByText("Clear schedule").parentElement.textContent,
     ).toMatch(/current plan/);
     expect(screen.queryByText(/under Search by/)).toBeNull();
-    expect(screen.getByText(/does not include analytics/)).toBeTruthy();
+    expect(screen.getByText(/doesn't include analytics/)).toBeTruthy();
     await fireEvent.click(screen.getByRole("button", { name: "Close guide" }));
     expect(onClose).toHaveBeenCalledOnce();
   });

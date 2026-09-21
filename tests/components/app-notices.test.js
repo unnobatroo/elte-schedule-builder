@@ -9,7 +9,7 @@ describe("AppNotices", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Check important details before relying on this schedule",
+        name: "Check the details before trusting this schedule",
       }),
     ).toBeTruthy();
     expect(screen.queryByRole("dialog")).toBeNull();
