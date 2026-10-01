@@ -131,7 +131,7 @@ describe("subject API integration", () => {
     expect(await first.text()).toBe(upstreamHtml);
     expect(await second.text()).toBe(upstreamHtml);
     expect(fetchSubject).toHaveBeenCalledOnce();
-    expect(fetchSubject).toHaveBeenCalledWith("IK-TEST", "2026-2027-1");
+    expect(fetchSubject).toHaveBeenCalledWith("IK-TEST", "2026-2027-1", "code");
     await expect(
       database.get("SELECT COUNT(*) AS count FROM cache"),
     ).resolves.toEqual({ count: 1 });

@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   applyScheduleSuggestion,
   findScheduleSuggestions,
-  getEventTypeClass,
 } from "../../src/utils/scheduleOptimizer.js";
-import { getConflictPairs } from "../../src/utils/schedule.js";
+import {
+  getConflictPairs,
+  getEventTypeClass,
+} from "../../src/utils/schedule.js";
 import { getEnabledEvents } from "../../src/utils/scheduleState.js";
 
 function makeEvent(overrides = {}) {

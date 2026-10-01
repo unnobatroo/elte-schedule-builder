@@ -14,6 +14,7 @@
     Subject,
   } from "../types/schedule.js";
   import {
+    DAY_ORDER,
     getConflictPairs,
     getEventDisplayTitle,
     getEventGroupNumber,
@@ -21,7 +22,7 @@
     isLectureType,
   } from "../utils/schedule.js";
   import { resolvedTheme } from "../utils/theme.js";
-  import { language, t } from "../utils/i18n.js";
+  import { dayName, language, t } from "../utils/i18n.js";
   import ColorLegend from "./ColorLegend.svelte";
   import EventDetailsCard from "./EventDetailsCard.svelte";
   import ScheduleSuggestions from "./ScheduleSuggestions.svelte";
@@ -82,13 +83,10 @@
     return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
   }
 
-  function formatEvents(rawEvents: CalendarEvent[]) {
-    const overlappingEvents = new Set(
-      getConflictPairs(rawEvents, lectureExemption).flatMap(
-        ({ event1, event2 }) => [event1, event2],
-      ),
-    );
-
+  function formatEvents(
+    rawEvents: CalendarEvent[],
+    overlappingEvents: ReadonlySet<number>,
+  ) {
     return rawEvents.map((event, index) => {
       const [startHour, startMin] = event.startTime.split(":").map(Number);
       const [endHour, endMin] = event.endTime.split(":").map(Number);
@@ -163,8 +161,16 @@
     plugins: [eventsServicePlugin, eventModal],
   });
 
+  const conflictIndexes = $derived(
+    new Set(
+      getConflictPairs(events, lectureExemption).flatMap(
+        ({ event1, event2 }) => [event1, event2],
+      ),
+    ),
+  );
+
   $effect(() => {
-    eventsServicePlugin.set(formatEvents(events));
+    eventsServicePlugin.set(formatEvents(events, conflictIndexes));
   });
 
   $effect(() => {
@@ -175,15 +181,7 @@
     calendarApp.destroy();
   });
 
-  const DAYS = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
+  const DAYS = Object.keys(DAY_ORDER);
 
   const agendaByDay = $derived(
     DAYS.map((day) => ({
@@ -197,14 +195,6 @@
             a.event.endTime.localeCompare(b.event.endTime),
         ),
     })).filter(({ events: dayEvents }) => dayEvents.length > 0),
-  );
-
-  const conflictIndexes = $derived(
-    new Set(
-      getConflictPairs(events, lectureExemption).flatMap(
-        ({ event1, event2 }) => [event1, event2],
-      ),
-    ),
   );
 
   function describeEvent({
@@ -277,17 +267,18 @@
         {t($language, "agendaIntro")}
       </p>
       {#each agendaByDay as { day, events: dayEvents } (day)}
-        <h4>{t($language, day.toLocaleLowerCase("en-US"))}</h4>
+        <h4>{dayName($language, day)}</h4>
         <ul>
           {#each dayEvents as entry (entry.index)}
             {@const { event, index } = entry}
+            {@const description = describeEvent(entry)}
             <li
               class="agenda-event"
               class:is-lecture={isLectureType(event.extendedProps?.type)}
               class:has-conflict={conflictIndexes.has(index)}
-              aria-label={describeEvent(entry)}
+              aria-label={description}
             >
-              <span class="sr-only">{describeEvent(entry)}</span>
+              <span class="sr-only">{description}</span>
               <div class="agenda-event-heading">
                 <strong>{getEventDisplayTitle(event)}</strong>
                 <span>{event.startTime}–{event.endTime}</span>

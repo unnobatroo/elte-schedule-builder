@@ -484,3 +484,7 @@ export function t(
     template,
   );
 }
+
+export function dayName(activeLanguage: string, day: string): string {
+  return t(activeLanguage, day.toLocaleLowerCase("en-US"));
+}

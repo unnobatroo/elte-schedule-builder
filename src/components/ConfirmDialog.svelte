@@ -66,7 +66,7 @@
   }
 
   p {
-    color: var(--color-muted);
+    color: var(--color-text-muted);
     font-size: 0.95rem;
     line-height: 1.5;
   }

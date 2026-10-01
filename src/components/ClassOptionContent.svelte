@@ -2,7 +2,7 @@
   import Icon from "./Icon.svelte";
   import type { CalendarEvent } from "../types/schedule.js";
   import { getEventDisplayTitle } from "../utils/schedule.js";
-  import { language, t } from "../utils/i18n.js";
+  import { dayName, language, t } from "../utils/i18n.js";
 
   interface Props {
     selected?: boolean;
@@ -31,7 +31,7 @@
       conflicts.map((event) => {
         const title = getEventDisplayTitle(event);
         const eventDay = event.dayOfWeek
-          ? t($language, event.dayOfWeek.toLocaleLowerCase("en-US"))
+          ? dayName($language, event.dayOfWeek)
           : "";
         const eventTime =
           event.startTime && event.endTime

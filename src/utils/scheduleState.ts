@@ -1,3 +1,4 @@
+import { getEventType, getEventTypeClass } from "./schedule.js";
 import type { CalendarEvent, Subject } from "../types/schedule.js";
 
 export function normalizeSubjectTitle(title: string): string {
@@ -14,13 +15,7 @@ export function getEventCode(event: unknown): string {
   return (e?.code ?? e?.description?.split("\n")[0] ?? "").trim();
 }
 
-export function getEventType(event: unknown): string {
-  const e = event as {
-    extendedProps?: { type?: string };
-    type?: string;
-  } | null;
-  return (e?.extendedProps?.type ?? e?.type ?? "").trim().toLowerCase();
-}
+export { getEventType };
 
 function normalizeIdentityValue(value: unknown): string {
   return String(value ?? "")
@@ -78,12 +73,6 @@ export function getEventIdentity(event: unknown): string {
   ].join("\u0000");
 }
 
-function getClassTypeGroup(type: unknown): "lecture" | "practice" {
-  return typeof type === "string" && type.toLowerCase().includes("lecture")
-    ? "lecture"
-    : "practice";
-}
-
 /**
  * Keep every fetched class as an option while selecting one initial course
  * group from each subject's lecture and practice sections. Multiple distinct
@@ -102,7 +91,7 @@ export function selectInitialScheduleGroups(
   const availableVariants = new Map<string, Set<string>>();
   for (const event of events) {
     const subjectTitle = normalizeSubjectTitle(String(event.title ?? ""));
-    const sectionKey = `${subjectTitle}\u0000${getClassTypeGroup(getEventType(event))}`;
+    const sectionKey = `${subjectTitle}\u0000${getEventTypeClass(getEventType(event))}`;
     const variants = availableVariants.get(sectionKey) ?? new Set<string>();
     variants.add(getEventVariantIdentity(event));
     availableVariants.set(sectionKey, variants);
@@ -113,7 +102,7 @@ export function selectInitialScheduleGroups(
   for (const event of existingEvents) {
     if (!event?.enabled) continue;
     const subjectTitle = normalizeSubjectTitle(String(event.title ?? ""));
-    const sectionKey = `${subjectTitle}\u0000${getClassTypeGroup(getEventType(event))}`;
+    const sectionKey = `${subjectTitle}\u0000${getEventTypeClass(getEventType(event))}`;
     const variantIdentity = getEventVariantIdentity(event);
     if (availableVariants.get(sectionKey)?.has(variantIdentity)) {
       selectedVariants.set(sectionKey, variantIdentity);
@@ -122,7 +111,7 @@ export function selectInitialScheduleGroups(
 
   return events.map((event) => {
     const subjectTitle = normalizeSubjectTitle(String(event.title ?? ""));
-    const sectionKey = `${subjectTitle}\u0000${getClassTypeGroup(getEventType(event))}`;
+    const sectionKey = `${subjectTitle}\u0000${getEventTypeClass(getEventType(event))}`;
     const variantIdentity = getEventVariantIdentity(event);
     if (!selectedVariants.has(sectionKey)) {
       selectedVariants.set(sectionKey, variantIdentity);
@@ -173,7 +162,7 @@ function findExistingEventIndex(
 }
 
 function isSameClassType(firstType: unknown, secondType: unknown): boolean {
-  return getClassTypeGroup(firstType) === getClassTypeGroup(secondType);
+  return getEventTypeClass(firstType) === getEventTypeClass(secondType);
 }
 
 function eventMatchesClass(event: CalendarEvent, selectedClass: any): boolean {

@@ -54,7 +54,7 @@
 
   .notice-copy p {
     margin-top: 4px;
-    color: var(--color-muted);
+    color: var(--color-text-muted);
     font-size: 0.92rem;
     line-height: 1.45;
   }

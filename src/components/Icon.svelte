@@ -4,13 +4,9 @@
     | "calendar"
     | "check"
     | "chevron-down"
-    | "chevron-left"
-    | "chevron-right"
     | "chevron-up"
     | "clock"
     | "download"
-    | "external-link"
-    | "info"
     | "mail"
     | "map-pin"
     | "monitor"
@@ -21,7 +17,6 @@
     | "rotate-ccw"
     | "search"
     | "send"
-    | "smartphone"
     | "sparkles"
     | "sun"
     | "trash"
@@ -35,13 +30,9 @@
   import Calendar from "@lucide/svelte/icons/calendar";
   import Check from "@lucide/svelte/icons/check";
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
-  import ChevronLeft from "@lucide/svelte/icons/chevron-left";
-  import ChevronRight from "@lucide/svelte/icons/chevron-right";
   import ChevronUp from "@lucide/svelte/icons/chevron-up";
   import Clock from "@lucide/svelte/icons/clock";
   import Download from "@lucide/svelte/icons/download";
-  import ExternalLink from "@lucide/svelte/icons/external-link";
-  import Info from "@lucide/svelte/icons/info";
   import Mail from "@lucide/svelte/icons/mail";
   import MapPin from "@lucide/svelte/icons/map-pin";
   import Monitor from "@lucide/svelte/icons/monitor";
@@ -52,7 +43,6 @@
   import RotateCcw from "@lucide/svelte/icons/rotate-ccw";
   import Search from "@lucide/svelte/icons/search";
   import Send from "@lucide/svelte/icons/send";
-  import Smartphone from "@lucide/svelte/icons/smartphone";
   import Sparkles from "@lucide/svelte/icons/sparkles";
   import Sun from "@lucide/svelte/icons/sun";
   import Trash from "@lucide/svelte/icons/trash";
@@ -65,13 +55,9 @@
     calendar: Calendar,
     check: Check,
     "chevron-down": ChevronDown,
-    "chevron-left": ChevronLeft,
-    "chevron-right": ChevronRight,
     "chevron-up": ChevronUp,
     clock: Clock,
     download: Download,
-    "external-link": ExternalLink,
-    info: Info,
     mail: Mail,
     "map-pin": MapPin,
     monitor: Monitor,
@@ -82,7 +68,6 @@
     "rotate-ccw": RotateCcw,
     search: Search,
     send: Send,
-    smartphone: Smartphone,
     sparkles: Sparkles,
     sun: Sun,
     trash: Trash,

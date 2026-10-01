@@ -1,12 +1,13 @@
 <script>
   import Icon from "./Icon.svelte";
   import ClassOptionContent from "./ClassOptionContent.svelte";
-  import { language, t } from "../utils/i18n.js";
+  import { dayName, language, t } from "../utils/i18n.js";
   import {
     createCalendarEvents,
+    DAY_ORDER,
     fetchSubjectClasses,
+    formatEventConflictLabel,
     getConflictingEvents,
-    getEventDisplayTitle,
     getTanrendSubjectCode,
     isTypoTolerantNameMatch,
     isLectureType,
@@ -49,14 +50,6 @@
   const showSuggestions = $derived(
     suggestionsEnabled && (isSuggesting || suggestions.length > 0),
   );
-
-  const dayPriority = {
-    Monday: 0,
-    Tuesday: 1,
-    Wednesday: 2,
-    Thursday: 3,
-    Friday: 4,
-  };
 
   const classSectionDefinitions = [
     {
@@ -136,7 +129,7 @@
           startTime: time.startTime,
           endTime: time.endTime,
           when: `${time.dayOfWeek} ${time.startTime}–${time.endTime}`,
-          dayIndex: dayPriority[time.dayOfWeek] ?? Number.MAX_SAFE_INTEGER,
+          dayIndex: DAY_ORDER[time.dayOfWeek] ?? Number.MAX_SAFE_INTEGER,
           startMinutes: hour * 60 + minute,
         };
       })
@@ -612,15 +605,6 @@
     return { selected, conflicts };
   }
 
-  function formatConflictAria(conflicts) {
-    return conflicts
-      .map(
-        (event) =>
-          `${getEventDisplayTitle(event)}, ${localizeWhen(`${event.dayOfWeek} ${event.startTime}–${event.endTime}`)}`,
-      )
-      .join("; ");
-  }
-
   function finishAdding() {
     resultGroups = [];
     requestAnimationFrame(() => {
@@ -675,7 +659,7 @@
   function localizeWhen(value = "") {
     return value.replace(
       /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/,
-      (day) => t($language, day.toLocaleLowerCase("en-US")),
+      (day) => dayName($language, day),
     );
   }
 
@@ -902,7 +886,7 @@
                         type="radio"
                         name={`${group.id}-${section.id}`}
                         checked={rowState.selected}
-                        aria-label={`${t($language, rowState.selected ? "selectedClass" : "selectClass")}: ${row.title}, ${localizeType(row.type)}, ${localizeWhen(row.when)}, ${row.code}${rowState.conflicts.length > 0 ? `, ${t($language, "conflictsWithCourses", { courses: formatConflictAria(rowState.conflicts) })}` : ""}`}
+                        aria-label={`${t($language, rowState.selected ? "selectedClass" : "selectClass")}: ${row.title}, ${localizeType(row.type)}, ${localizeWhen(row.when)}, ${row.code}${rowState.conflicts.length > 0 ? `, ${t($language, "conflictsWithCourses", { courses: formatEventConflictLabel($language, rowState.conflicts) })}` : ""}`}
                         onclick={(event) => {
                           if (!rowState.selected) return;
                           event.preventDefault();
@@ -914,10 +898,7 @@
                       />
                       <ClassOptionContent
                         selected={rowState.selected}
-                        day={t(
-                          $language,
-                          row.dayOfWeek.toLocaleLowerCase("en-US"),
-                        )}
+                        day={dayName($language, row.dayOfWeek)}
                         startTime={row.startTime}
                         endTime={row.endTime}
                         instructor={row.instructor}

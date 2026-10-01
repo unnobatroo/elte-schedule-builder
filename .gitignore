@@ -28,8 +28,8 @@
 !.env.example
 *.local
 
-# Local Codex project memory
-/.codex-vault/
+# Localproject memory
+/.agent-vault/
 
 # Logs
 /logs/

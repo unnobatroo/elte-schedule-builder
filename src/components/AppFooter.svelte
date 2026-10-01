@@ -71,7 +71,7 @@
 
   .project-note p {
     margin-top: 4px;
-    color: var(--color-muted);
+    color: var(--color-text-muted);
     font-size: 0.88rem;
     line-height: 1.45;
   }
@@ -122,7 +122,7 @@
   }
 
   .contact-action small {
-    color: var(--color-muted);
+    color: var(--color-text-muted);
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;

@@ -38,14 +38,6 @@ export function isValidSubjectName(subjectName) {
   );
 }
 
-export function validateSubjectCode(req, res, next) {
-  if (!isValidSubjectCode(req.params.code)) {
-    return res.status(400).json({ error: "Invalid subject code" });
-  }
-
-  next();
-}
-
 export function validateSubjectSearch(req, res, next) {
   const searchMode = req.query?.by ?? "code";
   const searchTerm = req.params.query;
@@ -92,6 +84,14 @@ export async function fetchSubjectData(searchTerm, term, searchMode = "code") {
       Referer: "https://tanrend.elte.hu/oktatoitanrend_en",
     },
   });
+
+  if (!response.ok) {
+    const error = new Error(
+      `Tanrend request failed with HTTP ${response.status}`,
+    );
+    error.status = response.status;
+    throw error;
+  }
 
   return await response.text();
 }

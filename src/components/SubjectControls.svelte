@@ -3,8 +3,9 @@
   import ClassOptionContent from "./ClassOptionContent.svelte";
   import type { CalendarEvent, Subject } from "../types/schedule.js";
   import {
+    DAY_ORDER,
+    formatEventConflictLabel,
     getConflictingEvents,
-    getEventDisplayTitle,
     getEventGroupNumber,
     isLectureType,
   } from "../utils/schedule.js";
@@ -13,7 +14,7 @@
     getEventInstructor,
     normalizeSubjectTitle,
   } from "../utils/scheduleState.js";
-  import { language, t } from "../utils/i18n.js";
+  import { dayName, language, t } from "../utils/i18n.js";
 
   interface Props {
     subjects?: Subject[];
@@ -71,16 +72,6 @@
       openSubject = null;
   });
 
-  const dayOrder: Record<string, number> = {
-    Monday: 0,
-    Tuesday: 1,
-    Wednesday: 2,
-    Thursday: 3,
-    Friday: 4,
-    Saturday: 5,
-    Sunday: 6,
-  };
-
   function toggleEvents(title: string) {
     openSubject = openSubject === title ? null : title;
   }
@@ -93,7 +84,7 @@
     const groupLabel = group
       ? `, ${t($language, "group").toLocaleLowerCase($language)} ${group}`
       : "";
-    return `${type}${groupLabel}, ${t($language, event.dayOfWeek.toLocaleLowerCase("en-US"))} ${event.startTime}–${event.endTime}`;
+    return `${type}${groupLabel}, ${dayName($language, event.dayOfWeek)} ${event.startTime}–${event.endTime}`;
   }
 
   function getEventConflicts(
@@ -117,15 +108,6 @@
     return getConflictingEvents(event, retainedEvents, lectureExemption);
   }
 
-  function formatConflictAria(conflicts: CalendarEvent[]): string {
-    return conflicts
-      .map(
-        (event) =>
-          `${getEventDisplayTitle(event)}, ${t($language, event.dayOfWeek.toLocaleLowerCase("en-US"))} ${event.startTime}–${event.endTime}`,
-      )
-      .join("; ");
-  }
-
   function getSubjectCodes(subject: Subject): string {
     const codes = [
       ...new Set(
@@ -142,8 +124,8 @@
     second: { event: CalendarEvent; eventIndex: number },
   ): number {
     return (
-      (dayOrder[first.event.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) -
-        (dayOrder[second.event.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) ||
+      (DAY_ORDER[first.event.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) -
+        (DAY_ORDER[second.event.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) ||
       first.event.startTime.localeCompare(second.event.startTime) ||
       first.event.endTime.localeCompare(second.event.endTime) ||
       (first.event.code ?? "").localeCompare(second.event.code ?? "") ||
@@ -290,16 +272,13 @@
                             type="radio"
                             name={`subject-${subjectIndex}-${group.key}`}
                             checked={event.enabled}
-                            aria-label={`${formatEventLabel(event)}${conflicts.length > 0 ? `, ${t($language, "conflictsWithCourses", { courses: formatConflictAria(conflicts) })}` : ""}`}
+                            aria-label={`${formatEventLabel(event)}${conflicts.length > 0 ? `, ${t($language, "conflictsWithCourses", { courses: formatEventConflictLabel($language, conflicts) })}` : ""}`}
                             onchange={() =>
                               onToggleEvent?.(subject.title, eventIndex)}
                           />
                           <ClassOptionContent
                             selected={event.enabled}
-                            day={t(
-                              $language,
-                              event.dayOfWeek.toLocaleLowerCase("en-US"),
-                            )}
+                            day={dayName($language, event.dayOfWeek)}
                             startTime={event.startTime}
                             endTime={event.endTime}
                             instructor={getEventInstructor(event)}

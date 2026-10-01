@@ -1,49 +1,22 @@
-import { checkTimeOverlap, isLectureType } from "./schedule.js";
+import {
+  checkTimeOverlap,
+  getEventType,
+  getEventTypeClass,
+  isLectureType,
+} from "./schedule.js";
 import {
   getEventCode,
   getEventIdentity,
   getEventInstructor,
 } from "./scheduleState.js";
-import type { CalendarEvent, Subject } from "../types/schedule.js";
-
-export interface OptimizerGroup {
-  key: string;
-  subjectTitle: string;
-  code: string;
-  typeClass: "lecture" | "practice";
-  events: CalendarEvent[];
-}
-
-export interface OptimizerVariable {
-  subjectTitle: string;
-  typeClass: "lecture" | "practice";
-  groups: OptimizerGroup[];
-  currentGroupKeys: string[];
-}
-
-export interface OptimizerChange {
-  key: string;
-  subjectTitle: string;
-  typeClass: "lecture" | "practice";
-  from: OptimizerGroup;
-  to: OptimizerGroup;
-}
-
-export interface OptimizerSolution {
-  conflicts: number;
-  changedGroups: number;
-  changes: OptimizerChange[];
-  groups: OptimizerGroup[];
-}
-
-/**
- * Match the two sections used by the class picker: lectures and practices.
- * Tanrend uses several labels for non-lecture classes, but they are all
- * interchangeable choices within the practice section.
- */
-export function getEventTypeClass(type: unknown): "lecture" | "practice" {
-  return isLectureType(type) ? "lecture" : "practice";
-}
+import type {
+  CalendarEvent,
+  OptimizerChange,
+  OptimizerGroup,
+  OptimizerSolution,
+  OptimizerVariable,
+  Subject,
+} from "../types/schedule.js";
 
 function getGroupKey(
   subjectTitle: string,
@@ -55,20 +28,11 @@ function getGroupKey(
 }
 
 function getEventGroupKey(subjectTitle: string, event: CalendarEvent): string {
-  const code = getEventCode(event);
-  const type =
-    event.extendedProps?.type ?? (event as Record<string, unknown>).type;
   return getGroupKey(
     subjectTitle,
-    code,
-    getEventTypeClass(type),
+    getEventCode(event),
+    getEventTypeClass(getEventType(event)),
     getEventInstructor(event),
-  );
-}
-
-function isLectureEvent(event: CalendarEvent): boolean {
-  return isLectureType(
-    event.extendedProps?.type ?? (event as Record<string, unknown>).type,
   );
 }
 
@@ -78,7 +42,10 @@ function eventsConflict(
   lectureExemption: boolean,
 ): boolean {
   if (!checkTimeOverlap(first, second)) return false;
-  if (lectureExemption && (isLectureEvent(first) || isLectureEvent(second))) {
+  if (
+    lectureExemption &&
+    (isLectureType(getEventType(first)) || isLectureType(getEventType(second)))
+  ) {
     return false;
   }
   return true;
@@ -124,9 +91,7 @@ function buildVariables(subjects: Subject[]): OptimizerVariable[] {
     const groups = new Map<string, OptimizerGroup>();
     for (const event of subject.events) {
       const code = getEventCode(event);
-      const type =
-        event.extendedProps?.type ?? (event as Record<string, unknown>).type;
-      const typeClass = getEventTypeClass(type);
+      const typeClass = getEventTypeClass(getEventType(event));
       const key = getGroupKey(
         subject.title,
         code,

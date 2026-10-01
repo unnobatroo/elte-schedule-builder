@@ -12,7 +12,7 @@ test("uses the device language once and persists an explicit language choice", a
   browser,
 }) => {
   const context = await browser.newContext({
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: `http://127.0.0.1:${process.env.PLAYWRIGHT_PORT ?? 3000}`,
     locale: "hu-HU",
   });
   const page = await context.newPage();

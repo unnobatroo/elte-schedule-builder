@@ -1,6 +1,6 @@
 import Papa from "papaparse";
 import fnv1a from "@sindresorhus/fnv1a";
-import { getNextWeekDateForDay } from "./schedule.js";
+import { DAY_ORDER, getNextWeekDateForDay } from "./schedule.js";
 import { getEventIdentity } from "./scheduleState.js";
 import type { CalendarEvent } from "../types/schedule.js";
 
@@ -16,15 +16,6 @@ const CSV_HEADERS = [
   "Location",
   "Private",
 ];
-const dayOrder: Record<string, number> = {
-  Monday: 0,
-  Tuesday: 1,
-  Wednesday: 2,
-  Thursday: 3,
-  Friday: 4,
-  Saturday: 5,
-  Sunday: 6,
-};
 
 function uniqueSortedEvents(events: CalendarEvent[]): CalendarEvent[] {
   const unique = new Map<string, CalendarEvent>();
@@ -34,8 +25,8 @@ function uniqueSortedEvents(events: CalendarEvent[]): CalendarEvent[] {
   }
   return [...unique.values()].sort(
     (first, second) =>
-      (dayOrder[first.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) -
-        (dayOrder[second.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) ||
+      (DAY_ORDER[first.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) -
+        (DAY_ORDER[second.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) ||
       String(first.startTime).localeCompare(String(second.startTime)) ||
       String(first.title).localeCompare(String(second.title)),
   );

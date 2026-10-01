@@ -5,7 +5,6 @@ import {
   isValidSubjectName,
   MAX_SUBJECT_CODE_LENGTH,
   MAX_SUBJECT_NAME_LENGTH,
-  validateSubjectCode,
   validateSubjectSearch,
 } from "../../server/tanrend.js";
 
@@ -20,20 +19,10 @@ describe("subject code validation", () => {
     (code) => expect(isValidSubjectCode(code)).toBe(false),
   );
 
-  it("rejects oversized codes before continuing", () => {
-    const status = vi.fn().mockReturnThis();
-    const json = vi.fn().mockReturnThis();
-    const next = vi.fn();
-
-    validateSubjectCode(
-      { params: { code: "A".repeat(MAX_SUBJECT_CODE_LENGTH + 1) } },
-      { status, json },
-      next,
+  it("rejects oversized codes", () => {
+    expect(isValidSubjectCode("A".repeat(MAX_SUBJECT_CODE_LENGTH + 1))).toBe(
+      false,
     );
-
-    expect(status).toHaveBeenCalledWith(400);
-    expect(json).toHaveBeenCalledWith({ error: "Invalid subject code" });
-    expect(next).not.toHaveBeenCalled();
   });
 });
 

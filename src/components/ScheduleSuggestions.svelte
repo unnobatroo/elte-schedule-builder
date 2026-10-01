@@ -8,10 +8,10 @@
     OptimizerGroupInfo,
     Subject,
   } from "../types/schedule.js";
-  import { getConflictPairs } from "../utils/schedule.js";
+  import { DAY_ORDER, getConflictPairs } from "../utils/schedule.js";
   import { getEnabledEvents } from "../utils/scheduleState.js";
   import { findScheduleSuggestions } from "../utils/scheduleOptimizer.js";
-  import { language, t } from "../utils/i18n.js";
+  import { dayName, language, t } from "../utils/i18n.js";
 
   interface Props {
     subjects?: Subject[];
@@ -65,16 +65,6 @@
     closeSuggestions();
   }
 
-  const dayOrder: Record<string, number> = {
-    Monday: 0,
-    Tuesday: 1,
-    Wednesday: 2,
-    Thursday: 3,
-    Friday: 4,
-    Saturday: 5,
-    Sunday: 6,
-  };
-
   function uniqueSortedEvents(events: CalendarEvent[] = []): CalendarEvent[] {
     const unique = events.filter(
       (event, index, allEvents) =>
@@ -87,8 +77,8 @@
     );
     return unique.sort(
       (first, second) =>
-        (dayOrder[first.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) -
-          (dayOrder[second.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) ||
+        (DAY_ORDER[first.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) -
+          (DAY_ORDER[second.dayOfWeek] ?? Number.MAX_SAFE_INTEGER) ||
         first.startTime.localeCompare(second.startTime) ||
         first.endTime.localeCompare(second.endTime),
     );
@@ -98,7 +88,7 @@
     return uniqueSortedEvents(group?.events)
       .map(
         (event) =>
-          `${t($language, event.dayOfWeek.toLocaleLowerCase("en-US"))} ${event.startTime}–${event.endTime}`,
+          `${dayName($language, event.dayOfWeek)} ${event.startTime}–${event.endTime}`,
       )
       .join(" · ");
   }
@@ -142,8 +132,8 @@
       }))
       .sort(
         (first, second) =>
-          (dayOrder[first.day] ?? Number.MAX_SAFE_INTEGER) -
-            (dayOrder[second.day] ?? Number.MAX_SAFE_INTEGER) ||
+          (DAY_ORDER[first.day] ?? Number.MAX_SAFE_INTEGER) -
+            (DAY_ORDER[second.day] ?? Number.MAX_SAFE_INTEGER) ||
           first.day.localeCompare(second.day),
       );
   }
@@ -246,7 +236,7 @@
                 {#each getChangeDayGroups(suggestion) as dayGroup (dayGroup.day)}
                   <section class="day-group">
                     <h3>
-                      {t($language, dayGroup.day.toLocaleLowerCase("en-US"))}
+                      {dayName($language, dayGroup.day)}
                     </h3>
                     <div class="day-changes">
                       {#each dayGroup.changes as change (change.key)}

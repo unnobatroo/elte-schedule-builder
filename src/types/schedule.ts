@@ -11,8 +11,6 @@ export interface ParsedTime {
   dayOfWeek: string;
   startTime: string;
   endTime: string;
-  startMinutes?: number;
-  endMinutes?: number;
 }
 
 export interface EventExtendedProps {
@@ -20,8 +18,6 @@ export interface EventExtendedProps {
   location?: string;
   instructor?: string;
   description?: string;
-  subjectCode?: string;
-  color?: string;
   [key: string]: unknown;
 }
 
@@ -59,21 +55,19 @@ export interface ScheduleStore {
   schedules: Schedule[];
 }
 
-export interface RawClassData {
-  time: string;
-  title: string;
-  type: string;
-  location: string;
-  instructor: string;
-  code: string;
-}
-
 export interface OptimizerGroup {
   key: string;
   subjectTitle: string;
   code: string;
   typeClass: "lecture" | "practice";
   events: CalendarEvent[];
+}
+
+export interface OptimizerVariable {
+  subjectTitle: string;
+  typeClass: "lecture" | "practice";
+  groups: OptimizerGroup[];
+  currentGroupKeys: string[];
 }
 
 export interface OptimizerChange {

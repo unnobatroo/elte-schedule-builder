@@ -46,7 +46,7 @@
     justify-content: flex-end;
     gap: var(--space-4);
     padding: 0 var(--space-1);
-    color: var(--color-muted);
+    color: var(--color-text-muted);
     font-size: 0.88rem;
   }
 
@@ -73,15 +73,15 @@
   }
 
   .color-box.lecture {
-    background: var(--event-lecture);
+    background: var(--color-event-lecture);
   }
 
   .color-box.practice {
-    background: var(--event-practice);
+    background: var(--color-event-practice);
   }
 
   .color-box.conflict {
-    background: var(--event-conflict);
+    background: var(--color-event-conflict);
   }
 
   .exemption-item {

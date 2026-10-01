@@ -164,11 +164,7 @@
           törlése, a privát böngészés vagy másik böngésző használata
           eltávolíthatja vagy elrejtheti őket.
         </p>
-        <p>
-          Az éles oldal saját üzemeltetésű analitikát, munkamenet-felvételt és
-          hőtérképeket is használ. Ezek oldalmegtekintési és interakciós
-          adatokat fogadnak az alkalmazás fejlesztéséhez.
-        </p>
+        <p>Az oldal nem használ analitikát vagy munkamenet-felvételt.</p>
       </section>
     </article>
   {:else}

@@ -67,7 +67,7 @@ function createSubjectHandler({
         res.set("Retry-After", "1");
         return res.status(error.status).json({ error: error.message });
       }
-      return res.status(error.response?.status || 500).json({
+      return res.status(error.response?.status ?? error.status ?? 500).json({
         error: "Failed to fetch subject data",
       });
     }
@@ -141,10 +141,7 @@ export function createApp({
     maxQueued: maxQueueLength,
     handler: async (searchTerm, term, searchMode) => {
       logger.log(`Processing queued ${searchMode} search for ${searchTerm}`);
-      const data =
-        searchMode === "code"
-          ? await fetchSubject(searchTerm, term)
-          : await fetchSubject(searchTerm, term, searchMode);
+      const data = await fetchSubject(searchTerm, term, searchMode);
       await cache.set(`${term}-${searchMode}-${searchTerm}`, data);
       return data;
     },
@@ -195,7 +192,7 @@ export async function startServer({
   const { app, cleanupCache: cleanup } = createApp({ database, logger });
   const cacheCleanupInterval = setInterval(cleanup, 60 * 60 * 1000);
   const server = app.listen(listenPort, () => {
-    logger.info?.(`Server running at http://localhost:${listenPort}`);
+    logger.info(`Server running at http://localhost:${listenPort}`);
   });
 
   return {
@@ -215,15 +212,9 @@ export async function startServer({
   };
 }
 
-let defaultRuntime;
 const isMainModule =
   process.argv[1] &&
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMainModule) {
-  defaultRuntime = await startServer();
-}
-
-export async function closeServer() {
-  await defaultRuntime?.close();
-  defaultRuntime = undefined;
+  await startServer();
 }

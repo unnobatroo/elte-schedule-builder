@@ -1,4 +1,5 @@
 import { distance } from "fastest-levenshtein";
+import { dayName } from "./i18n.js";
 import type { CalendarEvent, ParsedTime, Subject } from "../types/schedule.js";
 
 export interface ParsedClassRow {
@@ -83,12 +84,6 @@ export function parseSubjectCodes(input: string): string[] {
     .split(/[\s,]+/)
     .map((code) => code.trim())
     .filter(Boolean);
-}
-
-export function processSubjectCode(code: string): string {
-  const parts = code.split("-");
-  if (parts.length > 1) parts.pop();
-  return parts.join("-");
 }
 
 // Tanrend codes such as DEMO-1 are already base codes. Only strip a group
@@ -297,14 +292,41 @@ export function checkTimeOverlap(
   );
 }
 
+export function getEventType(event: unknown): string {
+  const e = event as {
+    extendedProps?: { type?: string };
+    type?: string;
+  } | null;
+  return (e?.extendedProps?.type ?? e?.type ?? "").trim().toLowerCase();
+}
+
 export function isLectureType(type?: unknown): boolean {
   return typeof type === "string" && type.toLowerCase().includes("lecture");
 }
 
+/**
+ * Match the two sections used by the class picker: lectures and practices.
+ * Tanrend uses several labels for non-lecture classes, but they are all
+ * interchangeable choices within the practice section.
+ */
+export function getEventTypeClass(type: unknown): "lecture" | "practice" {
+  return isLectureType(type) ? "lecture" : "practice";
+}
+
 function isLecture(event: CalendarEvent): boolean {
-  return isLectureType(
-    event.extendedProps?.type ?? (event as Record<string, unknown>).type,
-  );
+  return isLectureType(getEventType(event));
+}
+
+export function formatEventConflictLabel(
+  activeLanguage: string,
+  events: CalendarEvent[],
+): string {
+  return events
+    .map(
+      (event) =>
+        `${getEventDisplayTitle(event)}, ${dayName(activeLanguage, event.dayOfWeek)} ${event.startTime}–${event.endTime}`,
+    )
+    .join("; ");
 }
 
 export function getConflictPairs(
@@ -460,19 +482,22 @@ export function encodeSchedule(
   return btoa(`${sections.join("|")}|${lectureExemption ? "1" : "0"}`);
 }
 
-const DAY_OF_WEEK_INDEX: Record<string, number> = {
-  Monday: 1,
-  Tuesday: 2,
-  Wednesday: 3,
-  Thursday: 4,
-  Friday: 5,
+/** Zero-based weekday order shared by every day-sorted list in the UI. */
+export const DAY_ORDER: Record<string, number> = {
+  Monday: 0,
+  Tuesday: 1,
+  Wednesday: 2,
+  Thursday: 3,
+  Friday: 4,
+  Saturday: 5,
+  Sunday: 6,
 };
 
 function getWeekdayDate(dayOfWeek: string, weekOffset: number): string {
   const today = new Date();
   const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
   const daysToMonday = currentDay === 0 ? 6 : currentDay - 1;
-  const daysToAdd = (DAY_OF_WEEK_INDEX[dayOfWeek] ?? 1) - 1;
+  const daysToAdd = DAY_ORDER[dayOfWeek] ?? 0;
 
   const eventDateObj = new Date(
     today.getFullYear(),

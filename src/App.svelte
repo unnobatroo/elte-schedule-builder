@@ -123,7 +123,6 @@
 
   function handleScheduleUpdate(eventData: CalendarEvent[]) {
     allSubjects = mergeScheduleEvents(allSubjects, eventData);
-    computeConflicts();
     saveAndUpdate();
   }
 
@@ -132,11 +131,11 @@
     selectedClass: CalendarEvent,
   ) {
     allSubjects = selectScheduleClass(allSubjects, eventData, selectedClass);
-    computeConflicts();
     saveAndUpdate();
   }
 
   function saveAndUpdate() {
+    computeConflicts();
     const currentStore = scheduleStore ?? loadScheduleStore(localStorage);
     scheduleStore = updateActiveSchedule(currentStore, {
       subjects: allSubjects,
@@ -144,7 +143,6 @@
     });
     saveScheduleStore(localStorage, scheduleStore);
     schedules = scheduleStore.schedules;
-    updateEvents();
   }
 
   function applyScheduleStore(store: ScheduleStore) {
@@ -228,25 +226,21 @@
 
   function toggleSubject(title: string, allEnabled: boolean | null = null) {
     allSubjects = setSubjectEnabled(allSubjects, title, allEnabled);
-    computeConflicts();
     saveAndUpdate();
   }
 
   function toggleEvent(subjectTitle: string, eventIndex: number) {
     allSubjects = toggleScheduleEvent(allSubjects, subjectTitle, eventIndex);
-    computeConflicts();
     saveAndUpdate();
   }
 
   function applySuggestion(suggestion: OptimizationSuggestion) {
     allSubjects = applyScheduleSuggestion(allSubjects, suggestion);
-    computeConflicts();
     saveAndUpdate();
   }
 
   function deleteSubject(title: string) {
     allSubjects = allSubjects.filter((subject) => subject.title !== title);
-    computeConflicts();
     saveAndUpdate();
   }
 
@@ -257,7 +251,6 @@
       confirmLabel: t($language, "clear"),
       action: () => {
         allSubjects = [];
-        events = [];
         saveAndUpdate();
       },
     });
@@ -270,7 +263,6 @@
 
   function toggleLectureExemption(value: boolean) {
     lectureExemption = value;
-    computeConflicts();
     saveAndUpdate();
   }
 

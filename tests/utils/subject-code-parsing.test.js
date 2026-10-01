@@ -5,48 +5,10 @@ import {
   getTanrendSubjectCode,
   isTypoTolerantNameMatch,
   parseSubjectCodes,
-  processSubjectCode,
   rankSubjectMatches,
 } from "../../src/utils/schedule.js";
 
 describe("Subject Code Processing", () => {
-  describe("processSubjectCode", () => {
-    it("should remove the last part (group number) from a standard code", () => {
-      const result = processSubjectCode("IP-18fWPEG-90");
-      expect(result).toBe("IP-18fWPEG");
-    });
-
-    it("should handle code with multiple dashes", () => {
-      const result = processSubjectCode("CS-101-A-01");
-      expect(result).toBe("CS-101-A");
-    });
-
-    it("should return the code as-is if no dash exists", () => {
-      const result = processSubjectCode("STANDALONE");
-      expect(result).toBe("STANDALONE");
-    });
-
-    it("should handle code with two parts", () => {
-      const result = processSubjectCode("MATH-01");
-      expect(result).toBe("MATH");
-    });
-
-    it("should handle practice code format", () => {
-      const result = processSubjectCode("IP-18fKVFPG-91");
-      expect(result).toBe("IP-18fKVFPG");
-    });
-
-    it("should handle empty string", () => {
-      const result = processSubjectCode("");
-      expect(result).toBe("");
-    });
-
-    it("should handle code with only dash at end", () => {
-      const result = processSubjectCode("CODE-");
-      expect(result).toBe("CODE");
-    });
-  });
-
   describe("parseSubjectCodes", () => {
     it("should parse space-separated codes", () => {
       const result = parseSubjectCodes("IP-18fWPEG IP-18fKVFPG MATH-201");

@@ -7,7 +7,7 @@
     if (window.location.pathname.startsWith("/tanrend")) {
       window.history.replaceState({}, "", "/#course-finder");
       requestAnimationFrame(() => {
-        document.getElementById("subject-code-search")?.focus();
+        document.getElementById("subject-search-query")?.focus();
       });
     }
   });
