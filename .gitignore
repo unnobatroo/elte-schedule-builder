@@ -28,7 +28,7 @@
 !.env.example
 *.local
 
-# Localproject memory
+# Local project memory
 /.agent-vault/
 
 # Logs
