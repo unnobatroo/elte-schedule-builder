@@ -3,9 +3,9 @@
 ## Public fork on Vercel
 
 The `unnobatroo/elte-schedule-builder` fork is live at
-[schedule.jalols.page](https://schedule.jalols.page). Vercel builds the Vite
-frontend; `api/subject/[query].js` is the serverless adapter for the Express
-app.
+[elte-schedule.jismailov.com](https://elte-schedule.jismailov.com). Vercel
+builds the Vite frontend; `api/subject/[query].js` is the serverless adapter
+for the Express app.
 
 The adapter keeps the shared Tanrend validation, request queue, rate limit,
 demo data, and security headers. Only the cache differs: a bounded in-memory
@@ -23,13 +23,13 @@ vercel deploy --prod
 Then check the SPA and API:
 
 ```bash
-curl --fail https://schedule.jalols.page/
-curl --fail https://schedule.jalols.page/api/subject/DEMO-1
+curl --fail https://elte-schedule.jismailov.com/
+curl --fail https://elte-schedule.jismailov.com/api/subject/DEMO-1
 ```
 
 The `/import/*` and `/tanrend` rewrites in `vercel.json` keep SPA deep links
-working without swallowing `/api`. The custom domain uses an `A` record for
-`schedule.jalols.page` pointing at Vercel.
+working without swallowing `/api`. The custom domain
+`elte-schedule.jismailov.com` points at Vercel.
 
 ## Upstream container releases
 

@@ -2,7 +2,7 @@
 
 Schedule planner for ELTE students. Search courses by code, name, or professor — compare groups, spot conflicts, export to your calendar.
 
-**[Open the planner](https://schedule.jalols.page)**
+**[Open the planner](https://elte-schedule.jismailov.com)**
 
 Independent student project, not affiliated with ELTE. Tanrend is the official
 source — always double-check your final schedule there. Your schedules stay in
